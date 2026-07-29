@@ -1,14 +1,5 @@
-const jwt = require('jsonwebtoken');
 const Student = require('../models/Student');
-
-// Helper to generate token
-const generateToken = (id, role) => {
-  return jwt.sign(
-    { id, role },
-    process.env.JWT_SECRET || 'fallback_secret_for_dev_only',
-    { expiresIn: process.env.JWT_EXPIRES_IN || '1d' }
-  );
-};
+const generateToken = require('../utils/generateToken');
 
 // @desc    Register a new student
 // @route   POST /api/student/register
