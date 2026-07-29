@@ -1,8 +1,8 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Calendar, MapPin, Users, Building } from 'lucide-react';
+import { Calendar, MapPin, Users, Building, CheckCircle, XCircle } from 'lucide-react';
 
-const EventCard = ({ event }) => {
+const EventCard = ({ event, isRegistered, registrationId, onRegister, onCancel, userRole }) => {
   const getStatusClass = (status) => {
     switch (status) {
       case 'Upcoming':
@@ -21,6 +21,9 @@ const EventCard = ({ event }) => {
   const isSoldOut = event.availableSeats <= 0;
   const isCancelled = event.status === 'Cancelled';
   const isCompleted = event.status === 'Completed';
+  
+  // Registration deadline check
+  const isDeadlinePassed = new Date() > new Date(event.registrationDeadline);
 
   return (
     <div className="bg-white rounded-xl shadow-xs hover:shadow-md border border-gray-250 overflow-hidden flex flex-col transition-all duration-300 hover:-translate-y-1">
@@ -46,9 +49,17 @@ const EventCard = ({ event }) => {
       {/* Card Content */}
       <div className="p-5 flex-grow flex flex-col justify-between">
         <div>
-          <h3 className="text-lg font-bold text-gray-950 line-clamp-1 mb-1">{event.title}</h3>
-          <p className="text-xs text-gray-500 mb-4 flex items-center gap-1 font-medium">
-            <Building className="h-3.5 w-3.5" />
+          <div className="flex justify-between items-start gap-2 mb-1">
+            <h3 className="text-lg font-bold text-gray-950 line-clamp-1">{event.title}</h3>
+            {isRegistered && (
+              <span className="bg-green-50 text-green-700 border border-green-200 text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0 flex items-center gap-0.5">
+                <CheckCircle className="h-3 w-3" />
+                <span>Registered</span>
+              </span>
+            )}
+          </div>
+          <p className="text-xs text-gray-550 mb-4 flex items-center gap-1 font-medium">
+            <Building className="h-3.5 w-3.5 text-gray-400" />
             <span>Organized by {event.organizer}</span>
           </p>
 
@@ -72,13 +83,13 @@ const EventCard = ({ event }) => {
                 <Users className="h-4 w-4 text-gray-400" />
                 <span>Available Seats</span>
               </span>
-              <span>
-                {event.availableSeats} / {event.capacity}
+              <span className={isSoldOut ? 'text-red-650' : 'text-gray-800'}>
+                {isSoldOut ? 'Sold Out' : `${event.availableSeats} / ${event.capacity}`}
               </span>
             </div>
-            <div className="w-full bg-gray-200 h-1.5 rounded-full overflow-hidden">
+            <div className="w-full bg-gray-250 h-1.5 rounded-full overflow-hidden">
               <div
-                className={`h-full rounded-full ${isSoldOut ? 'bg-red-500' : 'bg-primary-500'}`}
+                className={`h-full rounded-full transition-all duration-500 ${isSoldOut ? 'bg-red-500' : 'bg-primary-500'}`}
                 style={{ width: `${Math.max(0, (event.availableSeats / event.capacity) * 100)}%` }}
               ></div>
             </div>
@@ -86,21 +97,49 @@ const EventCard = ({ event }) => {
 
           <div className="grid grid-cols-2 gap-2">
             <Link
-              to={`/events/${event._id}`}
-              className="bg-gray-100 hover:bg-gray-200 text-gray-800 text-center font-bold py-2 rounded-lg text-xs transition duration-150 ease-in-out flex items-center justify-center"
+              to={`/events/${event.id}`}
+              className="bg-gray-100 hover:bg-gray-200 text-gray-800 text-center font-bold py-2 rounded-lg text-xs transition duration-150 ease-in-out flex items-center justify-center border border-gray-250"
             >
               View Details
             </Link>
-            <button
-              disabled
-              title="Registration will be available in Phase 3"
-              className="bg-primary-100 text-primary-400 font-bold py-2 rounded-lg text-xs transition duration-150 cursor-not-allowed flex flex-col justify-center items-center relative group"
-            >
-              <span>Register</span>
-              <span className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-1.5 hidden group-hover:block bg-gray-900 text-white text-[10px] font-medium px-2 py-1 rounded shadow-lg whitespace-nowrap z-10">
-                Phase 3 feature
-              </span>
-            </button>
+
+            {userRole === 'Admin' ? (
+              <Link
+                to={`/events/${event.id}/participants`}
+                className="bg-primary-50 hover:bg-primary-100 text-primary-700 text-center font-bold py-2 rounded-lg text-xs transition duration-150 ease-in-out flex items-center justify-center border border-primary-200"
+              >
+                Participants
+              </Link>
+            ) : isRegistered ? (
+              <button
+                onClick={() => onCancel(registrationId)}
+                className="bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 font-bold py-2 rounded-lg text-xs transition duration-155 flex items-center justify-center gap-1"
+              >
+                <XCircle className="h-3.5 w-3.5" />
+                <span>Cancel</span>
+              </button>
+            ) : isCancelled || isCompleted || isDeadlinePassed ? (
+              <button
+                disabled
+                className="bg-gray-100 text-gray-400 font-bold py-2 rounded-lg text-xs border border-gray-200 cursor-not-allowed flex items-center justify-center"
+              >
+                Locked
+              </button>
+            ) : isSoldOut ? (
+              <button
+                disabled
+                className="bg-red-50 text-red-400 font-bold py-2 rounded-lg text-xs border border-red-100 cursor-not-allowed flex items-center justify-center"
+              >
+                Sold Out
+              </button>
+            ) : (
+              <button
+                onClick={() => onRegister(event.id)}
+                className="bg-primary-600 hover:bg-primary-750 text-white font-bold py-2 rounded-lg text-xs transition duration-150 flex items-center justify-center"
+              >
+                Register
+              </button>
+            )}
           </div>
         </div>
       </div>

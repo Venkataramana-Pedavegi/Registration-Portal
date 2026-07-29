@@ -14,6 +14,9 @@ import AdminLogin from './pages/AdminLogin';
 import StudentDashboard from './pages/StudentDashboard';
 import AdminDashboard from './pages/AdminDashboard';
 import EventDetails from './pages/EventDetails';
+import MyRegistrations from './pages/MyRegistrations';
+import RegistrationHistory from './pages/RegistrationHistory';
+import Participants from './pages/Participants';
 import NotFound from './pages/NotFound';
 
 function App() {
@@ -44,6 +47,22 @@ function App() {
                 }
               />
               <Route
+                path="/my-registrations"
+                element={
+                  <ProtectedRoute allowedRoles={['Student']}>
+                    <MyRegistrations />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/registration-history"
+                element={
+                  <ProtectedRoute allowedRoles={['Student']}>
+                    <RegistrationHistory />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
                 path="/admin-dashboard"
                 element={
                   <ProtectedRoute allowedRoles={['Admin']}>
@@ -56,6 +75,14 @@ function App() {
                 element={
                   <ProtectedRoute allowedRoles={['Student', 'Admin']}>
                     <EventDetails />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/events/:id/participants"
+                element={
+                  <ProtectedRoute allowedRoles={['Admin']}>
+                    <Participants />
                   </ProtectedRoute>
                 }
               />

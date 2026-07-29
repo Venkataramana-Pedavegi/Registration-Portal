@@ -35,12 +35,20 @@ const Navbar = () => {
             {token ? (
               <>
                 {role === 'Student' ? (
-                  <Link
-                    to="/student-dashboard"
-                    className="text-gray-600 hover:text-primary-600 px-3 py-2 rounded-md text-sm font-medium"
-                  >
-                    Dashboard
-                  </Link>
+                  <>
+                    <Link
+                      to="/student-dashboard"
+                      className="text-gray-600 hover:text-primary-600 px-3 py-2 rounded-md text-sm font-medium"
+                    >
+                      Dashboard
+                    </Link>
+                    <Link
+                      to="/my-registrations"
+                      className="text-gray-600 hover:text-primary-600 px-3 py-2 rounded-md text-sm font-medium"
+                    >
+                      My Registrations
+                    </Link>
+                  </>
                 ) : (
                   <Link
                     to="/admin-dashboard"
@@ -118,13 +126,22 @@ const Navbar = () => {
             {token ? (
               <>
                 {role === 'Student' ? (
-                  <Link
-                    to="/student-dashboard"
-                    onClick={() => setIsOpen(false)}
-                    className="block text-gray-600 hover:text-primary-600 px-3 py-2 rounded-md text-base font-medium"
-                  >
-                    Dashboard
-                  </Link>
+                  <>
+                    <Link
+                      to="/student-dashboard"
+                      onClick={() => setIsOpen(false)}
+                      className="block text-gray-600 hover:text-primary-600 px-3 py-2 rounded-md text-base font-medium"
+                    >
+                      Dashboard
+                    </Link>
+                    <Link
+                      to="/my-registrations"
+                      onClick={() => setIsOpen(false)}
+                      className="block text-gray-600 hover:text-primary-600 px-3 py-2 rounded-md text-base font-medium"
+                    >
+                      My Registrations
+                    </Link>
+                  </>
                 ) : (
                   <Link
                     to="/admin-dashboard"

@@ -52,6 +52,7 @@ startDb();
 app.use('/api/student', require('./routes/studentRoutes'));
 app.use('/api/admin', require('./routes/adminRoutes'));
 app.use('/api/events', require('./routes/eventRoutes'));
+app.use('/api/registrations', require('./routes/registrationRoutes'));
 
 // Root Endpoint
 app.get('/', (req, res) => {

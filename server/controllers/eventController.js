@@ -1,5 +1,5 @@
 const { Op } = require('sequelize');
-const { Event, Admin } = require('../models');
+const { Event, Admin, Registration, Student } = require('../models');
 
 // Helper to serialize event for frontend (_id and populated createdBy object)
 const formatEvent = (eventInstance) => {
@@ -267,10 +267,75 @@ const deleteEvent = async (req, res) => {
   }
 };
 
+// @desc    Get participants of a specific event
+// @route   GET /api/events/:id/participants
+// @access  Private/Admin
+const getEventParticipants = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { search, department, year, status } = req.query;
+
+    // Validate ID is numeric
+    if (isNaN(id) || !Number.isInteger(Number(id))) {
+      return res.status(400).json({ message: 'Invalid Event ID format' });
+    }
+
+    const event = await Event.findByPk(id);
+    if (!event) {
+      return res.status(404).json({ message: 'Event not found' });
+    }
+
+    let regQuery = { eventId: id };
+    let studentQuery = {};
+
+    if (status) {
+      regQuery.status = status;
+    }
+    if (department) {
+      studentQuery.department = department;
+    }
+    if (year) {
+      studentQuery.year = year;
+    }
+    if (search) {
+      studentQuery[Op.or] = [
+        { fullName: { [Op.like]: `%${search}%` } },
+        { rollNumber: { [Op.like]: `%${search}%` } },
+      ];
+    }
+
+    const participants = await Registration.findAll({
+      where: regQuery,
+      include: [
+        {
+          model: Student,
+          where: studentQuery,
+          attributes: { exclude: ['password'] },
+        },
+      ],
+      order: [['registrationDate', 'DESC']],
+    });
+
+    const formatted = participants.map((p) => {
+      const plain = p.toJSON();
+      plain._id = plain.id;
+      if (plain.Student) {
+        plain.Student._id = plain.Student.id;
+      }
+      return plain;
+    });
+
+    res.json(formatted);
+  } catch (error) {
+    res.status(500).json({ message: 'Server error retrieving participants list', error: error.message });
+  }
+};
+
 module.exports = {
   createEvent,
   getEvents,
   getEventById,
   updateEvent,
   deleteEvent,
+  getEventParticipants,
 };

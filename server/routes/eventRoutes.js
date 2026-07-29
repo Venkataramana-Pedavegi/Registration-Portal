@@ -6,6 +6,7 @@ const {
   getEventById,
   updateEvent,
   deleteEvent,
+  getEventParticipants,
 } = require('../controllers/eventController');
 const { protect } = require('../middleware/authMiddleware');
 const { adminProtect } = require('../middleware/adminMiddleware');
@@ -19,5 +20,6 @@ router.get('/', getEvents);
 router.get('/:id', getEventById);
 router.put('/:id', adminProtect, validateEvent, updateEvent);
 router.delete('/:id', adminProtect, deleteEvent);
+router.get('/:id/participants', adminProtect, getEventParticipants);
 
 module.exports = router;

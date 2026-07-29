@@ -81,7 +81,14 @@ const EventTable = ({ events, onEdit, onDelete }) => {
                 <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                   <div className="flex justify-end items-center gap-2">
                     <Link
-                      to={`/events/${event._id}`}
+                      to={`/events/${event.id || event._id}/participants`}
+                      className="text-gray-500 hover:text-green-650 p-1.5 hover:bg-gray-100 rounded-lg transition-colors duration-150"
+                      title="View Participants"
+                    >
+                      <Users className="h-4.5 w-4.5" />
+                    </Link>
+                    <Link
+                      to={`/events/${event.id || event._id}`}
                       className="text-gray-500 hover:text-primary-600 p-1.5 hover:bg-gray-100 rounded-lg transition-colors duration-150"
                       title="View Details"
                     >
@@ -95,7 +102,7 @@ const EventTable = ({ events, onEdit, onDelete }) => {
                       <Edit2 className="h-4.5 w-4.5" />
                     </button>
                     <button
-                      onClick={() => onDelete(event._id)}
+                      onClick={() => onDelete(event.id || event._id)}
                       className="text-gray-500 hover:text-red-600 p-1.5 hover:bg-gray-100 rounded-lg transition-colors duration-150"
                       title="Delete Event"
                     >

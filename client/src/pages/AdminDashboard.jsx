@@ -6,13 +6,22 @@ import FilterDropdown from '../components/FilterDropdown';
 import EventTable from '../components/EventTable';
 import EventModal from '../components/EventModal';
 import ConfirmationDialog from '../components/ConfirmationDialog';
-import { Calendar, Plus, Shield, Award, CalendarDays, XCircle } from 'lucide-react';
+import { Plus, Shield, Users, Bookmark, CalendarClock, BookMarked, Landmark } from 'lucide-react';
 
 const AdminDashboard = () => {
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadingStats, setLoadingStats] = useState(true);
   const [error, setError] = useState('');
   
+  // Stats state
+  const [stats, setStats] = useState({
+    totalRegistrations: 0,
+    todaysRegistrations: 0,
+    seatsFilled: 0,
+    availableSeats: 0,
+  });
+
   // Search & Filters state
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState('');
@@ -26,6 +35,19 @@ const AdminDashboard = () => {
 
   const categories = ['Technical', 'Cultural', 'Sports', 'Seminar', 'Workshop', 'Other'];
   const statuses = ['Upcoming', 'Ongoing', 'Completed', 'Cancelled'];
+
+  // Fetch Admin Registration Statistics
+  const fetchStats = async () => {
+    try {
+      setLoadingStats(true);
+      const { data } = await api.get('/admin/registrations');
+      setStats(data);
+    } catch (err) {
+      console.error('Failed to load registrations stats:', err);
+    } finally {
+      setLoadingStats(false);
+    }
+  };
 
   // Fetch events list
   const fetchEvents = async () => {
@@ -48,6 +70,10 @@ const AdminDashboard = () => {
   };
 
   useEffect(() => {
+    fetchStats();
+  }, []);
+
+  useEffect(() => {
     // Debounce search input changes slightly
     const timer = setTimeout(() => {
       fetchEvents();
@@ -60,13 +86,16 @@ const AdminDashboard = () => {
     try {
       if (editEventData) {
         // Edit Mode
-        const { data } = await api.put(`/events/${editEventData._id}`, formData);
-        setEvents(events.map((e) => (e._id === editEventData._id ? data : e)));
+        const id = editEventData.id || editEventData._id;
+        const { data } = await api.put(`/events/${id}`, formData);
+        setEvents(events.map((e) => ((e.id || e._id) === id ? data : e)));
       } else {
         // Create Mode
         const { data } = await api.post('/events', formData);
         setEvents([data, ...events]);
       }
+      // Re-fetch dashboard stats
+      await fetchStats();
       return true;
     } catch (err) {
       console.error(err);
@@ -79,9 +108,10 @@ const AdminDashboard = () => {
     if (!deleteEventId) return;
     try {
       await api.delete(`/events/${deleteEventId}`);
-      setEvents(events.filter((e) => e._id !== deleteEventId));
+      setEvents(events.filter((e) => (e.id || e._id) !== deleteEventId));
       setIsConfirmOpen(false);
       setDeleteEventId(null);
+      await fetchStats();
     } catch (err) {
       console.error(err);
       alert(err.response?.data?.message || 'Delete failed.');
@@ -102,12 +132,6 @@ const AdminDashboard = () => {
     setDeleteEventId(id);
     setIsConfirmOpen(true);
   };
-
-  // Dashboard Stats Calculations
-  const totalEvents = events.length;
-  const upcomingCount = events.filter((e) => e.status === 'Upcoming').length;
-  const completedCount = events.filter((e) => e.status === 'Completed').length;
-  const cancelledCount = events.filter((e) => e.status === 'Cancelled').length;
 
   return (
     <div className="flex-grow bg-gray-50 py-10 px-4 sm:px-6 lg:px-8">
@@ -133,49 +157,57 @@ const AdminDashboard = () => {
 
         {/* Stats Grid */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-xs flex items-center gap-4">
+          <div className="bg-white p-6 rounded-xl border border-gray-250 shadow-xs flex items-center gap-4">
             <div className="bg-primary-50 p-3 rounded-lg text-primary-600">
-              <Calendar className="h-6 w-6" />
+              <BookMarked className="h-6 w-6" />
             </div>
             <div>
-              <p className="text-xs text-gray-500 font-semibold uppercase tracking-wider">Total Events</p>
-              <h3 className="text-2xl font-black text-gray-900 mt-0.5">{totalEvents}</h3>
+              <p className="text-xs text-gray-500 font-semibold uppercase tracking-wider">Total Signups</p>
+              <h3 className="text-2xl font-black text-gray-900 mt-0.5">
+                {loadingStats ? '...' : stats.totalRegistrations}
+              </h3>
             </div>
           </div>
 
-          <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-xs flex items-center gap-4">
+          <div className="bg-white p-6 rounded-xl border border-gray-250 shadow-xs flex items-center gap-4">
             <div className="bg-blue-50 p-3 rounded-lg text-blue-600">
-              <CalendarDays className="h-6 w-6" />
+              <CalendarClock className="h-6 w-6" />
             </div>
             <div>
-              <p className="text-xs text-gray-500 font-semibold uppercase tracking-wider">Upcoming</p>
-              <h3 className="text-2xl font-black text-blue-900 mt-0.5">{upcomingCount}</h3>
+              <p className="text-xs text-gray-500 font-semibold uppercase tracking-wider">Today's Signups</p>
+              <h3 className="text-2xl font-black text-blue-900 mt-0.5">
+                {loadingStats ? '...' : stats.todaysRegistrations}
+              </h3>
             </div>
           </div>
 
-          <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-xs flex items-center gap-4">
+          <div className="bg-white p-6 rounded-xl border border-gray-250 shadow-xs flex items-center gap-4">
             <div className="bg-green-50 p-3 rounded-lg text-green-600">
-              <Award className="h-6 w-6" />
+              <Users className="h-6 w-6" />
             </div>
             <div>
-              <p className="text-xs text-gray-500 font-semibold uppercase tracking-wider">Completed</p>
-              <h3 className="text-2xl font-black text-green-900 mt-0.5">{completedCount}</h3>
+              <p className="text-xs text-gray-500 font-semibold uppercase tracking-wider">Seats Filled</p>
+              <h3 className="text-2xl font-black text-green-900 mt-0.5">
+                {loadingStats ? '...' : stats.seatsFilled}
+              </h3>
             </div>
           </div>
 
-          <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-xs flex items-center gap-4">
-            <div className="bg-red-50 p-3 rounded-lg text-red-600">
-              <XCircle className="h-6 w-6" />
+          <div className="bg-white p-6 rounded-xl border border-gray-250 shadow-xs flex items-center gap-4">
+            <div className="bg-yellow-50 p-3 rounded-lg text-yellow-600">
+              <Landmark className="h-6 w-6" />
             </div>
             <div>
-              <p className="text-xs text-gray-500 font-semibold uppercase tracking-wider">Cancelled</p>
-              <h3 className="text-2xl font-black text-red-900 mt-0.5">{cancelledCount}</h3>
+              <p className="text-xs text-gray-500 font-semibold uppercase tracking-wider">Available Seats</p>
+              <h3 className="text-2xl font-black text-yellow-900 mt-0.5">
+                {loadingStats ? '...' : stats.availableSeats}
+              </h3>
             </div>
           </div>
         </div>
 
         {/* Filter Controls Bar */}
-        <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-xs flex flex-col md:flex-row justify-between items-stretch md:items-center gap-4">
+        <div className="bg-white p-4 rounded-xl border border-gray-250 shadow-xs flex flex-col md:flex-row justify-between items-stretch md:items-center gap-4">
           <SearchBar search={search} setSearch={setSearch} placeholder="Search by title, venue, or organizer..." />
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 shrink-0">
             <FilterDropdown

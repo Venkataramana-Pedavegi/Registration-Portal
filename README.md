@@ -1,19 +1,18 @@
-# College Event Registration Management System - Database Refactored to MySQL
+# College Event Registration Management System - MySQL Backend & Registration Module
 
-This repository contains the complete, production-grade **Authentication Module (Phase 1)** and **Event Management Module (Phase 2)** of the College Event Registration Management System. The database backend has been fully migrated from MongoDB to MySQL using the Sequelize ORM.
+This repository contains the complete, production-grade **Authentication Module (Phase 1)**, **Event Management Module (Phase 2)**, and **Student Event Registration Module (Phase 3)**. The database backend has been fully migrated from MongoDB to MySQL using the Sequelize ORM.
 
 ---
 
 ## 🛠️ Tech Stack
 
-- **Frontend**: React (Vite)
+- **Frontend**: React (Vite) + Lucide Icons + Tailwind CSS
 - **Backend**: Node.js + Express.js
 - **Database**: MySQL 8.0 (Sequelize ORM)
 - **Authentication**: JSON Web Tokens (JWT) & bcryptjs (password hashing)
 - **HTTP Client**: Axios
-- **Styling**: Tailwind CSS v3
 - **State Management**: React Context API
-- **Testing**: Jest + Supertest (using database test runs with tables drops/recreation)
+- **Testing**: Jest + Supertest
 
 ---
 
@@ -25,38 +24,36 @@ This repository contains the complete, production-grade **Authentication Module 
   +------------------+             +------------------+
   |     Students     |             |      Admins      |
   +------------------+             +------------------+
-  | id (PK) [INT]    |             | id (PK) [INT]    |
-  | fullName         |             | username [Unique]|
-  | rollNumber [Uniq]|             | email [Unique]   |
-  | email [Unique]   |             | password         |
-  | department       |             | role ('Admin')   |
-  | year             |             +------------------+
-  | password         |                      |
-  +------------------+                      | 1
-                                            |
-                                            | hasMany
-                                            |
-                                            | N
-                                   +------------------+
-                                   |      Events      |
-                                   +------------------+
-                                   | id (PK) [INT]    |
-                                   | title            |
-                                   | description      |
-                                   | category         |
-                                   | venue            |
-                                   | eventDate        |
-                                   | startTime        |
-                                   | endTime          |
-                                   | regDeadline      |
-                                   | organizer        |
-                                   | capacity         |
-                                   | availableSeats   |
-                                   | image            |
-                                   | status           |
-                                   | createdBy (FK)---|---> Admins.id
-                                   +------------------+
-                                   * Unique constraint on (title, venue, eventDate)
+  | id (PK) [INT]    |<--------\   | id (PK) [INT]    |<-------\
+  | fullName         |         |   | username [Unique]|        |
+  | rollNumber [Uniq]|         |   | email [Unique]   |        |
+  | email [Unique]   |         |   | password         |        |
+  | department       |         |   | role ('Admin')   |        |
+  | year             |         |   +------------------+        |
+  | password         |         |            |                  |
+  +------------------+         |            | hasMany          |
+           |                   |            |                  |
+           | hasMany           |            v                  |
+           |                   |         +------------------+  |
+           v                   |         |      Events      |  |
+  +------------------+         |         +------------------+  |
+  |   Registrations  |         |         | id (PK) [INT]    |  |
+  +------------------+         |         | title            |  |
+  | id (PK) [INT]    |         |         | description      |  |
+  | studentId (FK)---|---------/         | category         |  |
+  | eventId (FK)-----|------------------>| venue            |  |
+  | registrationDate |                   | eventDate        |  |
+  | status           |                   | startTime        |  |
+  | createdAt        |                   | endTime          |  |
+  | updatedAt        |                   | regDeadline      |  |
+  +------------------+                   | organizer        |  |
+  * Unique constraint on                 | capacity         |  |
+    (studentId, eventId)                 | availableSeats   |  |
+    where status = 'Registered'          | image            |  |
+                                         | status           |  |
+                                         | createdBy (FK)---|--/
+                                         +------------------+
+                                         * Unique constraint on (title, venue, eventDate)
 ```
 
 ---
@@ -65,34 +62,37 @@ This repository contains the complete, production-grade **Authentication Module 
 
 ```text
 /c:/Registration Portal
-├── College_Event_Registration_System_Phase_2.postman_collection.json
+├── College_Event_Registration_System_Phase_3.postman_collection.json
 ├── README.md
 ├── database/
-│   └── schema.sql                  # MySQL raw DDL script
+│   └── schema.sql                  # MySQL DDL script (Students, Admins, Events, Registrations)
 ├── client/
 │   └── src/
-│       ├── components/             # Reusable UI Elements (Modals, Tables, Cards)
-│       └── pages/                  # React Router Views (Dashboards, Details)
+│       ├── components/             # Reusable UI Elements (Badges, ProgressBars, EmptyState)
+│       └── pages/                  # Student & Admin Dashboards, Event Details, Registrations history
 └── server/
     ├── server.js                   # Entrypoint with Sequelize sync & Admin seed
     ├── config/
-    │   └── database.js             # MySQL/Sequelize DB config pooling
+    │   └── database.js             # MySQL/Sequelize DB connection pool config
     ├── controllers/
     │   ├── adminController.js
-    │   ├── eventController.js      # Sequelize CRUD & populated serializers
+    │   ├── eventController.js      # Event CRUD & participants lookup list
+    │   ├── registrationController.js # Registrations logic (atomic transactions)
     │   └── studentController.js
     ├── middleware/
     │   ├── adminMiddleware.js
     │   ├── authMiddleware.js
     │   └── validation.js
     ├── models/
-    │   ├── index.js                # Relationships Loader
+    │   ├── index.js                # Relationships Loader & Export definitions
     │   ├── Admin.js
     │   ├── Event.js
+    │   ├── Registration.js         # Event registration schema
     │   └── Student.js
     └── tests/
         ├── auth.test.js
-        └── event.test.js
+        ├── event.test.js
+        └── registration.test.js    # 12 Integration tests covering registrations validations
 ```
 
 ---
@@ -100,11 +100,7 @@ This repository contains the complete, production-grade **Authentication Module 
 ## 🔧 MySQL Setup Guide
 
 1. Ensure MySQL server 8.0+ is running locally.
-2. Log into MySQL client and verify the database is initialized:
-   ```sql
-   CREATE DATABASE IF NOT EXISTS `college_event_registration`;
-   ```
-   *(Note: The server includes a self-healing script at `server/utils/initDb.js` that automatically runs on startup to create the database if it is not present.)*
+2. The server boot sequence automatically executes a self-healing script at `server/utils/initDb.js` that checks for or creates the `college_event_registration` database automatically.
 3. Update environment credentials in `server/.env`:
    ```env
    PORT=5000
@@ -128,81 +124,113 @@ Execute Jest integration tests:
    ```bash
    npm run test
    ```
-   *The test suite connects to the MySQL test instance, drops/recreates tables for each run using `sync({ force: true })`, and executes all 28 API validations.*
+   *The test suite connects to the MySQL test database, drops/recreates tables for each run using `sync({ force: true })`, and executes all 37 API validations.*
 
 ---
 
 ## 📝 Sample SQL Queries
 
-### 1. Retrieve all Events with Admin details (Inner Join)
+### 1. View all participants of a specific Event
 ```sql
-SELECT e.*, a.username, a.email 
-FROM Events e 
-INNER JOIN Admins a ON e.createdBy = a.id
-ORDER BY e.eventDate ASC;
+SELECT r.id, r.status, r.registrationDate, s.fullName, s.rollNumber, s.email, s.department, s.year 
+FROM Registrations r
+INNER JOIN Students s ON r.studentId = s.id
+WHERE r.eventId = 1 AND r.status = 'Registered'
+ORDER BY r.registrationDate DESC;
 ```
 
-### 2. Verify Duplicate Constraints
+### 2. Calculate Admin Registration Stats
 ```sql
-SELECT id FROM Events 
-WHERE title = 'Campus Hackathon 2026' AND venue = 'Hall A' AND eventDate = '2026-10-15';
+-- Total seats filled
+SELECT COUNT(*) FROM Registrations WHERE status = 'Registered';
+
+-- Today's signups
+SELECT COUNT(*) FROM Registrations 
+WHERE registrationDate >= CURDATE() AND status != 'Cancelled';
 ```
 
 ---
 
 ## 🌐 Sample API Requests & Responses
 
-### Create Event (Admin)
-* **POST `/api/events`**
-* **Headers**: `Authorization: Bearer <Admin_Token>`
+### 1. Register for Event (Student)
+* **POST `/api/registrations`**
+* **Headers**: `Authorization: Bearer <Student_Token>`
 * **Body**:
   ```json
   {
-    "title": "Campus Hackathon 2026",
-    "description": "A 24-hour programming challenge.",
-    "category": "Technical",
-    "venue": "Main Hall",
-    "eventDate": "2026-10-15",
-    "startTime": "09:00",
-    "endTime": "17:00",
-    "registrationDeadline": "2026-10-10",
-    "organizer": "CSE Dept",
-    "capacity": 100
+    "eventId": 1
   }
   ```
-* **Response (210 Created)**:
+* **Response (201 Created)**:
   ```json
   {
     "_id": 1,
-    "title": "Campus Hackathon 2026",
-    "description": "A 24-hour programming challenge.",
-    "category": "Technical",
-    "venue": "Main Hall",
-    "eventDate": "2026-10-15T00:00:00.000Z",
-    "startTime": "09:00",
-    "endTime": "17:00",
-    "registrationDeadline": "2026-10-10T00:00:00.000Z",
-    "organizer": "CSE Dept",
-    "capacity": 100,
-    "availableSeats": 100,
-    "image": "https://images.unsplash.com/photo-1501281668745-f7f57925c3b4...",
-    "status": "Upcoming",
-    "createdBy": {
-      "_id": 1,
-      "username": "admin",
-      "email": "admin@college.edu"
-    },
-    "createdAt": "2026-07-29T17:09:00.000Z",
-    "updatedAt": "2026-07-29T17:09:00.000Z"
+    "studentId": 2,
+    "eventId": 1,
+    "registrationDate": "2026-07-29T17:18:00.000Z",
+    "status": "Registered",
+    "createdAt": "2026-07-29T17:18:00.000Z",
+    "updatedAt": "2026-07-29T17:18:00.000Z"
   }
   ```
 
----
+### 2. Cancel Registration (Student)
+* **DELETE `/api/registrations/1`**
+* **Headers**: `Authorization: Bearer <Student_Token>`
+* **Response (200 OK)**:
+  ```json
+  {
+    "message": "Registration cancelled successfully"
+  }
+  ```
 
-## ✅ Migration Checklist
+### 3. Get Student Registered Events (Student)
+* **GET `/api/registrations/my-events`**
+* **Headers**: `Authorization: Bearer <Student_Token>`
+* **Response (200 OK)**:
+  ```json
+  [
+    {
+      "_id": 1,
+      "studentId": 2,
+      "eventId": 1,
+      "registrationDate": "2026-07-29T17:18:00.000Z",
+      "status": "Registered",
+      "Event": {
+        "_id": 1,
+        "title": "Campus Hackathon 2026",
+        "venue": "Auditorium Hall A",
+        "eventDate": "2026-10-15T00:00:00.000Z",
+        "startTime": "09:00",
+        "endTime": "17:00",
+        "organizer": "ACM Student Chapter",
+        "image": "https://images.unsplash.com/..."
+      }
+    }
+  ]
+  ```
 
-- [x] **ORM Transition**: Mongoose connection logic and MongoDB libraries fully replaced with Sequelize + MySQL2 driver.
-- [x] **Self-Healing Schema**: Automatic schema creations via `sequelize.sync()` and database creations via raw `mysql2` connections if database is missing.
-- [x] **No Frontend Changes**: Ensured complete payload schema backwards compatibility. SQL `id` mappings and populated `createdBy` associations formatted as nested MongoDB-style JSON elements.
-- [x] **Functional Integrity**: Re-verified roll number checks, time conflicts, capacity boundaries, and duplicate rules.
-- [x] **100% Passing Tests**: Updated the database test runner environment, with all 28 API test validations passing perfectly.
+### 4. Admin View Participants (Admin)
+* **GET `/api/events/1/participants?search=Jane&status=Registered`**
+* **Headers**: `Authorization: Bearer <Admin_Token>`
+* **Response (200 OK)**:
+  ```json
+  [
+    {
+      "_id": 1,
+      "studentId": 2,
+      "eventId": 1,
+      "registrationDate": "2026-07-29T17:18:00.000Z",
+      "status": "Registered",
+      "Student": {
+        "_id": 2,
+        "fullName": "Jane Doe",
+        "rollNumber": "CS202699",
+        "email": "janedoe@college.edu",
+        "department": "Computer Science",
+        "year": "3rd Year"
+      }
+    }
+  ]
+  ```

@@ -4,14 +4,20 @@ import Loader from '../components/Loader';
 import SearchBar from '../components/SearchBar';
 import FilterDropdown from '../components/FilterDropdown';
 import EventCard from '../components/EventCard';
-import { User, BookOpen, GraduationCap, Calendar, Compass, ArrowUpDown } from 'lucide-react';
+import ConfirmationDialog from '../components/ConfirmationDialog';
+import { User, BookOpen, GraduationCap, Calendar, Compass, ArrowUpDown, Bookmark, Clock, CheckCircle, AlertTriangle } from 'lucide-react';
 
 const StudentDashboard = () => {
   const [profile, setProfile] = useState(null);
   const [events, setEvents] = useState([]);
+  const [registrations, setRegistrations] = useState([]);
   const [loadingProfile, setLoadingProfile] = useState(true);
   const [loadingEvents, setLoadingEvents] = useState(true);
   const [error, setError] = useState('');
+
+  // Cancellation Modal State
+  const [cancelId, setCancelId] = useState(null);
+  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
 
   // Filtering / Sorting state
   const [search, setSearch] = useState('');
@@ -35,6 +41,20 @@ const StudentDashboard = () => {
       }
     };
     fetchProfile();
+  }, []);
+
+  // Fetch registered events of this student
+  const fetchRegistrations = async () => {
+    try {
+      const { data } = await api.get('/registrations/my-events');
+      setRegistrations(data);
+    } catch (err) {
+      console.error('Error fetching registrations:', err);
+    }
+  };
+
+  useEffect(() => {
+    fetchRegistrations();
   }, []);
 
   // Fetch events list
@@ -64,11 +84,55 @@ const StudentDashboard = () => {
     return () => clearTimeout(timer);
   }, [search, category, status, sort]);
 
+  // Card interaction handlers
+  const handleRegister = async (eventId) => {
+    try {
+      await api.post('/registrations', { eventId });
+      alert('Event registration successful!');
+      // Refresh events grid and registrations counts
+      await Promise.all([fetchEvents(), fetchRegistrations()]);
+    } catch (err) {
+      console.error(err);
+      alert(err.response?.data?.message || 'Event registration failed.');
+    }
+  };
+
+  const handleCancelClick = (regId) => {
+    setCancelId(regId);
+    setIsConfirmOpen(true);
+  };
+
+  const handleCancelConfirm = async () => {
+    if (!cancelId) return;
+    try {
+      await api.delete(`/registrations/${cancelId}`);
+      setIsConfirmOpen(false);
+      setCancelId(null);
+      alert('Registration cancelled successfully.');
+      await Promise.all([fetchEvents(), fetchRegistrations()]);
+    } catch (err) {
+      console.error(err);
+      alert(err.response?.data?.message || 'Cancellation failed.');
+    }
+  };
+
+  // Compute stat counters
+  const activeSignups = registrations.filter((r) => r.status === 'Registered');
+  const upcomingCount = activeSignups.filter((r) => r.Event && r.Event.status === 'Upcoming').length;
+  const completedCount = registrations.filter((r) => r.status === 'Completed' || (r.status === 'Registered' && r.Event && r.Event.status === 'Completed')).length;
+  const cancelledCount = registrations.filter((r) => r.status === 'Cancelled').length;
+
+  // Build registration lookup maps for the events grid
+  const registeredEventMap = new Map();
+  activeSignups.forEach((reg) => {
+    if (reg.eventId) registeredEventMap.set(reg.eventId, reg.id);
+  });
+
   return (
     <div className="flex-grow bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto space-y-8">
         
-        {/* Student Profile Card (Minimized Overview) */}
+        {/* Student Profile Card */}
         {loadingProfile ? (
           <div className="h-28 flex items-center justify-center bg-white rounded-2xl border border-gray-200">
             <Loader size="medium" />
@@ -114,6 +178,49 @@ const StudentDashboard = () => {
             </div>
           )
         )}
+
+        {/* Dashboard Statistics Cards */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="bg-white p-5 rounded-2xl border border-gray-250 shadow-xs flex items-center gap-4">
+            <div className="bg-blue-50 text-blue-700 p-3 rounded-xl border border-blue-100 shrink-0">
+              <Bookmark className="h-6 w-6" />
+            </div>
+            <div>
+              <span className="text-xs text-gray-500 font-medium block">Active Signups</span>
+              <span className="text-2xl font-extrabold text-gray-950">{activeSignups.length}</span>
+            </div>
+          </div>
+
+          <div className="bg-white p-5 rounded-2xl border border-gray-250 shadow-xs flex items-center gap-4">
+            <div className="bg-yellow-50 text-yellow-700 p-3 rounded-xl border border-yellow-100 shrink-0">
+              <Clock className="h-6 w-6" />
+            </div>
+            <div>
+              <span className="text-xs text-gray-500 font-medium block">Upcoming Events</span>
+              <span className="text-2xl font-extrabold text-gray-950">{upcomingCount}</span>
+            </div>
+          </div>
+
+          <div className="bg-white p-5 rounded-2xl border border-gray-250 shadow-xs flex items-center gap-4">
+            <div className="bg-green-50 text-green-700 p-3 rounded-xl border border-green-100 shrink-0">
+              <CheckCircle className="h-6 w-6" />
+            </div>
+            <div>
+              <span className="text-xs text-gray-500 font-medium block">Completed Events</span>
+              <span className="text-2xl font-extrabold text-gray-950">{completedCount}</span>
+            </div>
+          </div>
+
+          <div className="bg-white p-5 rounded-2xl border border-gray-250 shadow-xs flex items-center gap-4">
+            <div className="bg-red-50 text-red-700 p-3 rounded-xl border border-red-100 shrink-0">
+              <AlertTriangle className="h-6 w-6" />
+            </div>
+            <div>
+              <span className="text-xs text-gray-500 font-medium block">Cancelled Signups</span>
+              <span className="text-2xl font-extrabold text-gray-950">{cancelledCount}</span>
+            </div>
+          </div>
+        </div>
 
         {/* Explorer Heading */}
         <div>
@@ -173,11 +280,29 @@ const StudentDashboard = () => {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {events.map((event) => (
-              <EventCard key={event._id} event={event} />
+              <EventCard
+                key={event.id}
+                event={event}
+                isRegistered={registeredEventMap.has(event.id)}
+                registrationId={registeredEventMap.get(event.id)}
+                onRegister={handleRegister}
+                onCancel={handleCancelClick}
+                userRole="Student"
+              />
             ))}
           </div>
         )}
       </div>
+
+      <ConfirmationDialog
+        isOpen={isConfirmOpen}
+        title="Confirm Event De-Registration"
+        message="Are you sure you want to cancel your registration? This slot will be made available for other students immediately."
+        onConfirm={handleCancelConfirm}
+        onCancel={() => setIsConfirmOpen(false)}
+        confirmText="Yes, Cancel Registration"
+        cancelText="Keep Registration"
+      />
     </div>
   );
 };

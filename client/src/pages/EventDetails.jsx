@@ -3,7 +3,8 @@ import { useParams, useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import Loader from '../components/Loader';
 import { AuthContext } from '../context/AuthContext';
-import { ArrowLeft, Calendar, MapPin, Users, Building, AlertCircle, Clock } from 'lucide-react';
+import ConfirmationDialog from '../components/ConfirmationDialog';
+import { ArrowLeft, Calendar, MapPin, Users, Building, AlertCircle, Clock, CheckCircle } from 'lucide-react';
 
 const EventDetails = () => {
   const { id } = useParams();
@@ -14,20 +15,50 @@ const EventDetails = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  useEffect(() => {
-    const fetchEventDetails = async () => {
+  // Registration states for students
+  const [isRegistered, setIsRegistered] = useState(false);
+  const [registrationId, setRegistrationId] = useState(null);
+  const [loadingReg, setLoadingReg] = useState(false);
+
+  // Cancellation Modal State
+  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+
+  const fetchEventDetails = async () => {
+    try {
+      const { data } = await api.get(`/events/${id}`);
+      setEvent(data);
+    } catch (err) {
+      console.error(err);
+      setError(err.response?.data?.message || 'Failed to load event details.');
+    }
+  };
+
+  const fetchRegistrationStatus = async () => {
+    if (role === 'Student') {
       try {
-        const { data } = await api.get(`/events/${id}`);
-        setEvent(data);
+        const { data } = await api.get('/registrations/my-events');
+        const activeReg = data.find((r) => r.eventId === Number(id) && r.status === 'Registered');
+        if (activeReg) {
+          setIsRegistered(true);
+          setRegistrationId(activeReg.id);
+        } else {
+          setIsRegistered(false);
+          setRegistrationId(null);
+        }
       } catch (err) {
-        console.error(err);
-        setError(err.response?.data?.message || 'Failed to load event details.');
-      } finally {
-        setLoading(false);
+        console.error('Failed to resolve registration status:', err);
       }
+    }
+  };
+
+  useEffect(() => {
+    const bootstrap = async () => {
+      setLoading(true);
+      await Promise.all([fetchEventDetails(), fetchRegistrationStatus()]);
+      setLoading(false);
     };
-    fetchEventDetails();
-  }, [id]);
+    bootstrap();
+  }, [id, role]);
 
   const handleBack = () => {
     if (role === 'Admin') {
@@ -48,7 +79,45 @@ const EventDetails = () => {
       case 'Cancelled':
         return 'bg-red-50 text-red-800 border-red-200';
       default:
-        return 'bg-gray-50 text-gray-850';
+        return 'bg-gray-50 text-gray-855';
+    }
+  };
+
+  const handleRegister = async () => {
+    setLoadingReg(true);
+    try {
+      const { data } = await api.post('/registrations', { eventId: id });
+      setIsRegistered(true);
+      setRegistrationId(data.id);
+      alert('You have registered successfully!');
+      await fetchEventDetails(); // Reload available seats
+    } catch (err) {
+      console.error(err);
+      alert(err.response?.data?.message || 'Failed to register for the event.');
+    } finally {
+      setLoadingReg(false);
+    }
+  };
+
+  const handleCancelClick = () => {
+    setIsConfirmOpen(true);
+  };
+
+  const handleCancelConfirm = async () => {
+    if (!registrationId) return;
+    setLoadingReg(true);
+    try {
+      await api.delete(`/registrations/${registrationId}`);
+      setIsRegistered(false);
+      setRegistrationId(null);
+      setIsConfirmOpen(false);
+      alert('Your registration has been cancelled.');
+      await fetchEventDetails(); // Reload available seats
+    } catch (err) {
+      console.error(err);
+      alert(err.response?.data?.message || 'Failed to cancel registration.');
+    } finally {
+      setLoadingReg(false);
     }
   };
 
@@ -77,6 +146,11 @@ const EventDetails = () => {
       </div>
     );
   }
+
+  const isSoldOut = event.availableSeats <= 0;
+  const isCancelled = event.status === 'Cancelled';
+  const isCompleted = event.status === 'Completed';
+  const isDeadlinePassed = new Date() > new Date(event.registrationDeadline);
 
   return (
     <div className="flex-grow bg-gray-50 py-10 px-4 sm:px-6 lg:px-8">
@@ -164,7 +238,7 @@ const EventDetails = () => {
                 </div>
 
                 <div className="flex items-start gap-2">
-                  <AlertCircle className="h-5 w-5 text-red-600 shrink-0" />
+                  <AlertCircle className="h-5 w-5 text-red-650 shrink-0" />
                   <div>
                     <h4 className="text-xs font-semibold text-gray-500">Reg. Deadline</h4>
                     <p className="text-xs text-red-700 font-bold mt-0.5">
@@ -180,9 +254,9 @@ const EventDetails = () => {
                     <p className="text-xs text-gray-900 font-bold mt-0.5">
                       {event.availableSeats} / {event.capacity} seats remaining
                     </p>
-                    <div className="w-full bg-gray-200 h-1.5 rounded-full overflow-hidden mt-1.5">
+                    <div className="w-full bg-gray-250 h-1.5 rounded-full overflow-hidden mt-1.5">
                       <div
-                        className="h-full bg-primary-500 rounded-full"
+                        className="h-full bg-primary-500 rounded-full transition-all duration-500"
                         style={{ width: `${(event.availableSeats / event.capacity) * 100}%` }}
                       ></div>
                     </div>
@@ -192,17 +266,44 @@ const EventDetails = () => {
 
               {/* Action Button */}
               {role === 'Student' && (
-                <div className="pt-4 border-t border-gray-200">
-                  <button
-                    disabled
-                    className="w-full bg-primary-100 text-primary-400 font-bold py-2.5 rounded-lg text-xs cursor-not-allowed text-center transition"
-                  >
-                    Register for Event
-                  </button>
-                  <p className="mt-2.5 text-[10px] text-center text-primary-600 font-bold bg-primary-50 px-2 py-1.5 rounded border border-primary-100 flex items-center gap-1 justify-center">
-                    <AlertCircle className="h-3.5 w-3.5" />
-                    <span>Registration will be available in Phase 3.</span>
-                  </p>
+                <div className="pt-4 border-t border-gray-250">
+                  {isRegistered ? (
+                    <div className="space-y-3">
+                      <span className="w-full justify-center inline-flex items-center gap-1 bg-green-50 text-green-700 border border-green-200 text-xs font-bold py-2 rounded-lg">
+                        <CheckCircle className="h-4.5 w-4.5" />
+                        <span>Registered Successfully</span>
+                      </span>
+                      <button
+                        onClick={handleCancelClick}
+                        disabled={loadingReg}
+                        className="w-full bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 font-bold py-2.5 rounded-lg text-xs transition duration-150 text-center"
+                      >
+                        Cancel Registration
+                      </button>
+                    </div>
+                  ) : isCancelled || isCompleted || isDeadlinePassed ? (
+                    <button
+                      disabled
+                      className="w-full bg-gray-200 text-gray-400 font-bold py-2.5 rounded-lg text-xs border border-gray-250 cursor-not-allowed text-center"
+                    >
+                      Registration Closed
+                    </button>
+                  ) : isSoldOut ? (
+                    <button
+                      disabled
+                      className="w-full bg-red-50 text-red-400 font-bold py-2.5 rounded-lg text-xs border border-red-100 cursor-not-allowed text-center"
+                    >
+                      Sold Out
+                    </button>
+                  ) : (
+                    <button
+                      onClick={handleRegister}
+                      disabled={loadingReg}
+                      className="w-full bg-primary-600 hover:bg-primary-750 text-white font-bold py-2.5 rounded-lg text-xs transition duration-150 text-center"
+                    >
+                      Register for Event
+                    </button>
+                  )}
                 </div>
               )}
             </div>
@@ -212,6 +313,16 @@ const EventDetails = () => {
         </div>
 
       </div>
+
+      <ConfirmationDialog
+        isOpen={isConfirmOpen}
+        title="Confirm Event De-Registration"
+        message="Are you sure you want to cancel your registration? This slot will be made available for other students immediately."
+        onConfirm={handleCancelConfirm}
+        onCancel={() => setIsConfirmOpen(false)}
+        confirmText="Yes, Cancel Registration"
+        cancelText="Keep Registration"
+      />
     </div>
   );
 };

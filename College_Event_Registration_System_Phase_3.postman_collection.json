@@ -1,8 +1,8 @@
 {
   "info": {
     "_postman_id": "8b9e6dc3-bc2a-4db3-bc8e-2895690b21a8",
-    "name": "College Event Registration System - Phase 2",
-    "description": "API collection for testing Phase 2 Event Management Module integrated with Phase 1 Authentication Module.",
+    "name": "College Event Registration System - Phase 3",
+    "description": "API collection for testing Phase 3 Event Registrations integrated with Phase 1 & 2 Modules.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "item": [
@@ -363,6 +363,187 @@
                 "api",
                 "events",
                 "{{event_id}}"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Registrations",
+      "item": [
+        {
+          "name": "Register for Event",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const responseJson = pm.response.json();",
+                  "if (responseJson._id) {",
+                  "    pm.environment.set(\"registration_id\", responseJson._id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{student_token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"eventId\": {{event_id}}\n}"
+            },
+            "url": {
+              "raw": "http://localhost:5000/api/registrations",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5000",
+              "path": [
+                "api",
+                "registrations"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Student Registered Events (My Events)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{student_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:5000/api/registrations/my-events",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5000",
+              "path": [
+                "api",
+                "registrations",
+                "my-events"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Cancel Registration",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{student_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:5000/api/registrations/{{registration_id}}",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5000",
+              "path": [
+                "api",
+                "registrations",
+                "{{registration_id}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Admin View Participants",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:5000/api/events/{{event_id}}/participants?search=Jane&department=Computer Science&year=3rd Year&status=Registered",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5000",
+              "path": [
+                "api",
+                "events",
+                "{{event_id}}",
+                "participants"
+              ],
+              "query": [
+                {
+                  "key": "search",
+                  "value": "Jane"
+                },
+                {
+                  "key": "department",
+                  "value": "Computer Science"
+                },
+                {
+                  "key": "year",
+                  "value": "3rd Year"
+                },
+                {
+                  "key": "status",
+                  "value": "Registered"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Admin Registration Dashboard",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:5000/api/admin/registrations",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5000",
+              "path": [
+                "api",
+                "admin",
+                "registrations"
               ]
             }
           },
