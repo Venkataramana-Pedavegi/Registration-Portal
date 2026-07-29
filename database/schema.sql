@@ -71,3 +71,20 @@ CREATE TABLE IF NOT EXISTS `Registrations` (
   CONSTRAINT `fk_registrations_eventId` FOREIGN KEY (`eventId`) REFERENCES `Events` (`id`) ON DELETE CASCADE,
   UNIQUE KEY `unique_student_event_registration` (`studentId`, `eventId`, `status`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- --------------------------------------------------
+-- Table structure for Attendances
+-- --------------------------------------------------
+CREATE TABLE IF NOT EXISTS `Attendances` (
+  `id` INT AUTO_INCREMENT PRIMARY KEY,
+  `registrationId` INT NOT NULL UNIQUE,
+  `eventId` INT NOT NULL,
+  `studentId` INT NOT NULL,
+  `attendanceStatus` VARCHAR(255) NOT NULL DEFAULT 'Present',
+  `markedAt` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `createdAt` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updatedAt` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  CONSTRAINT `fk_attendances_registrationId` FOREIGN KEY (`registrationId`) REFERENCES `Registrations` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_attendances_eventId` FOREIGN KEY (`eventId`) REFERENCES `Events` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_attendances_studentId` FOREIGN KEY (`studentId`) REFERENCES `Students` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;

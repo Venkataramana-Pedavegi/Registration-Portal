@@ -1,18 +1,24 @@
-# College Event Registration Management System - MySQL Backend & Registration Module
+# College Event Registration Management System - Full Stack Application
 
-This repository contains the complete, production-grade **Authentication Module (Phase 1)**, **Event Management Module (Phase 2)**, and **Student Event Registration Module (Phase 3)**. The database backend has been fully migrated from MongoDB to MySQL using the Sequelize ORM.
+This repository contains the complete, production-grade **College Event Registration Management System** covering:
+- **Phase 1**: Authentication Module (JWT + bcryptjs)
+- **Phase 2**: Event Management Module (Admin Event CRUD)
+- **Phase 3**: Student Event Registration Module (Atomic SQL Transactions)
+- **Phase 4**: Admin Analytics & Management Module (Attendance, Recharts, Reports & Exports)
+
+The backend database runs on **MySQL 8.0** using **Sequelize ORM**.
 
 ---
 
 ## 🛠️ Tech Stack
 
-- **Frontend**: React (Vite) + Lucide Icons + Tailwind CSS
+- **Frontend**: React (Vite) + Tailwind CSS + Recharts + Lucide Icons
 - **Backend**: Node.js + Express.js
 - **Database**: MySQL 8.0 (Sequelize ORM)
 - **Authentication**: JSON Web Tokens (JWT) & bcryptjs (password hashing)
 - **HTTP Client**: Axios
 - **State Management**: React Context API
-- **Testing**: Jest + Supertest
+- **Testing**: Jest + Supertest (47 Automated Integration Tests)
 
 ---
 
@@ -32,28 +38,25 @@ This repository contains the complete, production-grade **Authentication Module 
   | year             |         |   +------------------+        |
   | password         |         |            |                  |
   +------------------+         |            | hasMany          |
-           |                   |            |                  |
-           | hasMany           |            v                  |
-           |                   |         +------------------+  |
-           v                   |         |      Events      |  |
-  +------------------+         |         +------------------+  |
-  |   Registrations  |         |         | id (PK) [INT]    |  |
-  +------------------+         |         | title            |  |
-  | id (PK) [INT]    |         |         | description      |  |
-  | studentId (FK)---|---------/         | category         |  |
-  | eventId (FK)-----|------------------>| venue            |  |
-  | registrationDate |                   | eventDate        |  |
-  | status           |                   | startTime        |  |
-  | createdAt        |                   | endTime          |  |
-  | updatedAt        |                   | regDeadline      |  |
-  +------------------+                   | organizer        |  |
-  * Unique constraint on                 | capacity         |  |
-    (studentId, eventId)                 | availableSeats   |  |
-    where status = 'Registered'          | image            |  |
-                                         | status           |  |
-                                         | createdBy (FK)---|--/
-                                         +------------------+
-                                         * Unique constraint on (title, venue, eventDate)
+     |            |            |            |                  |
+     |            \--------\   |            v                  |
+     | hasMany             |   |         +------------------+  |
+     v                     v   |         |      Events      |  |
+  +------------------+   +------------------+               |  |
+  |   Registrations  |   |    Attendances   |               |  |
+  +------------------+   +------------------+               |  |
+  | id (PK) [INT]    |   | id (PK) [INT]    |               |  |
+  | studentId (FK)---|---|->studentId (FK)  |               |  |
+  | eventId (FK)-----|---|->eventId (FK)    |               |  |
+  | registrationDate |   | registrationId---|------------\  |  |
+  | status           |   | attendanceStatus |            |  |  |
+  | createdAt        |   | markedAt         |            |  |  |
+  +------------------+   +------------------+            |  |  |
+           ^                                             |  |  |
+           \---------------------------------------------/  |  |
+                                                            |  |
+  Event.hasMany(Registrations) -----------------------------/  |
+  Event.hasMany(Attendances) ----------------------------------/
 ```
 
 ---
@@ -62,37 +65,38 @@ This repository contains the complete, production-grade **Authentication Module 
 
 ```text
 /c:/Registration Portal
-├── College_Event_Registration_System_Phase_3.postman_collection.json
+├── College_Event_Registration_System_Phase_4.postman_collection.json
 ├── README.md
 ├── database/
-│   └── schema.sql                  # MySQL DDL script (Students, Admins, Events, Registrations)
+│   └── schema.sql                  # MySQL DDL script (Students, Admins, Events, Registrations, Attendances)
 ├── client/
 │   └── src/
-│       ├── components/             # Reusable UI Elements (Badges, ProgressBars, EmptyState)
-│       └── pages/                  # Student & Admin Dashboards, Event Details, Registrations history
+│       ├── components/             # StatisticsCard, AnalyticsCharts, AttendanceTable, ExportButton, StudentProfileCard
+│       └── pages/                  # AnalyticsDashboard, Attendance, Reports, StudentProfile, ExportReports, AdminSettings
 └── server/
-    ├── server.js                   # Entrypoint with Sequelize sync & Admin seed
+    ├── server.js                   # Express server entrypoint
     ├── config/
-    │   └── database.js             # MySQL/Sequelize DB connection pool config
+    │   └── database.js             # Sequelize MySQL connection pool
     ├── controllers/
     │   ├── adminController.js
-    │   ├── eventController.js      # Event CRUD & participants lookup list
-    │   ├── registrationController.js # Registrations logic (atomic transactions)
+    │   ├── analyticsController.js  # Dashboard metrics, 5 Recharts aggregations, Reports, Profile
+    │   ├── attendanceController.js # Mark, update, view event attendance
+    │   ├── eventController.js      # Event CRUD & participants lookup
+    │   ├── exportController.js     # Native CSV reports streaming
+    │   ├── registrationController.js
     │   └── studentController.js
-    ├── middleware/
-    │   ├── adminMiddleware.js
-    │   ├── authMiddleware.js
-    │   └── validation.js
     ├── models/
-    │   ├── index.js                # Relationships Loader & Export definitions
+    │   ├── index.js                # Relationships Loader
     │   ├── Admin.js
+    │   ├── Attendance.js           # Attendance schema
     │   ├── Event.js
-    │   ├── Registration.js         # Event registration schema
+    │   ├── Registration.js
     │   └── Student.js
     └── tests/
+        ├── analytics.test.js       # Phase 4 integration tests
         ├── auth.test.js
         ├── event.test.js
-        └── registration.test.js    # 12 Integration tests covering registrations validations
+        └── registration.test.js
 ```
 
 ---
@@ -124,113 +128,49 @@ Execute Jest integration tests:
    ```bash
    npm run test
    ```
-   *The test suite connects to the MySQL test database, drops/recreates tables for each run using `sync({ force: true })`, and executes all 37 API validations.*
-
----
-
-## 📝 Sample SQL Queries
-
-### 1. View all participants of a specific Event
-```sql
-SELECT r.id, r.status, r.registrationDate, s.fullName, s.rollNumber, s.email, s.department, s.year 
-FROM Registrations r
-INNER JOIN Students s ON r.studentId = s.id
-WHERE r.eventId = 1 AND r.status = 'Registered'
-ORDER BY r.registrationDate DESC;
-```
-
-### 2. Calculate Admin Registration Stats
-```sql
--- Total seats filled
-SELECT COUNT(*) FROM Registrations WHERE status = 'Registered';
-
--- Today's signups
-SELECT COUNT(*) FROM Registrations 
-WHERE registrationDate >= CURDATE() AND status != 'Cancelled';
-```
+   *The test suite executes 47 automated integration tests across 4 modules, passing with 100% success.*
 
 ---
 
 ## 🌐 Sample API Requests & Responses
 
-### 1. Register for Event (Student)
-* **POST `/api/registrations`**
-* **Headers**: `Authorization: Bearer <Student_Token>`
+### 1. Get Admin Dashboard Metrics (10 Cards)
+* **GET `/api/admin/dashboard`**
+* **Headers**: `Authorization: Bearer <Admin_Token>`
+* **Response (200 OK)**:
+  ```json
+  {
+    "totalStudents": 15,
+    "totalEvents": 4,
+    "totalRegistrations": 8,
+    "activeRegistrations": 7,
+    "cancelledRegistrations": 1,
+    "completedEvents": 1,
+    "upcomingEvents": 3,
+    "seatsFilled": 45,
+    "availableSeats": 105,
+    "eventOccupancyPct": 30
+  }
+  ```
+
+### 2. Mark Attendance (Admin)
+* **POST `/api/attendance`**
+* **Headers**: `Authorization: Bearer <Admin_Token>`
 * **Body**:
   ```json
   {
-    "eventId": 1
+    "registrationId": 1,
+    "attendanceStatus": "Present"
   }
   ```
 * **Response (201 Created)**:
   ```json
   {
     "_id": 1,
-    "studentId": 2,
+    "registrationId": 1,
     "eventId": 1,
-    "registrationDate": "2026-07-29T17:18:00.000Z",
-    "status": "Registered",
-    "createdAt": "2026-07-29T17:18:00.000Z",
-    "updatedAt": "2026-07-29T17:18:00.000Z"
+    "studentId": 2,
+    "attendanceStatus": "Present",
+    "markedAt": "2026-07-29T17:28:00.000Z"
   }
-  ```
-
-### 2. Cancel Registration (Student)
-* **DELETE `/api/registrations/1`**
-* **Headers**: `Authorization: Bearer <Student_Token>`
-* **Response (200 OK)**:
-  ```json
-  {
-    "message": "Registration cancelled successfully"
-  }
-  ```
-
-### 3. Get Student Registered Events (Student)
-* **GET `/api/registrations/my-events`**
-* **Headers**: `Authorization: Bearer <Student_Token>`
-* **Response (200 OK)**:
-  ```json
-  [
-    {
-      "_id": 1,
-      "studentId": 2,
-      "eventId": 1,
-      "registrationDate": "2026-07-29T17:18:00.000Z",
-      "status": "Registered",
-      "Event": {
-        "_id": 1,
-        "title": "Campus Hackathon 2026",
-        "venue": "Auditorium Hall A",
-        "eventDate": "2026-10-15T00:00:00.000Z",
-        "startTime": "09:00",
-        "endTime": "17:00",
-        "organizer": "ACM Student Chapter",
-        "image": "https://images.unsplash.com/..."
-      }
-    }
-  ]
-  ```
-
-### 4. Admin View Participants (Admin)
-* **GET `/api/events/1/participants?search=Jane&status=Registered`**
-* **Headers**: `Authorization: Bearer <Admin_Token>`
-* **Response (200 OK)**:
-  ```json
-  [
-    {
-      "_id": 1,
-      "studentId": 2,
-      "eventId": 1,
-      "registrationDate": "2026-07-29T17:18:00.000Z",
-      "status": "Registered",
-      "Student": {
-        "_id": 2,
-        "fullName": "Jane Doe",
-        "rollNumber": "CS202699",
-        "email": "janedoe@college.edu",
-        "department": "Computer Science",
-        "year": "3rd Year"
-      }
-    }
-  ]
   ```

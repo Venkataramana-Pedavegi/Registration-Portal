@@ -17,6 +17,12 @@ import EventDetails from './pages/EventDetails';
 import MyRegistrations from './pages/MyRegistrations';
 import RegistrationHistory from './pages/RegistrationHistory';
 import Participants from './pages/Participants';
+import AnalyticsDashboard from './pages/AnalyticsDashboard';
+import Attendance from './pages/Attendance';
+import Reports from './pages/Reports';
+import StudentProfile from './pages/StudentProfile';
+import ExportReports from './pages/ExportReports';
+import AdminSettings from './pages/AdminSettings';
 import NotFound from './pages/NotFound';
 
 function App() {
@@ -38,6 +44,7 @@ function App() {
               <Route path="/student-login" element={<StudentLogin setToast={setToast} />} />
               <Route path="/admin-login" element={<AdminLogin setToast={setToast} />} />
               
+              {/* Student Protected Routes */}
               <Route
                 path="/student-dashboard"
                 element={
@@ -62,6 +69,8 @@ function App() {
                   </ProtectedRoute>
                 }
               />
+
+              {/* Admin Protected Routes */}
               <Route
                 path="/admin-dashboard"
                 element={
@@ -70,6 +79,56 @@ function App() {
                   </ProtectedRoute>
                 }
               />
+              <Route
+                path="/analytics-dashboard"
+                element={
+                  <ProtectedRoute allowedRoles={['Admin']}>
+                    <AnalyticsDashboard />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/attendance"
+                element={
+                  <ProtectedRoute allowedRoles={['Admin']}>
+                    <Attendance />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/reports"
+                element={
+                  <ProtectedRoute allowedRoles={['Admin']}>
+                    <Reports />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/export-reports"
+                element={
+                  <ProtectedRoute allowedRoles={['Admin']}>
+                    <ExportReports />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin-settings"
+                element={
+                  <ProtectedRoute allowedRoles={['Admin']}>
+                    <AdminSettings />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/student/:id/profile"
+                element={
+                  <ProtectedRoute allowedRoles={['Admin']}>
+                    <StudentProfile />
+                  </ProtectedRoute>
+                }
+              />
+
+              {/* Shared Protected Routes */}
               <Route
                 path="/events/:id"
                 element={

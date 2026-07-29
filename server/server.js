@@ -53,6 +53,8 @@ app.use('/api/student', require('./routes/studentRoutes'));
 app.use('/api/admin', require('./routes/adminRoutes'));
 app.use('/api/events', require('./routes/eventRoutes'));
 app.use('/api/registrations', require('./routes/registrationRoutes'));
+app.use('/api/attendance', require('./routes/attendanceRoutes'));
+app.use('/api/export', require('./routes/exportRoutes'));
 
 // Root Endpoint
 app.get('/', (req, res) => {

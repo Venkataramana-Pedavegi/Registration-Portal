@@ -50,7 +50,67 @@ const getAdminProfile = async (req, res) => {
   }
 };
 
+// @desc    Update admin profile details
+// @route   PUT /api/admin/profile
+// @access  Private/Admin
+const updateAdminProfile = async (req, res) => {
+  try {
+    const { username, email } = req.body;
+    const admin = await Admin.findByPk(req.user.id);
+
+    if (!admin) {
+      return res.status(404).json({ message: 'Admin profile not found' });
+    }
+
+    if (username) admin.username = username.trim();
+    if (email) admin.email = email.trim().toLowerCase();
+
+    await admin.save();
+
+    res.json({
+      _id: admin.id,
+      username: admin.username,
+      email: admin.email,
+      role: 'Admin',
+      message: 'Admin profile updated successfully',
+    });
+  } catch (error) {
+    res.status(500).json({ message: 'Server error updating admin profile', error: error.message });
+  }
+};
+
+// @desc    Change admin password
+// @route   PUT /api/admin/change-password
+// @access  Private/Admin
+const changeAdminPassword = async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+    const admin = await Admin.findByPk(req.user.id);
+
+    if (!admin) {
+      return res.status(404).json({ message: 'Admin profile not found' });
+    }
+
+    if (!(await admin.comparePassword(currentPassword))) {
+      return res.status(400).json({ message: 'Current password is incorrect' });
+    }
+
+    if (!newPassword || newPassword.length < 6) {
+      return res.status(400).json({ message: 'New password must be at least 6 characters long' });
+    }
+
+    admin.password = newPassword;
+    await admin.save();
+
+    res.json({ message: 'Password updated successfully' });
+  } catch (error) {
+    res.status(500).json({ message: 'Server error changing admin password', error: error.message });
+  }
+};
+
 module.exports = {
   loginAdmin,
   getAdminProfile,
+  updateAdminProfile,
+  changeAdminPassword,
 };

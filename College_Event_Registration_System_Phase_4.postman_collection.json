@@ -1,0 +1,160 @@
+{
+  "info": {
+    "_postman_id": "9c8e7dc4-cd3b-5eb4-cd9f-3906801c32b9",
+    "name": "College Event Registration System - Phase 4",
+    "description": "API collection for testing Phase 4 Admin Analytics & Management Module integrated with previous phases.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Student Register",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fullName\": \"Jane Doe\",\n  \"rollNumber\": \"CS202699\",\n  \"email\": \"janedoe@college.edu\",\n  \"department\": \"Computer Science\",\n  \"year\": \"3rd Year\",\n  \"password\": \"securepassword123\"\n}"
+            },
+            "url": { "raw": "http://localhost:5000/api/student/register", "protocol": "http", "host": ["localhost"], "port": "5000", "path": ["api", "student", "register"] }
+          }
+        },
+        {
+          "name": "Student Login",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"janedoe@college.edu\",\n  \"password\": \"securepassword123\"\n}"
+            },
+            "url": { "raw": "http://localhost:5000/api/student/login", "protocol": "http", "host": ["localhost"], "port": "5000", "path": ["api", "student", "login"] }
+          }
+        },
+        {
+          "name": "Admin Login",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@college.edu\",\n  \"password\": \"adminpassword\"\n}"
+            },
+            "url": { "raw": "http://localhost:5000/api/admin/login", "protocol": "http", "host": ["localhost"], "port": "5000", "path": ["api", "admin", "login"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Analytics & Dashboard",
+      "item": [
+        {
+          "name": "Admin Dashboard Metrics (10 Cards)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }],
+            "url": { "raw": "http://localhost:5000/api/admin/dashboard", "protocol": "http", "host": ["localhost"], "port": "5000", "path": ["api", "admin", "dashboard"] }
+          }
+        },
+        {
+          "name": "Admin Analytics Charts (5 Graphs)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }],
+            "url": { "raw": "http://localhost:5000/api/admin/analytics", "protocol": "http", "host": ["localhost"], "port": "5000", "path": ["api", "admin", "analytics"] }
+          }
+        },
+        {
+          "name": "Admin Performance Reports",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }],
+            "url": { "raw": "http://localhost:5000/api/admin/reports", "protocol": "http", "host": ["localhost"], "port": "5000", "path": ["api", "admin", "reports"] }
+          }
+        },
+        {
+          "name": "Admin View Student Profile",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }],
+            "url": { "raw": "http://localhost:5000/api/student/1/profile", "protocol": "http", "host": ["localhost"], "port": "5000", "path": ["api", "student", "1", "profile"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Attendance",
+      "item": [
+        {
+          "name": "Mark Attendance",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{admin_token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"registrationId\": 1,\n  \"attendanceStatus\": \"Present\"\n}"
+            },
+            "url": { "raw": "http://localhost:5000/api/attendance", "protocol": "http", "host": ["localhost"], "port": "5000", "path": ["api", "attendance"] }
+          }
+        },
+        {
+          "name": "Update Attendance",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{admin_token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"attendanceStatus\": \"Absent\"\n}"
+            },
+            "url": { "raw": "http://localhost:5000/api/attendance/1", "protocol": "http", "host": ["localhost"], "port": "5000", "path": ["api", "attendance", "1"] }
+          }
+        },
+        {
+          "name": "Get Event Attendance",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }],
+            "url": { "raw": "http://localhost:5000/api/attendance/event/1", "protocol": "http", "host": ["localhost"], "port": "5000", "path": ["api", "attendance", "event", "1"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Reports & Exports",
+      "item": [
+        {
+          "name": "Export Events CSV",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }],
+            "url": { "raw": "http://localhost:5000/api/export/events", "protocol": "http", "host": ["localhost"], "port": "5000", "path": ["api", "export", "events"] }
+          }
+        },
+        {
+          "name": "Export Participants CSV",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }],
+            "url": { "raw": "http://localhost:5000/api/export/participants", "protocol": "http", "host": ["localhost"], "port": "5000", "path": ["api", "export", "participants"] }
+          }
+        },
+        {
+          "name": "Export Attendance CSV",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }],
+            "url": { "raw": "http://localhost:5000/api/export/attendance", "protocol": "http", "host": ["localhost"], "port": "5000", "path": ["api", "export", "attendance"] }
+          }
+        }
+      ]
+    }
+  ]
+}

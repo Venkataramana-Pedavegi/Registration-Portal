@@ -50,12 +50,44 @@ const Navbar = () => {
                     </Link>
                   </>
                 ) : (
-                  <Link
-                    to="/admin-dashboard"
-                    className="text-gray-600 hover:text-primary-600 px-3 py-2 rounded-md text-sm font-medium"
-                  >
-                    Admin Panel
-                  </Link>
+                  <>
+                    <Link
+                      to="/admin-dashboard"
+                      className="text-gray-600 hover:text-primary-600 px-3 py-2 rounded-md text-sm font-medium"
+                    >
+                      Events
+                    </Link>
+                    <Link
+                      to="/analytics-dashboard"
+                      className="text-gray-600 hover:text-primary-600 px-3 py-2 rounded-md text-sm font-medium"
+                    >
+                      Analytics
+                    </Link>
+                    <Link
+                      to="/attendance"
+                      className="text-gray-600 hover:text-primary-600 px-3 py-2 rounded-md text-sm font-medium"
+                    >
+                      Attendance
+                    </Link>
+                    <Link
+                      to="/reports"
+                      className="text-gray-600 hover:text-primary-600 px-3 py-2 rounded-md text-sm font-medium"
+                    >
+                      Reports
+                    </Link>
+                    <Link
+                      to="/export-reports"
+                      className="text-gray-600 hover:text-primary-600 px-3 py-2 rounded-md text-sm font-medium"
+                    >
+                      Export
+                    </Link>
+                    <Link
+                      to="/admin-settings"
+                      className="text-gray-600 hover:text-primary-600 px-3 py-2 rounded-md text-sm font-medium"
+                    >
+                      Settings
+                    </Link>
+                  </>
                 )}
 
                 <div className="flex items-center space-x-2 bg-gray-100 text-gray-800 px-3 py-1.5 rounded-full text-xs font-semibold">
