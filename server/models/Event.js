@@ -1,82 +1,121 @@
-const mongoose = require('mongoose');
+const { DataTypes } = require('sequelize');
+const sequelize = require('../config/database');
 
-const eventSchema = new mongoose.Schema(
+const Event = sequelize.define(
+  'Event',
   {
+    id: {
+      type: DataTypes.INTEGER,
+      autoIncrement: true,
+      primaryKey: true,
+    },
     title: {
-      type: String,
-      required: [true, 'Event title is required'],
-      trim: true,
+      type: DataTypes.STRING,
+      allowNull: false,
+      validate: {
+        notEmpty: { msg: 'Event title is required' },
+      },
     },
     description: {
-      type: String,
-      required: [true, 'Event description is required'],
-      trim: true,
+      type: DataTypes.TEXT,
+      allowNull: false,
+      validate: {
+        notEmpty: { msg: 'Event description is required' },
+      },
     },
     category: {
-      type: String,
-      required: [true, 'Event category is required'],
-      trim: true,
+      type: DataTypes.STRING,
+      allowNull: false,
+      validate: {
+        notEmpty: { msg: 'Event category is required' },
+      },
     },
     venue: {
-      type: String,
-      required: [true, 'Event venue is required'],
-      trim: true,
+      type: DataTypes.STRING,
+      allowNull: false,
+      validate: {
+        notEmpty: { msg: 'Event venue is required' },
+      },
     },
     eventDate: {
-      type: Date,
-      required: [true, 'Event date is required'],
+      type: DataTypes.DATE,
+      allowNull: false,
+      validate: {
+        notEmpty: { msg: 'Event date is required' },
+      },
     },
     startTime: {
-      type: String,
-      required: [true, 'Start time is required'],
-      trim: true,
+      type: DataTypes.STRING,
+      allowNull: false,
+      validate: {
+        notEmpty: { msg: 'Start time is required' },
+      },
     },
     endTime: {
-      type: String,
-      required: [true, 'End time is required'],
-      trim: true,
+      type: DataTypes.STRING,
+      allowNull: false,
+      validate: {
+        notEmpty: { msg: 'End time is required' },
+      },
     },
     registrationDeadline: {
-      type: Date,
-      required: [true, 'Registration deadline is required'],
+      type: DataTypes.DATE,
+      allowNull: false,
+      validate: {
+        notEmpty: { msg: 'Registration deadline is required' },
+      },
     },
     organizer: {
-      type: String,
-      required: [true, 'Organizer name is required'],
-      trim: true,
+      type: DataTypes.STRING,
+      allowNull: false,
+      validate: {
+        notEmpty: { msg: 'Organizer name is required' },
+      },
     },
     capacity: {
-      type: Number,
-      required: [true, 'Capacity is required'],
-      min: [1, 'Capacity must be greater than zero'],
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      validate: {
+        isInt: { msg: 'Capacity must be an integer' },
+        min: {
+          args: [1],
+          msg: 'Capacity must be greater than zero',
+        },
+      },
     },
     availableSeats: {
-      type: Number,
-      required: [true, 'Available seats is required'],
+      type: DataTypes.INTEGER,
+      allowNull: false,
     },
     image: {
-      type: String,
-      default: 'https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?auto=format&fit=crop&q=80&w=800',
+      type: DataTypes.STRING,
+      defaultValue: 'https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?auto=format&fit=crop&q=80&w=800',
     },
     status: {
-      type: String,
-      required: true,
-      enum: ['Upcoming', 'Ongoing', 'Completed', 'Cancelled'],
-      default: 'Upcoming',
+      type: DataTypes.STRING,
+      allowNull: false,
+      defaultValue: 'Upcoming',
+      validate: {
+        isIn: {
+          args: [['Upcoming', 'Ongoing', 'Completed', 'Cancelled']],
+          msg: "Status must be 'Upcoming', 'Ongoing', 'Completed', or 'Cancelled'",
+        },
+      },
     },
     createdBy: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'Admin',
-      required: true,
+      type: DataTypes.INTEGER,
+      allowNull: false,
     },
   },
   {
-    timestamps: true,
+    indexes: [
+      {
+        unique: true,
+        fields: ['title', 'venue', 'eventDate'],
+        name: 'unique_event_title_venue_date',
+      },
+    ],
   }
 );
 
-// Indexes to speed up queries and support compound duplicate prevention checks
-eventSchema.index({ title: 1, venue: 1, eventDate: 1 }, { unique: true });
-
-const Event = mongoose.model('Event', eventSchema);
 module.exports = Event;

@@ -1,33 +1,40 @@
-const { MongoMemoryServer } = require('mongodb-memory-server');
-const mongoose = require('mongoose');
 const request = require('supertest');
+const { sequelize, Admin } = require('../models');
 
-let mongoServer;
+const initDb = require('../utils/initDb');
+
 let app;
 let server;
 
 beforeAll(async () => {
-  // Start mongo memory server
-  mongoServer = await MongoMemoryServer.create();
-  const uri = mongoServer.getUri();
-  
-  // Set MONGODB_URI to the in-memory database
-  process.env.MONGODB_URI = uri;
   process.env.JWT_SECRET = 'test_secret_key';
   
-  // Import app and server now that MONGODB_URI is set
+  // Create DB if not exists
+  await initDb();
+  
+  // Recreate all tables fresh in the test database
+  await sequelize.sync({ force: true });
+  
+  // Manual seed of default admin for testing (since sync dropped tables)
+  await Admin.create({
+    username: 'admin',
+    email: 'admin@college.edu',
+    password: 'adminpassword',
+    role: 'Admin',
+  });
+
+  // Import app and server
   const backend = require('../server');
   app = backend.app;
   server = backend.server;
   
-  // Wait a small bit to ensure DB connect & seeding completes
-  await new Promise((resolve) => setTimeout(resolve, 1000));
+  // Small wait for server startup log print
+  await new Promise((resolve) => setTimeout(resolve, 500));
 });
 
 afterAll(async () => {
   // Close database connections and server
-  await mongoose.disconnect();
-  await mongoServer.stop();
+  await sequelize.close();
   await new Promise((resolve) => server.close(resolve));
 });
 

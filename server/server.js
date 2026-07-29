@@ -1,14 +1,10 @@
 const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
-const connectDB = require('./config/db');
-const Admin = require('./models/Admin');
+const { sequelize, Admin } = require('./models');
 
 // Load environment variables
 dotenv.config();
-
-// Connect to Database
-connectDB();
 
 const app = express();
 
@@ -19,13 +15,13 @@ app.use(express.json());
 // Seed Admin User if none exists
 const seedAdmin = async () => {
   try {
-    const adminCount = await Admin.countDocuments();
+    const adminCount = await Admin.count();
     if (adminCount === 0) {
       console.log('No admin users found. Seeding default admin...');
       await Admin.create({
         username: 'admin',
         email: 'admin@college.edu',
-        password: 'adminpassword', // Will be hashed by the model pre-save hook
+        password: 'adminpassword', // Will be hashed by the model hook
         role: 'Admin',
       });
       console.log('Default Admin seeded successfully: admin@college.edu / adminpassword');
@@ -34,7 +30,23 @@ const seedAdmin = async () => {
     console.error('Error seeding admin user:', error.message);
   }
 };
-seedAdmin();
+
+const initDb = require('./utils/initDb');
+
+// Database Connection & Syncing
+const startDb = async () => {
+  await initDb();
+  try {
+    await sequelize.authenticate();
+    console.log('MySQL Database Connected successfully...');
+    await sequelize.sync();
+    console.log('Database tables synchronized successfully.');
+    await seedAdmin();
+  } catch (err) {
+    console.error('Database connection or synchronization failed:', err.message);
+  }
+};
+startDb();
 
 // Routes
 app.use('/api/student', require('./routes/studentRoutes'));

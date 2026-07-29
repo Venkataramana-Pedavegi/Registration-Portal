@@ -1,4 +1,4 @@
-const Admin = require('../models/Admin');
+const { Admin } = require('../models');
 const generateToken = require('../utils/generateToken');
 
 // @desc    Auth admin & get token
@@ -8,15 +8,15 @@ const loginAdmin = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    const admin = await Admin.findOne({ email: email.toLowerCase() });
+    const admin = await Admin.findOne({ where: { email: email.toLowerCase() } });
 
     if (admin && (await admin.comparePassword(password))) {
       res.json({
-        _id: admin._id,
+        _id: admin.id,
         username: admin.username,
         email: admin.email,
         role: 'Admin',
-        token: generateToken(admin._id, 'Admin'),
+        token: generateToken(admin.id, 'Admin'),
       });
     } else {
       res.status(401).json({ message: 'Invalid email or password' });
@@ -31,11 +31,11 @@ const loginAdmin = async (req, res) => {
 // @access  Private
 const getAdminProfile = async (req, res) => {
   try {
-    const admin = await Admin.findById(req.user._id);
+    const admin = await Admin.findByPk(req.user.id);
 
     if (admin) {
       res.json({
-        _id: admin._id,
+        _id: admin.id,
         username: admin.username,
         email: admin.email,
         role: 'Admin',

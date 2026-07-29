@@ -1,6 +1,5 @@
 const jwt = require('jsonwebtoken');
-const Student = require('../models/Student');
-const Admin = require('../models/Admin');
+const { Student, Admin } = require('../models');
 
 const protect = async (req, res, next) => {
   let token;
@@ -16,12 +15,16 @@ const protect = async (req, res, next) => {
       // Verify token
       const decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback_secret_for_dev_only');
 
-      // Get user from the token payload
+      // Get user from the token payload using Sequelize findByPk
       if (decoded.role === 'Admin') {
-        req.user = await Admin.findById(decoded.id).select('-password');
+        req.user = await Admin.findByPk(decoded.id, {
+          attributes: { exclude: ['password'] },
+        });
         req.role = 'Admin';
       } else {
-        req.user = await Student.findById(decoded.id).select('-password');
+        req.user = await Student.findByPk(decoded.id, {
+          attributes: { exclude: ['password'] },
+        });
         req.role = 'Student';
       }
 
@@ -29,6 +32,8 @@ const protect = async (req, res, next) => {
         return res.status(401).json({ message: 'Not authorized, user not found' });
       }
 
+      // Convert Sequelize model instance to plain object to attach custom JSON attributes if needed
+      // but keeping it as model instance is fine too, let's keep it as instance.
       next();
     } catch (error) {
       console.error(error);

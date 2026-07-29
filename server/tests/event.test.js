@@ -1,28 +1,40 @@
-const { MongoMemoryServer } = require('mongodb-memory-server');
-const mongoose = require('mongoose');
 const request = require('supertest');
+const { sequelize, Admin } = require('../models');
 
-let mongoServer;
+const initDb = require('../utils/initDb');
+
 let app;
 let server;
 
 beforeAll(async () => {
-  mongoServer = await MongoMemoryServer.create();
-  const uri = mongoServer.getUri();
-  
-  process.env.MONGODB_URI = uri;
   process.env.JWT_SECRET = 'event_test_secret_key';
   
+  // Create DB if not exists
+  await initDb();
+  
+  // Recreate all tables fresh in the test database
+  await sequelize.sync({ force: true });
+  
+  // Manual seed of default admin for testing (since sync dropped tables)
+  await Admin.create({
+    username: 'admin',
+    email: 'admin@college.edu',
+    password: 'adminpassword',
+    role: 'Admin',
+  });
+
+  // Import app and server
   const backend = require('../server');
   app = backend.app;
   server = backend.server;
   
-  await new Promise((resolve) => setTimeout(resolve, 1000));
+  // Wait a small bit to ensure DB connect & seeding completes
+  await new Promise((resolve) => setTimeout(resolve, 500));
 });
 
 afterAll(async () => {
-  await mongoose.disconnect();
-  await mongoServer.stop();
+  // Close database connections and server
+  await sequelize.close();
   await new Promise((resolve) => server.close(resolve));
 });
 
@@ -187,7 +199,7 @@ describe('College Event Registration Event CRUD APIs', () => {
   });
 
   test('GET /api/events/:id - Should return 404 for non-existent ID', async () => {
-    const nonExistentId = new mongoose.Types.ObjectId().toString();
+    const nonExistentId = 99999;
     const res = await request(app)
       .get(`/api/events/${nonExistentId}`)
       .set('Authorization', `Bearer ${studentToken}`);

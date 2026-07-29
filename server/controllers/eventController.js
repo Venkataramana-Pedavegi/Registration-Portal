@@ -1,5 +1,25 @@
-const mongoose = require('mongoose');
-const Event = require('../models/Event');
+const { Op } = require('sequelize');
+const { Event, Admin } = require('../models');
+
+// Helper to serialize event for frontend (_id and populated createdBy object)
+const formatEvent = (eventInstance) => {
+  if (!eventInstance) return null;
+  const ev = eventInstance.get({ plain: true });
+  ev._id = ev.id; // Map SQL id to Mongo _id for frontend compatibility
+  
+  // Format createdBy object to mirror MongoDB populate output
+  if (ev.Admin) {
+    ev.createdBy = {
+      _id: ev.Admin.id,
+      username: ev.Admin.username,
+      email: ev.Admin.email,
+    };
+  } else {
+    ev.createdBy = null;
+  }
+  delete ev.Admin;
+  return ev;
+};
 
 // @desc    Create a new event
 // @route   POST /api/events
@@ -23,9 +43,11 @@ const createEvent = async (req, res) => {
 
     // Check duplicate event with same title, venue, and date
     const duplicate = await Event.findOne({
-      title: title.trim(),
-      venue: venue.trim(),
-      eventDate: new Date(eventDate),
+      where: {
+        title: title.trim(),
+        venue: venue.trim(),
+        eventDate: new Date(eventDate),
+      },
     });
 
     if (duplicate) {
@@ -45,13 +67,18 @@ const createEvent = async (req, res) => {
       registrationDeadline: new Date(registrationDeadline),
       organizer: organizer.trim(),
       capacity,
-      availableSeats: capacity, // At creation, available seats equals total capacity
+      availableSeats: capacity,
       image: image || undefined,
       status: status || 'Upcoming',
-      createdBy: req.user._id,
+      createdBy: req.user.id,
     });
 
-    res.status(201).json(event);
+    // Fetch newly created event with relations for population matching
+    const fullEvent = await Event.findByPk(event.id, {
+      include: [{ model: Admin, attributes: ['id', 'username', 'email'] }],
+    });
+
+    res.status(201).json(formatEvent(fullEvent));
   } catch (error) {
     res.status(500).json({ message: 'Server error creating event', error: error.message });
   }
@@ -63,38 +90,43 @@ const createEvent = async (req, res) => {
 const getEvents = async (req, res) => {
   try {
     const { search, category, status, sort } = req.query;
-    let query = {};
+    let whereClause = {};
 
     // Search filter (title, venue, organizer)
     if (search) {
-      const searchRegex = new RegExp(search, 'i');
-      query.$or = [
-        { title: searchRegex },
-        { venue: searchRegex },
-        { organizer: searchRegex },
+      whereClause[Op.or] = [
+        { title: { [Op.like]: `%${search}%` } },
+        { venue: { [Op.like]: `%${search}%` } },
+        { organizer: { [Op.like]: `%${search}%` } },
       ];
     }
 
     // Category filter
     if (category) {
-      query.category = category;
+      whereClause.category = category;
     }
 
     // Status filter
     if (status) {
-      query.status = status;
+      whereClause.status = status;
     }
 
     // Build sort options
-    let sortOptions = { eventDate: 1 }; // Default: earliest events first
+    let order = [['eventDate', 'ASC']]; // Default: earliest first
     if (sort === 'date_desc') {
-      sortOptions = { eventDate: -1 };
+      order = [['eventDate', 'DESC']];
     } else if (sort === 'createdAt_desc') {
-      sortOptions = { createdAt: -1 };
+      order = [['createdAt', 'DESC']];
     }
 
-    const events = await Event.find(query).sort(sortOptions).populate('createdBy', 'username email');
-    res.json(events);
+    const events = await Event.findAll({
+      where: whereClause,
+      order,
+      include: [{ model: Admin, attributes: ['id', 'username', 'email'] }],
+    });
+
+    const formattedEvents = events.map((event) => formatEvent(event));
+    res.json(formattedEvents);
   } catch (error) {
     res.status(500).json({ message: 'Server error retrieving events', error: error.message });
   }
@@ -107,16 +139,20 @@ const getEventById = async (req, res) => {
   try {
     const { id } = req.params;
 
-    if (!mongoose.Types.ObjectId.isValid(id)) {
+    // Validate ID is numeric
+    if (isNaN(id) || !Number.isInteger(Number(id))) {
       return res.status(400).json({ message: 'Invalid Event ID format' });
     }
 
-    const event = await Event.findById(id).populate('createdBy', 'username email');
+    const event = await Event.findByPk(id, {
+      include: [{ model: Admin, attributes: ['id', 'username', 'email'] }],
+    });
+
     if (!event) {
       return res.status(404).json({ message: 'Event not found' });
     }
 
-    res.json(event);
+    res.json(formatEvent(event));
   } catch (error) {
     res.status(500).json({ message: 'Server error retrieving event details', error: error.message });
   }
@@ -129,7 +165,8 @@ const updateEvent = async (req, res) => {
   try {
     const { id } = req.params;
 
-    if (!mongoose.Types.ObjectId.isValid(id)) {
+    // Validate ID is numeric
+    if (isNaN(id) || !Number.isInteger(Number(id))) {
       return res.status(400).json({ message: 'Invalid Event ID format' });
     }
 
@@ -148,17 +185,19 @@ const updateEvent = async (req, res) => {
       status,
     } = req.body;
 
-    const event = await Event.findById(id);
+    const event = await Event.findByPk(id);
     if (!event) {
       return res.status(404).json({ message: 'Event not found' });
     }
 
     // Check duplicate event with same title, venue, and date (excluding current event)
     const duplicate = await Event.findOne({
-      title: title.trim(),
-      venue: venue.trim(),
-      eventDate: new Date(eventDate),
-      _id: { $ne: id },
+      where: {
+        title: title.trim(),
+        venue: venue.trim(),
+        eventDate: new Date(eventDate),
+        id: { [Op.ne]: id },
+      },
     });
 
     if (duplicate) {
@@ -191,8 +230,14 @@ const updateEvent = async (req, res) => {
     if (image) event.image = image;
     if (status) event.status = status;
 
-    const updatedEvent = await event.save();
-    res.json(updatedEvent);
+    await event.save();
+
+    // Fetch updated event with relations
+    const fullEvent = await Event.findByPk(id, {
+      include: [{ model: Admin, attributes: ['id', 'username', 'email'] }],
+    });
+
+    res.json(formatEvent(fullEvent));
   } catch (error) {
     res.status(500).json({ message: 'Server error updating event', error: error.message });
   }
@@ -205,16 +250,17 @@ const deleteEvent = async (req, res) => {
   try {
     const { id } = req.params;
 
-    if (!mongoose.Types.ObjectId.isValid(id)) {
+    // Validate ID is numeric
+    if (isNaN(id) || !Number.isInteger(Number(id))) {
       return res.status(400).json({ message: 'Invalid Event ID format' });
     }
 
-    const event = await Event.findById(id);
+    const event = await Event.findByPk(id);
     if (!event) {
       return res.status(404).json({ message: 'Event not found' });
     }
 
-    await Event.findByIdAndDelete(id);
+    await event.destroy();
     res.json({ message: 'Event removed successfully' });
   } catch (error) {
     res.status(500).json({ message: 'Server error deleting event', error: error.message });

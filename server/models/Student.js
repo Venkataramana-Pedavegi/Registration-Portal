@@ -1,67 +1,86 @@
-const mongoose = require('mongoose');
+const { DataTypes } = require('sequelize');
+const sequelize = require('../config/database');
 const bcrypt = require('bcryptjs');
 
-const studentSchema = new mongoose.Schema(
+const Student = sequelize.define(
+  'Student',
   {
+    id: {
+      type: DataTypes.INTEGER,
+      autoIncrement: true,
+      primaryKey: true,
+    },
     fullName: {
-      type: String,
-      required: [true, 'Full name is required'],
-      trim: true,
+      type: DataTypes.STRING,
+      allowNull: false,
+      validate: {
+        notEmpty: { msg: 'Full name is required' },
+      },
     },
     rollNumber: {
-      type: String,
-      required: [true, 'Roll number is required'],
+      type: DataTypes.STRING,
+      allowNull: false,
       unique: true,
-      trim: true,
-      uppercase: true,
+      validate: {
+        notEmpty: { msg: 'Roll number is required' },
+      },
     },
     email: {
-      type: String,
-      required: [true, 'Email is required'],
+      type: DataTypes.STRING,
+      allowNull: false,
       unique: true,
-      trim: true,
-      lowercase: true,
-      match: [/^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/, 'Please fill a valid email address'],
+      validate: {
+        isEmail: { msg: 'Please fill a valid email address' },
+        notEmpty: { msg: 'Email is required' },
+      },
     },
     department: {
-      type: String,
-      required: [true, 'Department is required'],
-      trim: true,
+      type: DataTypes.STRING,
+      allowNull: false,
+      validate: {
+        notEmpty: { msg: 'Department is required' },
+      },
     },
     year: {
-      type: String,
-      required: [true, 'Year is required'],
-      trim: true,
+      type: DataTypes.STRING,
+      allowNull: false,
+      validate: {
+        notEmpty: { msg: 'Year is required' },
+      },
     },
     password: {
-      type: String,
-      required: [true, 'Password is required'],
-      minlength: [6, 'Password must be at least 6 characters long'],
+      type: DataTypes.STRING,
+      allowNull: false,
+      validate: {
+        notEmpty: { msg: 'Password is required' },
+        len: {
+          args: [6, 100],
+          msg: 'Password must be at least 6 characters long',
+        },
+      },
     },
   },
   {
-    timestamps: true,
+    hooks: {
+      beforeCreate: async (student) => {
+        if (student.password) {
+          const salt = await bcrypt.genSalt(10);
+          student.password = await bcrypt.hash(student.password, salt);
+        }
+      },
+      beforeUpdate: async (student) => {
+        if (student.changed('password')) {
+          const salt = await bcrypt.genSalt(10);
+          student.password = await bcrypt.hash(student.password, salt);
+        }
+      },
+    },
   }
 );
 
-// Hash password before saving
-studentSchema.pre('save', async function (next) {
-  if (!this.isModified('password')) {
-    return next();
-  }
-  try {
-    const salt = await bcrypt.genSalt(10);
-    this.password = await bcrypt.hash(this.password, salt);
-    next();
-  } catch (error) {
-    next(error);
-  }
-});
-
 // Compare password method
-studentSchema.methods.comparePassword = async function (enteredPassword) {
+Student.prototype.comparePassword = async function (enteredPassword) {
   return await bcrypt.compare(enteredPassword, this.password);
 };
 
-const Student = mongoose.model('Student', studentSchema);
 module.exports = Student;

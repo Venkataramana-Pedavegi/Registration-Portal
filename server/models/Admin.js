@@ -1,55 +1,72 @@
-const mongoose = require('mongoose');
+const { DataTypes } = require('sequelize');
+const sequelize = require('../config/database');
 const bcrypt = require('bcryptjs');
 
-const adminSchema = new mongoose.Schema(
+const Admin = sequelize.define(
+  'Admin',
   {
+    id: {
+      type: DataTypes.INTEGER,
+      autoIncrement: true,
+      primaryKey: true,
+    },
     username: {
-      type: String,
-      required: [true, 'Username is required'],
+      type: DataTypes.STRING,
+      allowNull: false,
       unique: true,
-      trim: true,
+      validate: {
+        notEmpty: { msg: 'Username is required' },
+      },
     },
     email: {
-      type: String,
-      required: [true, 'Email is required'],
+      type: DataTypes.STRING,
+      allowNull: false,
       unique: true,
-      trim: true,
-      lowercase: true,
-      match: [/^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/, 'Please fill a valid email address'],
+      validate: {
+        isEmail: { msg: 'Please fill a valid email address' },
+        notEmpty: { msg: 'Email is required' },
+      },
     },
     password: {
-      type: String,
-      required: [true, 'Password is required'],
+      type: DataTypes.STRING,
+      allowNull: false,
+      validate: {
+        notEmpty: { msg: 'Password is required' },
+      },
     },
     role: {
-      type: String,
-      default: 'Admin',
-      enum: ['Admin'],
+      type: DataTypes.STRING,
+      allowNull: false,
+      defaultValue: 'Admin',
+      validate: {
+        isIn: {
+          args: [['Admin']],
+          msg: "Role must be 'Admin'",
+        },
+      },
     },
   },
   {
-    timestamps: true,
+    hooks: {
+      beforeCreate: async (admin) => {
+        if (admin.password) {
+          const salt = await bcrypt.genSalt(10);
+          admin.password = await bcrypt.hash(admin.password, salt);
+        }
+      },
+      beforeUpdate: async (admin) => {
+        if (admin.changed('password')) {
+          const salt = await bcrypt.genSalt(10);
+          admin.password = await bcrypt.hash(admin.password, salt);
+        }
+      },
+    },
   }
 );
 
-// Hash password before saving
-adminSchema.pre('save', async function (next) {
-  if (!this.isModified('password')) {
-    return next();
-  }
-  try {
-    const salt = await bcrypt.genSalt(10);
-    this.password = await bcrypt.hash(this.password, salt);
-    next();
-  } catch (error) {
-    next(error);
-  }
-});
-
 // Compare password method
-adminSchema.methods.comparePassword = async function (enteredPassword) {
+Admin.prototype.comparePassword = async function (enteredPassword) {
   return await bcrypt.compare(enteredPassword, this.password);
 };
 
-const Admin = mongoose.model('Admin', adminSchema);
 module.exports = Admin;
