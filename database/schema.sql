@@ -14,6 +14,9 @@ CREATE TABLE IF NOT EXISTS `Students` (
   `department` VARCHAR(255) NOT NULL,
   `year` VARCHAR(255) NOT NULL,
   `password` VARCHAR(255) NOT NULL,
+  `profileImage` TEXT DEFAULT NULL,
+  `resetPasswordToken` VARCHAR(255) DEFAULT NULL,
+  `resetPasswordExpire` DATETIME DEFAULT NULL,
   `createdAt` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `updatedAt` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
@@ -27,6 +30,9 @@ CREATE TABLE IF NOT EXISTS `Admins` (
   `email` VARCHAR(255) NOT NULL UNIQUE,
   `password` VARCHAR(255) NOT NULL,
   `role` VARCHAR(255) NOT NULL DEFAULT 'Admin',
+  `profileImage` TEXT DEFAULT NULL,
+  `resetPasswordToken` VARCHAR(255) DEFAULT NULL,
+  `resetPasswordExpire` DATETIME DEFAULT NULL,
   `createdAt` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `updatedAt` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
@@ -65,6 +71,7 @@ CREATE TABLE IF NOT EXISTS `Registrations` (
   `eventId` INT NOT NULL,
   `registrationDate` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `status` VARCHAR(255) NOT NULL DEFAULT 'Registered',
+  `qrCodeUrl` TEXT DEFAULT NULL,
   `createdAt` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `updatedAt` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   CONSTRAINT `fk_registrations_studentId` FOREIGN KEY (`studentId`) REFERENCES `Students` (`id`) ON DELETE CASCADE,
@@ -87,4 +94,52 @@ CREATE TABLE IF NOT EXISTS `Attendances` (
   CONSTRAINT `fk_attendances_registrationId` FOREIGN KEY (`registrationId`) REFERENCES `Registrations` (`id`) ON DELETE CASCADE,
   CONSTRAINT `fk_attendances_eventId` FOREIGN KEY (`eventId`) REFERENCES `Events` (`id`) ON DELETE CASCADE,
   CONSTRAINT `fk_attendances_studentId` FOREIGN KEY (`studentId`) REFERENCES `Students` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- --------------------------------------------------
+-- Table structure for Notifications
+-- --------------------------------------------------
+CREATE TABLE IF NOT EXISTS `Notifications` (
+  `id` INT AUTO_INCREMENT PRIMARY KEY,
+  `userId` INT NOT NULL,
+  `userRole` VARCHAR(255) NOT NULL DEFAULT 'Student',
+  `title` VARCHAR(255) NOT NULL,
+  `message` TEXT NOT NULL,
+  `type` VARCHAR(255) NOT NULL DEFAULT 'System',
+  `isRead` TINYINT(1) NOT NULL DEFAULT 0,
+  `createdAt` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updatedAt` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- --------------------------------------------------
+-- Table structure for Certificates
+-- --------------------------------------------------
+CREATE TABLE IF NOT EXISTS `Certificates` (
+  `id` INT AUTO_INCREMENT PRIMARY KEY,
+  `registrationId` INT NOT NULL UNIQUE,
+  `studentId` INT NOT NULL,
+  `eventId` INT NOT NULL,
+  `certificateId` VARCHAR(255) NOT NULL UNIQUE,
+  `issueDate` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `pdfUrl` TEXT DEFAULT NULL,
+  `qrVerificationCode` VARCHAR(255) NOT NULL,
+  `createdAt` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updatedAt` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  CONSTRAINT `fk_certificates_registrationId` FOREIGN KEY (`registrationId`) REFERENCES `Registrations` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_certificates_studentId` FOREIGN KEY (`studentId`) REFERENCES `Students` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_certificates_eventId` FOREIGN KEY (`eventId`) REFERENCES `Events` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- --------------------------------------------------
+-- Table structure for AuditLogs
+-- --------------------------------------------------
+CREATE TABLE IF NOT EXISTS `AuditLogs` (
+  `id` INT AUTO_INCREMENT PRIMARY KEY,
+  `userId` INT DEFAULT NULL,
+  `userRole` VARCHAR(255) DEFAULT NULL,
+  `action` VARCHAR(255) NOT NULL,
+  `details` TEXT DEFAULT NULL,
+  `ipAddress` VARCHAR(255) DEFAULT '127.0.0.1',
+  `createdAt` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updatedAt` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;

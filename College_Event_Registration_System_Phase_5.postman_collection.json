@@ -1,0 +1,185 @@
+{
+  "info": {
+    "_postman_id": "f5e9d8c7-b6a5-4f3e-821d-901c23456789",
+    "name": "College Event Registration System - Full Enterprise (Phase 1 to 5)",
+    "description": "Complete production API postman collection covering Authentication, Event Management, Registrations, Analytics, Reports, QR Scanning, Certificates, Notifications, Profile, and Audit Trail.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "1. Authentication & Recovery",
+      "item": [
+        {
+          "name": "Student Register",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fullName\": \"Phase 5 Enterprise\",\n  \"rollNumber\": \"CS202688\",\n  \"email\": \"enterprise@college.edu\",\n  \"department\": \"Computer Science\",\n  \"year\": \"4th Year\",\n  \"password\": \"securepassword123\"\n}"
+            },
+            "url": { "raw": "http://localhost:5000/api/student/register", "protocol": "http", "host": ["localhost"], "port": "5000", "path": ["api", "student", "register"] }
+          }
+        },
+        {
+          "name": "Student Login",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"enterprise@college.edu\",\n  \"password\": \"securepassword123\"\n}"
+            },
+            "url": { "raw": "http://localhost:5000/api/student/login", "protocol": "http", "host": ["localhost"], "port": "5000", "path": ["api", "student", "login"] }
+          }
+        },
+        {
+          "name": "Admin Login",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@college.edu\",\n  \"password\": \"adminpassword\"\n}"
+            },
+            "url": { "raw": "http://localhost:5000/api/admin/login", "protocol": "http", "host": ["localhost"], "port": "5000", "path": ["api", "admin", "login"] }
+          }
+        },
+        {
+          "name": "Forgot Password Request",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"enterprise@college.edu\"\n}"
+            },
+            "url": { "raw": "http://localhost:5000/api/auth/forgot-password", "protocol": "http", "host": ["localhost"], "port": "5000", "path": ["api", "auth", "forgot-password"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. User Profile Management",
+      "item": [
+        {
+          "name": "Update Profile Details",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{user_token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fullName\": \"Enterprise Student Updated\",\n  \"department\": \"Information Technology\"\n}"
+            },
+            "url": { "raw": "http://localhost:5000/api/profile", "protocol": "http", "host": ["localhost"], "port": "5000", "path": ["api", "profile"] }
+          }
+        },
+        {
+          "name": "Upload Profile Avatar",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{user_token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"imageUrl\": \"https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=400\"\n}"
+            },
+            "url": { "raw": "http://localhost:5000/api/profile/upload", "protocol": "http", "host": ["localhost"], "port": "5000", "path": ["api", "profile", "upload"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. QR Code & Attendance Scan",
+      "item": [
+        {
+          "name": "Get Registration QR Code",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{user_token}}" }],
+            "url": { "raw": "http://localhost:5000/api/qrcode/1", "protocol": "http", "host": ["localhost"], "port": "5000", "path": ["api", "qrcode", "1"] }
+          }
+        },
+        {
+          "name": "Admin Scan QR Code",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{admin_token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"registrationId\": 1\n}"
+            },
+            "url": { "raw": "http://localhost:5000/api/qrcode/scan", "protocol": "http", "host": ["localhost"], "port": "5000", "path": ["api", "qrcode", "scan"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. PDF Certificates",
+      "item": [
+        {
+          "name": "Get Certificates List",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{student_token}}" }],
+            "url": { "raw": "http://localhost:5000/api/certificates", "protocol": "http", "host": ["localhost"], "port": "5000", "path": ["api", "certificates"] }
+          }
+        },
+        {
+          "name": "Download PDF Certificate",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{student_token}}" }],
+            "url": { "raw": "http://localhost:5000/api/certificates/1/download", "protocol": "http", "host": ["localhost"], "port": "5000", "path": ["api", "certificates", "1", "download"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "5. Notifications Center",
+      "item": [
+        {
+          "name": "Get User Notifications",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{user_token}}" }],
+            "url": { "raw": "http://localhost:5000/api/notifications?page=1&limit=10", "protocol": "http", "host": ["localhost"], "port": "5000", "path": ["api", "notifications"], "query": [{ "key": "page", "value": "1" }, { "key": "limit", "value": "10" }] }
+          }
+        },
+        {
+          "name": "Mark Notifications Read",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{user_token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": { "mode": "raw", "raw": "{}" },
+            "url": { "raw": "http://localhost:5000/api/notifications/read", "protocol": "http", "host": ["localhost"], "port": "5000", "path": ["api", "notifications", "read"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "6. Security Audit Logs",
+      "item": [
+        {
+          "name": "Get Audit Logs Trail",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }],
+            "url": { "raw": "http://localhost:5000/api/auditlogs?page=1&limit=15", "protocol": "http", "host": ["localhost"], "port": "5000", "path": ["api", "auditlogs"], "query": [{ "key": "page", "value": "1" }, { "key": "limit", "value": "15" }] }
+          }
+        }
+      ]
+    }
+  ]
+}

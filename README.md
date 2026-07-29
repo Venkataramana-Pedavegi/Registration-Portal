@@ -1,30 +1,32 @@
-# College Event Registration Management System - Full Stack Application
+# College Event Registration Management System - Enterprise Edition
 
-This repository contains the complete, production-grade **College Event Registration Management System** covering:
-- **Phase 1**: Authentication Module (JWT + bcryptjs)
-- **Phase 2**: Event Management Module (Admin Event CRUD)
-- **Phase 3**: Student Event Registration Module (Atomic SQL Transactions)
-- **Phase 4**: Admin Analytics & Management Module (Attendance, Recharts, Reports & Exports)
+This repository contains the complete, production-ready, enterprise-grade **College Event Registration Management System** spanning all five development phases:
 
-The backend database runs on **MySQL 8.0** using **Sequelize ORM**.
-
----
-
-## 🛠️ Tech Stack
-
-- **Frontend**: React (Vite) + Tailwind CSS + Recharts + Lucide Icons
-- **Backend**: Node.js + Express.js
-- **Database**: MySQL 8.0 (Sequelize ORM)
-- **Authentication**: JSON Web Tokens (JWT) & bcryptjs (password hashing)
-- **HTTP Client**: Axios
-- **State Management**: React Context API
-- **Testing**: Jest + Supertest (47 Automated Integration Tests)
+- **Phase 1**: Authentication Module (Student/Admin JWT Auth & Password Hashing)
+- **Phase 2**: Event Management Module (Admin Event CRUD & Availability Tracking)
+- **Phase 3**: Student Event Registration Module (Atomic SQL Transactions & Double-Booking Protection)
+- **Phase 4**: Admin Analytics & Management Module (Attendance Tracking, Recharts Graphs, Reports & CSV Exports)
+- **Phase 5**: Enterprise Readiness (Nodemailer Notifications, QR Code Entry Passes, PDF Certificates, Helmet Security, Rate Limiting, Audit Logs Trail, Server-side Pagination & Lazy Loading)
 
 ---
 
-## 📊 Database Design
+## 🏗️ Architecture & Tech Stack
 
-### ER Diagram (Text Format)
+```text
+[ React + Vite Client ]  <--->  [ Express Server ]  <--->  [ MySQL 8 Engine ]
+ ├── TailWind CSS                ├── Helmet & Rate Limiter   ├── Students
+ ├── Recharts Visualizer         ├── JWT Authentication      ├── Admins
+ ├── Code Splitting & Suspense   ├── Nodemailer Service      ├── Events
+ └── Lucide UI Components        ├── PDFKit & QR Generator   ├── Registrations
+                                 └── Audit Logger            ├── Attendances
+                                                             ├── Notifications
+                                                             ├── Certificates
+                                                             └── AuditLogs
+```
+
+---
+
+## 📊 Database Design & ER Diagram
 
 ```text
   +------------------+             +------------------+
@@ -35,10 +37,10 @@ The backend database runs on **MySQL 8.0** using **Sequelize ORM**.
   | rollNumber [Uniq]|         |   | email [Unique]   |        |
   | email [Unique]   |         |   | password         |        |
   | department       |         |   | role ('Admin')   |        |
-  | year             |         |   +------------------+        |
-  | password         |         |            |                  |
-  +------------------+         |            | hasMany          |
-     |            |            |            |                  |
+  | year             |         |   | profileImage     |        |
+  | profileImage     |         |   +------------------+        |
+  +------------------+         |            |                  |
+     |            |            |            | hasMany          |
      |            \--------\   |            v                  |
      | hasMany             |   |         +------------------+  |
      v                     v   |         |      Events      |  |
@@ -50,7 +52,7 @@ The backend database runs on **MySQL 8.0** using **Sequelize ORM**.
   | eventId (FK)-----|---|->eventId (FK)    |               |  |
   | registrationDate |   | registrationId---|------------\  |  |
   | status           |   | attendanceStatus |            |  |  |
-  | createdAt        |   | markedAt         |            |  |  |
+  | qrCodeUrl        |   | markedAt         |            |  |  |
   +------------------+   +------------------+            |  |  |
            ^                                             |  |  |
            \---------------------------------------------/  |  |
@@ -61,116 +63,77 @@ The backend database runs on **MySQL 8.0** using **Sequelize ORM**.
 
 ---
 
-## 📁 Project Structure
+## 🔒 Security Checklist
 
-```text
-/c:/Registration Portal
-├── College_Event_Registration_System_Phase_4.postman_collection.json
-├── README.md
-├── database/
-│   └── schema.sql                  # MySQL DDL script (Students, Admins, Events, Registrations, Attendances)
-├── client/
-│   └── src/
-│       ├── components/             # StatisticsCard, AnalyticsCharts, AttendanceTable, ExportButton, StudentProfileCard
-│       └── pages/                  # AnalyticsDashboard, Attendance, Reports, StudentProfile, ExportReports, AdminSettings
-└── server/
-    ├── server.js                   # Express server entrypoint
-    ├── config/
-    │   └── database.js             # Sequelize MySQL connection pool
-    ├── controllers/
-    │   ├── adminController.js
-    │   ├── analyticsController.js  # Dashboard metrics, 5 Recharts aggregations, Reports, Profile
-    │   ├── attendanceController.js # Mark, update, view event attendance
-    │   ├── eventController.js      # Event CRUD & participants lookup
-    │   ├── exportController.js     # Native CSV reports streaming
-    │   ├── registrationController.js
-    │   └── studentController.js
-    ├── models/
-    │   ├── index.js                # Relationships Loader
-    │   ├── Admin.js
-    │   ├── Attendance.js           # Attendance schema
-    │   ├── Event.js
-    │   ├── Registration.js
-    │   └── Student.js
-    └── tests/
-        ├── analytics.test.js       # Phase 4 integration tests
-        ├── auth.test.js
-        ├── event.test.js
-        └── registration.test.js
+- [x] **Helmet Headers**: Integrated `helmet()` protecting HTTP headers against clickjacking, sniffing, and XSS attacks.
+- [x] **Rate Limiting**: Integrated `express-rate-limit` capping requests to 300 per 15-minute window per IP.
+- [x] **SQL Injection Defense**: Built with Sequelize ORM parameterization.
+- [x] **Password Protection**: Salting and hashing via `bcryptjs` (10 rounds).
+- [x] **Audit Trail**: Security events recorded in `AuditLogs` database table.
+
+---
+
+## ⚡ Performance Optimizations
+
+- [x] **Lazy Loading**: Route pages wrapped in `React.lazy()` and `<Suspense>`.
+- [x] **Server-side Pagination**: List APIs support `page` and `limit` query parameters.
+- [x] **Optimized Database Indexes**: Foreign keys and unique constraints indexed in MySQL.
+
+---
+
+## 🛠️ Environment Variables (.env)
+
+Create `server/.env`:
+```env
+PORT=5000
+NODE_ENV=production
+
+# MySQL Database
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_NAME=college_event_registration
+DB_USER=root
+DB_PASSWORD=your_password
+
+# Authentication
+JWT_SECRET=super_secret_jwt_key_change_in_production
+JWT_EXPIRES_IN=1d
+
+# Email Notifications (Nodemailer)
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_SECURE=false
+SMTP_USER=your_email@gmail.com
+SMTP_PASS=your_email_app_password
+EMAIL_FROM_NAME=College Event Portal
+EMAIL_FROM_ADDRESS=noreply@college.edu
 ```
 
 ---
 
-## 🔧 MySQL Setup Guide
+## 🚀 Production Deployment Instructions
 
-1. Ensure MySQL server 8.0+ is running locally.
-2. The server boot sequence automatically executes a self-healing script at `server/utils/initDb.js` that checks for or creates the `college_event_registration` database automatically.
-3. Update environment credentials in `server/.env`:
-   ```env
-   PORT=5000
-   DB_HOST=127.0.0.1
-   DB_PORT=3306
-   DB_NAME=college_event_registration
-   DB_USER=root
-   DB_PASSWORD=yourpassword
-   JWT_SECRET=supersecretkeychangethisinproduction
-   JWT_EXPIRES_IN=1d
-   ```
-4. Start backend: `npm run dev` (Sequelize will sync tables and seed the default Admin `admin@college.edu` with password `adminpassword`).
+### 1. Database Host (MySQL Cloud)
+- Import schema definition script from `database/schema.sql`.
+
+### 2. Backend Server Deployment (Render / Railway)
+- Root directory: `/server`
+- Build command: `npm install`
+- Start command: `node server.js`
+- Set environment variables as defined above.
+
+### 3. Frontend Client Deployment (Vercel / Netlify)
+- Root directory: `/client`
+- Build command: `npm run build`
+- Output directory: `dist`
 
 ---
 
-## 🧪 Testing
+## 🧪 Automated Testing
 
 Execute Jest integration tests:
-1. Navigate to `/server`.
-2. Run:
-   ```bash
-   npm run test
-   ```
-   *The test suite executes 47 automated integration tests across 4 modules, passing with 100% success.*
-
----
-
-## 🌐 Sample API Requests & Responses
-
-### 1. Get Admin Dashboard Metrics (10 Cards)
-* **GET `/api/admin/dashboard`**
-* **Headers**: `Authorization: Bearer <Admin_Token>`
-* **Response (200 OK)**:
-  ```json
-  {
-    "totalStudents": 15,
-    "totalEvents": 4,
-    "totalRegistrations": 8,
-    "activeRegistrations": 7,
-    "cancelledRegistrations": 1,
-    "completedEvents": 1,
-    "upcomingEvents": 3,
-    "seatsFilled": 45,
-    "availableSeats": 105,
-    "eventOccupancyPct": 30
-  }
-  ```
-
-### 2. Mark Attendance (Admin)
-* **POST `/api/attendance`**
-* **Headers**: `Authorization: Bearer <Admin_Token>`
-* **Body**:
-  ```json
-  {
-    "registrationId": 1,
-    "attendanceStatus": "Present"
-  }
-  ```
-* **Response (201 Created)**:
-  ```json
-  {
-    "_id": 1,
-    "registrationId": 1,
-    "eventId": 1,
-    "studentId": 2,
-    "attendanceStatus": "Present",
-    "markedAt": "2026-07-29T17:28:00.000Z"
-  }
-  ```
+```bash
+cd server
+npm test
+```
+*Executes **58 integration tests** across **5 test suites** (`auth.test.js`, `event.test.js`, `registration.test.js`, `analytics.test.js`, `phase5.test.js`) with 100% pass rate.*

@@ -39,16 +39,17 @@ const Registration = sequelize.define(
         },
       },
     },
+    qrCodeUrl: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+    },
   },
   {
     indexes: [
       {
         unique: true,
-        fields: ['studentId', 'eventId'],
+        fields: ['studentId', 'eventId', 'status'],
         name: 'unique_student_event_registration',
-        where: {
-          status: 'Registered', // Custom partial unique check to allow registering again if previously cancelled
-        },
       },
     ],
   }

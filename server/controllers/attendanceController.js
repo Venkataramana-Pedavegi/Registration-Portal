@@ -1,4 +1,4 @@
-const { Attendance, Registration, Event, Student } = require('../models');
+const { Attendance, Registration, Event, Student, Certificate, Notification } = require('../models');
 
 // @desc    Mark attendance for a registration
 // @route   POST /api/attendance
@@ -40,6 +40,30 @@ const markAttendance = async (req, res) => {
       await attendance.save();
     }
 
+    // Auto issue certificate if status Present
+    if (status === 'Present') {
+      const certCode = `CERT-2026-${registration.id.toString().padStart(4, '0')}`;
+      await Certificate.findOrCreate({
+        where: { registrationId: registration.id },
+        defaults: {
+          registrationId: registration.id,
+          studentId: registration.studentId,
+          eventId: registration.eventId,
+          certificateId: certCode,
+          issueDate: new Date(),
+          qrVerificationCode: certCode,
+        },
+      });
+
+      await Notification.create({
+        userId: registration.studentId,
+        userRole: 'Student',
+        title: 'Certificate Issued!',
+        message: `Your participation certificate for event #${registration.eventId} is ready to download.`,
+        type: 'Certificate',
+      });
+    }
+
     // Format response
     const result = attendance.toJSON();
     result._id = result.id;
@@ -70,6 +94,21 @@ const updateAttendance = async (req, res) => {
       attendance.attendanceStatus = attendanceStatus;
       attendance.markedAt = new Date();
       await attendance.save();
+
+      if (attendanceStatus === 'Present') {
+        const certCode = `CERT-2026-${attendance.registrationId.toString().padStart(4, '0')}`;
+        await Certificate.findOrCreate({
+          where: { registrationId: attendance.registrationId },
+          defaults: {
+            registrationId: attendance.registrationId,
+            studentId: attendance.studentId,
+            eventId: attendance.eventId,
+            certificateId: certCode,
+            issueDate: new Date(),
+            qrVerificationCode: certCode,
+          },
+        });
+      }
     }
 
     const result = attendance.toJSON();

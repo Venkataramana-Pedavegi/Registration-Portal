@@ -20,18 +20,27 @@ const Student = sequelize.define(
     rollNumber: {
       type: DataTypes.STRING,
       allowNull: false,
-      unique: true,
+      unique: {
+        msg: 'Roll Number already exists',
+      },
       validate: {
-        notEmpty: { msg: 'Roll number is required' },
+        notEmpty: { msg: 'Roll Number is required' },
       },
     },
     email: {
       type: DataTypes.STRING,
       allowNull: false,
-      unique: true,
+      unique: {
+        msg: 'Email already registered',
+      },
       validate: {
-        isEmail: { msg: 'Please fill a valid email address' },
+        isEmail: { msg: 'Invalid email address' },
         notEmpty: { msg: 'Email is required' },
+      },
+      set(val) {
+        if (val) {
+          this.setDataValue('email', val.toLowerCase().trim());
+        }
       },
     },
     department: {
@@ -45,19 +54,31 @@ const Student = sequelize.define(
       type: DataTypes.STRING,
       allowNull: false,
       validate: {
-        notEmpty: { msg: 'Year is required' },
+        notEmpty: { msg: 'Year of study is required' },
       },
     },
     password: {
       type: DataTypes.STRING,
       allowNull: false,
       validate: {
-        notEmpty: { msg: 'Password is required' },
         len: {
           args: [6, 100],
-          msg: 'Password must be at least 6 characters long',
+          msg: 'Password must be at least 6 characters',
         },
       },
+    },
+    profileImage: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+      defaultValue: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=400',
+    },
+    resetPasswordToken: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    resetPasswordExpire: {
+      type: DataTypes.DATE,
+      allowNull: true,
     },
   },
   {
@@ -78,7 +99,6 @@ const Student = sequelize.define(
   }
 );
 
-// Compare password method
 Student.prototype.comparePassword = async function (enteredPassword) {
   return await bcrypt.compare(enteredPassword, this.password);
 };

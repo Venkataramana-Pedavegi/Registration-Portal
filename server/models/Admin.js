@@ -13,7 +13,9 @@ const Admin = sequelize.define(
     username: {
       type: DataTypes.STRING,
       allowNull: false,
-      unique: true,
+      unique: {
+        msg: 'Username already exists',
+      },
       validate: {
         notEmpty: { msg: 'Username is required' },
       },
@@ -21,29 +23,45 @@ const Admin = sequelize.define(
     email: {
       type: DataTypes.STRING,
       allowNull: false,
-      unique: true,
+      unique: {
+        msg: 'Email already exists',
+      },
       validate: {
-        isEmail: { msg: 'Please fill a valid email address' },
+        isEmail: { msg: 'Invalid email address' },
         notEmpty: { msg: 'Email is required' },
+      },
+      set(val) {
+        if (val) {
+          this.setDataValue('email', val.toLowerCase().trim());
+        }
       },
     },
     password: {
       type: DataTypes.STRING,
       allowNull: false,
       validate: {
-        notEmpty: { msg: 'Password is required' },
+        len: {
+          args: [6, 100],
+          msg: 'Password must be at least 6 characters',
+        },
       },
     },
     role: {
       type: DataTypes.STRING,
-      allowNull: false,
       defaultValue: 'Admin',
-      validate: {
-        isIn: {
-          args: [['Admin']],
-          msg: "Role must be 'Admin'",
-        },
-      },
+    },
+    profileImage: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+      defaultValue: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=400',
+    },
+    resetPasswordToken: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    resetPasswordExpire: {
+      type: DataTypes.DATE,
+      allowNull: true,
     },
   },
   {
@@ -64,7 +82,6 @@ const Admin = sequelize.define(
   }
 );
 
-// Compare password method
 Admin.prototype.comparePassword = async function (enteredPassword) {
   return await bcrypt.compare(enteredPassword, this.password);
 };

@@ -4,6 +4,9 @@ const Admin = require('./Admin');
 const Event = require('./Event');
 const Registration = require('./Registration');
 const Attendance = require('./Attendance');
+const Notification = require('./Notification');
+const Certificate = require('./Certificate');
+const AuditLog = require('./AuditLog');
 
 // Relationships
 Admin.hasMany(Event, { foreignKey: 'createdBy', onDelete: 'CASCADE' });
@@ -26,6 +29,16 @@ Attendance.belongsTo(Event, { foreignKey: 'eventId' });
 Student.hasMany(Attendance, { foreignKey: 'studentId', onDelete: 'CASCADE' });
 Attendance.belongsTo(Student, { foreignKey: 'studentId' });
 
+// Certificate Relationships
+Registration.hasOne(Certificate, { foreignKey: 'registrationId', onDelete: 'CASCADE' });
+Certificate.belongsTo(Registration, { foreignKey: 'registrationId' });
+
+Student.hasMany(Certificate, { foreignKey: 'studentId', onDelete: 'CASCADE' });
+Certificate.belongsTo(Student, { foreignKey: 'studentId' });
+
+Event.hasMany(Certificate, { foreignKey: 'eventId', onDelete: 'CASCADE' });
+Certificate.belongsTo(Event, { foreignKey: 'eventId' });
+
 module.exports = {
   sequelize,
   Student,
@@ -33,4 +46,7 @@ module.exports = {
   Event,
   Registration,
   Attendance,
+  Notification,
+  Certificate,
+  AuditLog,
 };
