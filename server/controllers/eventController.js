@@ -1,24 +1,14 @@
 const { Op } = require('sequelize');
-const { Event, Admin, Registration, Student } = require('../models');
+const { Event, Admin, Registration } = require('../models');
 
-// Helper to serialize event for frontend (_id and populated createdBy object)
+// Helper to format event object mapping id to _id
 const formatEvent = (eventInstance) => {
-  if (!eventInstance) return null;
-  const ev = eventInstance.get({ plain: true });
-  ev._id = ev.id; // Map SQL id to Mongo _id for frontend compatibility
-  
-  // Format createdBy object to mirror MongoDB populate output
-  if (ev.Admin) {
-    ev.createdBy = {
-      _id: ev.Admin.id,
-      username: ev.Admin.username,
-      email: ev.Admin.email,
-    };
-  } else {
-    ev.createdBy = null;
+  const plain = eventInstance.toJSON();
+  plain._id = plain.id;
+  if (plain.Admin) {
+    plain.Admin._id = plain.Admin.id;
   }
-  delete ev.Admin;
-  return ev;
+  return plain;
 };
 
 // @desc    Create a new event
@@ -38,8 +28,9 @@ const createEvent = async (req, res) => {
       organizer,
       capacity,
       image,
-      status,
     } = req.body;
+
+    const createdBy = req.user.id;
 
     // Check duplicate event with same title, venue, and date
     const duplicate = await Event.findOne({
@@ -56,25 +47,23 @@ const createEvent = async (req, res) => {
       });
     }
 
-    const event = await Event.create({
+    const newEvent = await Event.create({
       title: title.trim(),
       description: description.trim(),
       category: category.trim(),
       venue: venue.trim(),
       eventDate: new Date(eventDate),
-      startTime,
-      endTime,
+      startTime: startTime.trim(),
+      endTime: endTime.trim(),
       registrationDeadline: new Date(registrationDeadline),
       organizer: organizer.trim(),
       capacity,
       availableSeats: capacity,
       image: image || undefined,
-      status: status || 'Upcoming',
-      createdBy: req.user.id,
+      createdBy,
     });
 
-    // Fetch newly created event with relations for population matching
-    const fullEvent = await Event.findByPk(event.id, {
+    const fullEvent = await Event.findByPk(newEvent.id, {
       include: [{ model: Admin, attributes: ['id', 'username', 'email'] }],
     });
 
@@ -84,39 +73,41 @@ const createEvent = async (req, res) => {
   }
 };
 
-// @desc    Get all events with filters
+// @desc    Get all events with optional filters, search, and pagination
 // @route   GET /api/events
-// @access  Private (Both student and admin)
-const getEvents = async (req, res) => {
+// @access  Public
+const getAllEvents = async (req, res) => {
   try {
-    const { search, category, status, sort } = req.query;
-    let whereClause = {};
+    const { category, status, search, sort } = req.query;
 
-    // Search filter (title, venue, organizer)
+    const whereClause = {};
+
+    if (category) {
+      whereClause.category = category;
+    }
+
+    if (status) {
+      whereClause.status = status;
+    }
+
     if (search) {
       whereClause[Op.or] = [
         { title: { [Op.like]: `%${search}%` } },
+        { description: { [Op.like]: `%${search}%` } },
         { venue: { [Op.like]: `%${search}%` } },
         { organizer: { [Op.like]: `%${search}%` } },
       ];
     }
 
-    // Category filter
-    if (category) {
-      whereClause.category = category;
-    }
-
-    // Status filter
-    if (status) {
-      whereClause.status = status;
-    }
-
-    // Build sort options
-    let order = [['eventDate', 'ASC']]; // Default: earliest first
-    if (sort === 'date_desc') {
-      order = [['eventDate', 'DESC']];
-    } else if (sort === 'createdAt_desc') {
+    let order = [['eventDate', 'ASC']];
+    if (sort === 'newest') {
       order = [['createdAt', 'DESC']];
+    } else if (sort === 'oldest') {
+      order = [['createdAt', 'ASC']];
+    } else if (sort === 'date_asc') {
+      order = [['eventDate', 'ASC']];
+    } else if (sort === 'date_desc') {
+      order = [['eventDate', 'DESC']];
     }
 
     const events = await Event.findAll({
@@ -139,7 +130,6 @@ const getEventById = async (req, res) => {
   try {
     const { id } = req.params;
 
-    // Validate ID is numeric
     if (isNaN(id) || !Number.isInteger(Number(id))) {
       return res.status(400).json({ message: 'Invalid Event ID format' });
     }
@@ -165,37 +155,26 @@ const updateEvent = async (req, res) => {
   try {
     const { id } = req.params;
 
-    // Validate ID is numeric
     if (isNaN(id) || !Number.isInteger(Number(id))) {
       return res.status(400).json({ message: 'Invalid Event ID format' });
     }
-
-    const {
-      title,
-      description,
-      category,
-      venue,
-      eventDate,
-      startTime,
-      endTime,
-      registrationDeadline,
-      organizer,
-      capacity,
-      image,
-      status,
-    } = req.body;
 
     const event = await Event.findByPk(id);
     if (!event) {
       return res.status(404).json({ message: 'Event not found' });
     }
 
-    // Check duplicate event with same title, venue, and date (excluding current event)
+    const newTitle = req.body.title !== undefined ? req.body.title.trim() : event.title;
+    const newVenue = req.body.venue !== undefined ? req.body.venue.trim() : event.venue;
+    const newEventDate = req.body.eventDate !== undefined ? new Date(req.body.eventDate) : event.eventDate;
+    const newCapacity = req.body.capacity !== undefined ? req.body.capacity : event.capacity;
+
+    // Check duplicate event
     const duplicate = await Event.findOne({
       where: {
-        title: title.trim(),
-        venue: venue.trim(),
-        eventDate: new Date(eventDate),
+        title: newTitle,
+        venue: newVenue,
+        eventDate: newEventDate,
         id: { [Op.ne]: id },
       },
     });
@@ -208,7 +187,7 @@ const updateEvent = async (req, res) => {
 
     // Adjust availableSeats based on capacity change
     const bookedSeats = event.capacity - event.availableSeats;
-    const newAvailableSeats = capacity - bookedSeats;
+    const newAvailableSeats = newCapacity - bookedSeats;
     if (newAvailableSeats < 0) {
       return res.status(400).json({
         message: 'Capacity cannot be reduced below the number of currently booked seats',
@@ -216,24 +195,25 @@ const updateEvent = async (req, res) => {
     }
 
     // Update fields
-    event.title = title.trim();
-    event.description = description.trim();
-    event.category = category.trim();
-    event.venue = venue.trim();
-    event.eventDate = new Date(eventDate);
-    event.startTime = startTime;
-    event.endTime = endTime;
-    event.registrationDeadline = new Date(registrationDeadline);
-    event.organizer = organizer.trim();
-    event.capacity = capacity;
-    event.availableSeats = newAvailableSeats;
-    if (image) event.image = image;
-    if (status) event.status = status;
+    if (req.body.title !== undefined) event.title = newTitle;
+    if (req.body.description !== undefined) event.description = req.body.description.trim();
+    if (req.body.category !== undefined) event.category = req.body.category.trim();
+    if (req.body.venue !== undefined) event.venue = newVenue;
+    if (req.body.eventDate !== undefined) event.eventDate = newEventDate;
+    if (req.body.startTime !== undefined) event.startTime = req.body.startTime.trim();
+    if (req.body.endTime !== undefined) event.endTime = req.body.endTime.trim();
+    if (req.body.registrationDeadline !== undefined) event.registrationDeadline = new Date(req.body.registrationDeadline);
+    if (req.body.organizer !== undefined) event.organizer = req.body.organizer.trim();
+    if (req.body.capacity !== undefined) {
+      event.capacity = newCapacity;
+      event.availableSeats = newAvailableSeats;
+    }
+    if (req.body.image !== undefined) event.image = req.body.image;
+    if (req.body.status !== undefined) event.status = req.body.status;
 
     await event.save();
 
-    // Fetch updated event with relations
-    const fullEvent = await Event.findByPk(id, {
+    const fullEvent = await Event.findByPk(event.id, {
       include: [{ model: Admin, attributes: ['id', 'username', 'email'] }],
     });
 
@@ -250,7 +230,6 @@ const deleteEvent = async (req, res) => {
   try {
     const { id } = req.params;
 
-    // Validate ID is numeric
     if (isNaN(id) || !Number.isInteger(Number(id))) {
       return res.status(400).json({ message: 'Invalid Event ID format' });
     }
@@ -261,21 +240,20 @@ const deleteEvent = async (req, res) => {
     }
 
     await event.destroy();
-    res.json({ message: 'Event removed successfully' });
+    res.json({ message: 'Event deleted successfully' });
   } catch (error) {
     res.status(500).json({ message: 'Server error deleting event', error: error.message });
   }
 };
 
-// @desc    Get participants of a specific event
+// @desc    Get participants list for a specific event
 // @route   GET /api/events/:id/participants
 // @access  Private/Admin
 const getEventParticipants = async (req, res) => {
   try {
     const { id } = req.params;
-    const { search, department, year, status } = req.query;
+    const { department, search } = req.query;
 
-    // Validate ID is numeric
     if (isNaN(id) || !Number.isInteger(Number(id))) {
       return res.status(400).json({ message: 'Invalid Event ID format' });
     }
@@ -285,39 +263,33 @@ const getEventParticipants = async (req, res) => {
       return res.status(404).json({ message: 'Event not found' });
     }
 
-    let regQuery = { eventId: id };
-    let studentQuery = {};
-
-    if (status) {
-      regQuery.status = status;
-    }
+    const studentWhere = {};
     if (department) {
-      studentQuery.department = department;
+      studentWhere.department = department;
     }
-    if (year) {
-      studentQuery.year = year;
-    }
+
     if (search) {
-      studentQuery[Op.or] = [
+      studentWhere[Op.or] = [
         { fullName: { [Op.like]: `%${search}%` } },
         { rollNumber: { [Op.like]: `%${search}%` } },
+        { email: { [Op.like]: `%${search}%` } },
       ];
     }
 
-    const participants = await Registration.findAll({
-      where: regQuery,
+    const registrations = await Registration.findAll({
+      where: { eventId: id, status: 'Registered' },
       include: [
         {
-          model: Student,
-          where: studentQuery,
-          attributes: { exclude: ['password'] },
+          model: require('../models').Student,
+          where: Object.keys(studentWhere).length > 0 ? studentWhere : undefined,
+          attributes: ['id', 'fullName', 'rollNumber', 'email', 'department', 'year'],
         },
       ],
-      order: [['registrationDate', 'DESC']],
+      order: [['registrationDate', 'ASC']],
     });
 
-    const formatted = participants.map((p) => {
-      const plain = p.toJSON();
+    const formattedParticipants = registrations.map((reg) => {
+      const plain = reg.toJSON();
       plain._id = plain.id;
       if (plain.Student) {
         plain.Student._id = plain.Student.id;
@@ -325,15 +297,16 @@ const getEventParticipants = async (req, res) => {
       return plain;
     });
 
-    res.json(formatted);
+    res.json(formattedParticipants);
   } catch (error) {
-    res.status(500).json({ message: 'Server error retrieving participants list', error: error.message });
+    res.status(500).json({ message: 'Server error retrieving participants', error: error.message });
   }
 };
 
 module.exports = {
   createEvent,
-  getEvents,
+  getAllEvents,
+  getEvents: getAllEvents,
   getEventById,
   updateEvent,
   deleteEvent,

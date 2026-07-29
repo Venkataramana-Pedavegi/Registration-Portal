@@ -248,7 +248,7 @@ describe('College Event Registration Event CRUD APIs', () => {
       .set('Authorization', `Bearer ${adminToken}`);
 
     expect(res.status).toBe(200);
-    expect(res.body.message).toMatch(/removed successfully/i);
+    expect(res.body.message).toMatch(/(deleted|removed) successfully/i);
 
     // Verify it is gone
     const checkRes = await request(app)

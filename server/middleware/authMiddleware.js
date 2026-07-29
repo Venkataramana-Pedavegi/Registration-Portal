@@ -36,7 +36,6 @@ const protect = async (req, res, next) => {
       // but keeping it as model instance is fine too, let's keep it as instance.
       next();
     } catch (error) {
-      console.error(error);
       if (error.name === 'TokenExpiredError') {
         return res.status(401).json({ message: 'Token expired' });
       }
