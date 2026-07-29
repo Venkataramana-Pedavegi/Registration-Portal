@@ -1,0 +1,374 @@
+{
+  "info": {
+    "_postman_id": "8b9e6dc3-bc2a-4db3-bc8e-2895690b21a8",
+    "name": "College Event Registration System - Phase 2",
+    "description": "API collection for testing Phase 2 Event Management Module integrated with Phase 1 Authentication Module.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Student Register",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fullName\": \"Jane Doe\",\n  \"rollNumber\": \"CS202699\",\n  \"email\": \"janedoe@college.edu\",\n  \"department\": \"Computer Science\",\n  \"year\": \"3rd Year\",\n  \"password\": \"securepassword123\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:5000/api/student/register",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5000",
+              "path": [
+                "api",
+                "student",
+                "register"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Student Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const responseJson = pm.response.json();",
+                  "if (responseJson.token) {",
+                  "    pm.environment.set(\"student_token\", responseJson.token);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"janedoe@college.edu\",\n  \"password\": \"securepassword123\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:5000/api/student/login",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5000",
+              "path": [
+                "api",
+                "student",
+                "login"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Student Profile",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{student_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:5000/api/student/profile",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5000",
+              "path": [
+                "api",
+                "student",
+                "profile"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Admin Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const responseJson = pm.response.json();",
+                  "if (responseJson.token) {",
+                  "    pm.environment.set(\"admin_token\", responseJson.token);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@college.edu\",\n  \"password\": \"adminpassword\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:5000/api/admin/login",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5000",
+              "path": [
+                "api",
+                "admin",
+                "login"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Admin Profile",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:5000/api/admin/profile",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5000",
+              "path": [
+                "api",
+                "admin",
+                "profile"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Events",
+      "item": [
+        {
+          "name": "Create Event (Admin Only)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const responseJson = pm.response.json();",
+                  "if (responseJson._id) {",
+                  "    pm.environment.set(\"event_id\", responseJson._id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Campus Hackathon 2026\",\n  \"description\": \"A 24-hour coding sprint to build software solutions for campus challenges.\",\n  \"category\": \"Technical\",\n  \"venue\": \"Auditorium Hall A\",\n  \"eventDate\": \"2026-10-15\",\n  \"startTime\": \"09:00\",\n  \"endTime\": \"17:00\",\n  \"registrationDeadline\": \"2026-10-10\",\n  \"organizer\": \"ACM Student Chapter\",\n  \"capacity\": 120\n}"
+            },
+            "url": {
+              "raw": "http://localhost:5000/api/events",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5000",
+              "path": [
+                "api",
+                "events"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get All Events (Student/Admin)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{student_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:5000/api/events?category=Technical&status=Upcoming&search=Hackathon",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5000",
+              "path": [
+                "api",
+                "events"
+              ],
+              "query": [
+                {
+                  "key": "category",
+                  "value": "Technical"
+                },
+                {
+                  "key": "status",
+                  "value": "Upcoming"
+                },
+                {
+                  "key": "search",
+                  "value": "Hackathon"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Event Details (Student/Admin)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{student_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:5000/api/events/{{event_id}}",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5000",
+              "path": [
+                "api",
+                "events",
+                "{{event_id}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Event (Admin Only)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Campus Hackathon 2026 (Updated)\",\n  \"description\": \"An expanded coding challenge with bigger cash prizes.\",\n  \"category\": \"Technical\",\n  \"venue\": \"Auditorium Hall A\",\n  \"eventDate\": \"2026-10-15\",\n  \"startTime\": \"09:00\",\n  \"endTime\": \"18:00\",\n  \"registrationDeadline\": \"2026-10-10\",\n  \"organizer\": \"ACM Student Chapter\",\n  \"capacity\": 150,\n  \"status\": \"Upcoming\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:5000/api/events/{{event_id}}",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5000",
+              "path": [
+                "api",
+                "events",
+                "{{event_id}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Event (Admin Only)",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:5000/api/events/{{event_id}}",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5000",
+              "path": [
+                "api",
+                "events",
+                "{{event_id}}"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}

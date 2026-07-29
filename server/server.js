@@ -39,6 +39,7 @@ seedAdmin();
 // Routes
 app.use('/api/student', require('./routes/studentRoutes'));
 app.use('/api/admin', require('./routes/adminRoutes'));
+app.use('/api/events', require('./routes/eventRoutes'));
 
 // Root Endpoint
 app.get('/', (req, res) => {

@@ -13,6 +13,7 @@ import StudentLogin from './pages/StudentLogin';
 import AdminLogin from './pages/AdminLogin';
 import StudentDashboard from './pages/StudentDashboard';
 import AdminDashboard from './pages/AdminDashboard';
+import EventDetails from './pages/EventDetails';
 import NotFound from './pages/NotFound';
 
 function App() {
@@ -47,6 +48,14 @@ function App() {
                 element={
                   <ProtectedRoute allowedRoles={['Admin']}>
                     <AdminDashboard />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/events/:id"
+                element={
+                  <ProtectedRoute allowedRoles={['Student', 'Admin']}>
+                    <EventDetails />
                   </ProtectedRoute>
                 }
               />

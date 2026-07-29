@@ -1,6 +1,6 @@
-# College Event Registration Management System - Phase 1
+# College Event Registration Management System - Phase 2
 
-This repository contains the complete, production-grade **Authentication Module (Phase 1)** of the College Event Registration Management System. It handles secure login, registration, role-based JWT authorization, validations, and responsive dashboards for both Students and Administrators.
+This repository contains the complete, production-grade **Event Management Module (Phase 2)** of the College Event Registration Management System. It builds on top of the Phase 1 Authentication Module, providing administrative controls for managing college activities while offering search, filter, and detail exploratory views for students.
 
 ---
 
@@ -21,7 +21,7 @@ This repository contains the complete, production-grade **Authentication Module 
 
 ```text
 /c:/Registration Portal
-├── College_Event_Registration_System_Phase_1.postman_collection.json
+├── College_Event_Registration_System_Phase_2.postman_collection.json
 ├── README.md
 ├── client/
 │   ├── index.html
@@ -34,16 +34,23 @@ This repository contains the complete, production-grade **Authentication Module 
 │       ├── index.css
 │       ├── main.jsx
 │       ├── components/
+│       │   ├── ConfirmationDialog.jsx
+│       │   ├── EventCard.jsx
+│       │   ├── EventModal.jsx
+│       │   ├── EventTable.jsx
+│       │   ├── FilterDropdown.jsx
 │       │   ├── Footer.jsx
 │       │   ├── Loader.jsx
 │       │   ├── Navbar.jsx
 │       │   ├── ProtectedRoute.jsx
+│       │   ├── SearchBar.jsx
 │       │   └── Toast.jsx
 │       ├── context/
 │       │   └── AuthContext.jsx
 │       ├── pages/
 │       │   ├── AdminDashboard.jsx
 │       │   ├── AdminLogin.jsx
+│       │   ├── EventDetails.jsx
 │       │   ├── Home.jsx
 │       │   ├── NotFound.jsx
 │       │   ├── StudentDashboard.jsx
@@ -59,18 +66,23 @@ This repository contains the complete, production-grade **Authentication Module 
     │   └── db.js
     ├── controllers/
     │   ├── adminController.js
+    │   ├── eventController.js
     │   └── studentController.js
     ├── middleware/
+    │   ├── adminMiddleware.js
     │   ├── authMiddleware.js
     │   └── validation.js
     ├── models/
     │   ├── Admin.js
+    │   ├── Event.js
     │   └── Student.js
     ├── routes/
     │   ├── adminRoutes.js
+    │   ├── eventRoutes.js
     │   └── studentRoutes.js
     └── tests/
-        └── auth.test.js
+        ├── auth.test.js
+        └── event.test.js
 ```
 
 ---
@@ -105,7 +117,7 @@ This repository contains the complete, production-grade **Authentication Module 
 ## 🧪 Testing
 
 ### Automated API Tests
-To run the full suite of integration tests (validating registration, login, token authentication, role restrictions, duplicate handling, and field validations):
+To run the full suite of integration tests (validating registration, login, token authentication, role restrictions, duplicate handling, field validations, and Event CRUD APIs):
 1. Navigate to `/server`.
 2. Run:
    ```bash
@@ -117,69 +129,121 @@ To run the full suite of integration tests (validating registration, login, toke
 
 ## 🌐 Sample API Requests & Responses
 
-### 1. Student Registration
-* **URL**: `POST /api/student/register`
+### 1. Create Event (Admin Only)
+* **URL**: `POST /api/events`
+* **Headers**: `Authorization: Bearer <Admin_Token>`
 * **Body**:
   ```json
   {
-    "fullName": "Jane Doe",
-    "rollNumber": "CS202699",
-    "email": "janedoe@college.edu",
-    "department": "Computer Science",
-    "year": "3rd Year",
-    "password": "securepassword123"
+    "title": "Campus Hackathon 2026",
+    "description": "A 24-hour coding sprint to build software solutions for campus challenges.",
+    "category": "Technical",
+    "venue": "Auditorium Hall A",
+    "eventDate": "2026-10-15",
+    "startTime": "09:00",
+    "endTime": "17:00",
+    "registrationDeadline": "2026-10-10",
+    "organizer": "ACM Student Chapter",
+    "capacity": 120
   }
   ```
 * **Response (201 Created)**:
   ```json
   {
-    "_id": "64c54b9d0fd5d...",
-    "fullName": "Jane Doe",
-    "rollNumber": "CS202699",
-    "email": "janedoe@college.edu",
-    "department": "Computer Science",
-    "year": "3rd Year",
-    "role": "Student",
-    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+    "_id": "64c55da0...",
+    "title": "Campus Hackathon 2026",
+    "description": "A 24-hour coding sprint to build software solutions for campus challenges.",
+    "category": "Technical",
+    "venue": "Auditorium Hall A",
+    "eventDate": "2026-10-15T00:00:00.000Z",
+    "startTime": "09:00",
+    "endTime": "17:00",
+    "registrationDeadline": "2026-10-10T00:00:00.000Z",
+    "organizer": "ACM Student Chapter",
+    "capacity": 120,
+    "availableSeats": 120,
+    "image": "https://images.unsplash.com/photo-1501281668745-f7f57925c3b4...",
+    "status": "Upcoming",
+    "createdBy": "64c54b9d0fd5d...",
+    "createdAt": "2026-07-29T16:55:00.000Z",
+    "updatedAt": "2026-07-29T16:55:00.000Z"
   }
   ```
 
-### 2. Student Login
-* **URL**: `POST /api/student/login`
+### 2. Get All Events (Student/Admin)
+* **URL**: `GET /api/events?category=Technical&status=Upcoming&search=Hackathon`
+* **Headers**: `Authorization: Bearer <Token>`
+* **Response (200 OK)**:
+  ```json
+  [
+    {
+      "_id": "64c55da0...",
+      "title": "Campus Hackathon 2026",
+      "description": "A 24-hour coding sprint to build software solutions for campus challenges.",
+      "category": "Technical",
+      "venue": "Auditorium Hall A",
+      "eventDate": "2026-10-15T00:00:00.000Z",
+      "startTime": "09:00",
+      "endTime": "17:00",
+      "registrationDeadline": "2026-10-10T00:00:00.000Z",
+      "organizer": "ACM Student Chapter",
+      "capacity": 120,
+      "availableSeats": 120,
+      "status": "Upcoming"
+    }
+  ]
+  ```
+
+### 3. Update Event (Admin Only)
+* **URL**: `PUT /api/events/:id`
+* **Headers**: `Authorization: Bearer <Admin_Token>`
 * **Body**:
   ```json
   {
-    "email": "janedoe@college.edu",
-    "password": "securepassword123"
+    "title": "Campus Hackathon 2026 (Updated)",
+    "description": "A 24-hour coding sprint.",
+    "category": "Technical",
+    "venue": "Auditorium Hall A",
+    "eventDate": "2026-10-15",
+    "startTime": "09:00",
+    "endTime": "18:00",
+    "registrationDeadline": "2026-10-10",
+    "organizer": "ACM Student Chapter",
+    "capacity": 150,
+    "status": "Upcoming"
   }
   ```
 * **Response (200 OK)**:
   ```json
   {
-    "_id": "64c54b9d0fd5d...",
-    "fullName": "Jane Doe",
-    "rollNumber": "CS202699",
-    "email": "janedoe@college.edu",
-    "role": "Student",
-    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+    "_id": "64c55da0...",
+    "title": "Campus Hackathon 2026 (Updated)",
+    "capacity": 150,
+    "availableSeats": 150,
+    "status": "Upcoming"
+  }
+  ```
+
+### 4. Delete Event (Admin Only)
+* **URL**: `DELETE /api/events/:id`
+* **Headers**: `Authorization: Bearer <Admin_Token>`
+* **Response (200 OK)**:
+  ```json
+  {
+    "message": "Event removed successfully"
   }
   ```
 
 ---
 
-## ✅ Phase 1 Verification Checklist
+## ✅ Phase 2 Verification Checklist
 
-- [x] **Project Setup**: Backend (Express) and Frontend (Vite + React) cleanly structured.
-- [x] **Database Models**: Fully defined schemas with validation constraints for Student and Admin.
-- [x] **Password Hashing**: Implemented using `bcryptjs` with pre-save database middleware hooks.
-- [x] **JWT Generation & Verification**: Auth middleware verifies Bearer tokens and extracts claims.
-- [x] **API Endpoints**: 
-  - `POST /api/student/register`
-  - `POST /api/student/login`
-  - `GET /api/student/profile` (Protected)
-  - `POST /api/admin/login`
-  - `GET /api/admin/profile` (Protected)
-- [x] **Role Restrictions**: Admins and Students restricted to their respective panels via role authorization.
-- [x] **Input Validations**: Built-in rules preventing duplicate emails, roll numbers, short passwords, and empty fields.
-- [x] **UI Layout**: Responsive navbar, custom footer, clean responsive login/registration forms, loader spinners, toast feedback, and dashboards.
-- [x] **Integration Tests**: 100% test coverage using Supertest and Jest, with all 14 test cases passing.
+- [x] **Event Database Model**: Full Event schema structure with proper indexes and default cover photos.
+- [x] **Admin Authorization Guard**: Standalone `adminProtect` middleware securing write paths.
+- [x] **Validation Controls**: Implemented time validation (`startTime < endTime`), deadline boundary checks (`registrationDeadline <= eventDate`), and capacity requirements.
+- [x] **API Route Mapping**: Added REST resources under `/api/events` with security middleware mapping.
+- [x] **MVC Architecture**: Fully separated controllers, schemas, validations, and express routers.
+- [x] **Admin Management UI**: Fully functional Event Table with actions to Create (via Modal), Update (via Modal), Delete (via Confirmation popup), and View Details.
+- [x] **Student Exploration Dashboard**: Modern grid layouts of event cards with robust Category, Status, and Search filtering.
+- [x] **Details Explorer Views**: Dedicated Single Event page displaying full stats, including a locked register action: `"Registration will be available in Phase 3."`
+- [x] **Integration Testing**: Added `event.test.js` validating CRUD endpoints, authorization restrictions, and duplicate rules. 28/28 tests passing.

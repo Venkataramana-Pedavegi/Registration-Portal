@@ -1,126 +1,236 @@
 import React, { useEffect, useState } from 'react';
 import api from '../services/api';
 import Loader from '../components/Loader';
-import { Shield, Mail, Calendar, User, LayoutGrid, FilePlus } from 'lucide-react';
+import SearchBar from '../components/SearchBar';
+import FilterDropdown from '../components/FilterDropdown';
+import EventTable from '../components/EventTable';
+import EventModal from '../components/EventModal';
+import ConfirmationDialog from '../components/ConfirmationDialog';
+import { Calendar, Plus, Shield, Award, CalendarDays, XCircle } from 'lucide-react';
 
 const AdminDashboard = () => {
-  const [profile, setProfile] = useState(null);
+  const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  
+  // Search & Filters state
+  const [search, setSearch] = useState('');
+  const [category, setCategory] = useState('');
+  const [status, setStatus] = useState('');
+
+  // Modals state
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editEventData, setEditEventData] = useState(null);
+  const [deleteEventId, setDeleteEventId] = useState(null);
+  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+
+  const categories = ['Technical', 'Cultural', 'Sports', 'Seminar', 'Workshop', 'Other'];
+  const statuses = ['Upcoming', 'Ongoing', 'Completed', 'Cancelled'];
+
+  // Fetch events list
+  const fetchEvents = async () => {
+    try {
+      setLoading(true);
+      const params = {};
+      if (search) params.search = search;
+      if (category) params.category = category;
+      if (status) params.status = status;
+      params.sort = 'createdAt_desc'; // Latest events first
+
+      const { data } = await api.get('/events', { params });
+      setEvents(data);
+    } catch (err) {
+      console.error(err);
+      setError(err.response?.data?.message || 'Failed to load events.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchProfile = async () => {
-      try {
-        const { data } = await api.get('/admin/profile');
-        setProfile(data);
-      } catch (err) {
-        console.error(err);
-        setError(err.response?.data?.message || 'Failed to load profile');
-      } finally {
-        setLoading(false);
+    // Debounce search input changes slightly
+    const timer = setTimeout(() => {
+      fetchEvents();
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [search, category, status]);
+
+  // CRUD submissions
+  const handleCreateOrUpdate = async (formData) => {
+    try {
+      if (editEventData) {
+        // Edit Mode
+        const { data } = await api.put(`/events/${editEventData._id}`, formData);
+        setEvents(events.map((e) => (e._id === editEventData._id ? data : e)));
+      } else {
+        // Create Mode
+        const { data } = await api.post('/events', formData);
+        setEvents([data, ...events]);
       }
-    };
-    fetchProfile();
-  }, []);
+      return true;
+    } catch (err) {
+      console.error(err);
+      alert(err.response?.data?.message || err.response?.data?.errors?.[0]?.msg || 'Action failed.');
+      return false;
+    }
+  };
 
-  if (loading) {
-    return (
-      <div className="flex-grow flex items-center justify-center bg-gray-50">
-        <Loader size="large" />
-      </div>
-    );
-  }
+  const handleDeleteConfirm = async () => {
+    if (!deleteEventId) return;
+    try {
+      await api.delete(`/events/${deleteEventId}`);
+      setEvents(events.filter((e) => e._id !== deleteEventId));
+      setIsConfirmOpen(false);
+      setDeleteEventId(null);
+    } catch (err) {
+      console.error(err);
+      alert(err.response?.data?.message || 'Delete failed.');
+    }
+  };
 
-  if (error) {
-    return (
-      <div className="flex-grow flex items-center justify-center bg-gray-50 px-4">
-        <div className="bg-red-50 border border-red-200 text-red-700 px-6 py-4 rounded-xl max-w-md w-full text-center">
-          <p className="font-semibold mb-2">Error Loading Profile</p>
-          <p className="text-sm">{error}</p>
-        </div>
-      </div>
-    );
-  }
+  const handleOpenEdit = (event) => {
+    setEditEventData(event);
+    setIsModalOpen(true);
+  };
+
+  const handleOpenCreate = () => {
+    setEditEventData(null);
+    setIsModalOpen(true);
+  };
+
+  const handleOpenDelete = (id) => {
+    setDeleteEventId(id);
+    setIsConfirmOpen(true);
+  };
+
+  // Dashboard Stats Calculations
+  const totalEvents = events.length;
+  const upcomingCount = events.filter((e) => e.status === 'Upcoming').length;
+  const completedCount = events.filter((e) => e.status === 'Completed').length;
+  const cancelledCount = events.filter((e) => e.status === 'Cancelled').length;
 
   return (
     <div className="flex-grow bg-gray-50 py-10 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-4xl mx-auto">
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden mb-8">
-          <div className="bg-gradient-to-r from-red-800 to-red-600 px-6 py-8 sm:px-8 text-white flex flex-col sm:flex-row items-center sm:justify-between gap-4">
-            <div className="flex items-center space-x-4">
-              <div className="bg-white/10 p-3.5 rounded-full border border-white/20">
-                <Shield className="h-10 w-10 text-white" />
-              </div>
-              <div className="text-center sm:text-left">
-                <h1 className="text-2xl font-bold">{profile?.username}</h1>
-                <p className="text-red-100 text-sm">Coordinator Email: {profile?.email}</p>
-              </div>
+      <div className="max-w-7xl mx-auto space-y-8">
+        
+        {/* Dashboard Header */}
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
+          <div>
+            <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight flex items-center gap-2">
+              <Shield className="h-8 w-8 text-primary-600" />
+              Event Management Dashboard
+            </h1>
+            <p className="text-sm text-gray-500 mt-1">Manage events catalogue, registrations deadlines, and venue details.</p>
+          </div>
+          <button
+            onClick={handleOpenCreate}
+            className="flex items-center justify-center gap-1.5 bg-primary-600 hover:bg-primary-700 text-white font-bold px-4 py-2.5 rounded-lg text-sm shadow-sm transition duration-150"
+          >
+            <Plus className="h-5 w-5" />
+            <span>Create Event</span>
+          </button>
+        </div>
+
+        {/* Stats Grid */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-xs flex items-center gap-4">
+            <div className="bg-primary-50 p-3 rounded-lg text-primary-600">
+              <Calendar className="h-6 w-6" />
             </div>
-            <span className="bg-white/20 text-white px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider">
-              {profile?.role} Profile
-            </span>
+            <div>
+              <p className="text-xs text-gray-500 font-semibold uppercase tracking-wider">Total Events</p>
+              <h3 className="text-2xl font-black text-gray-900 mt-0.5">{totalEvents}</h3>
+            </div>
           </div>
 
-          <div className="p-6 sm:p-8">
-            <h2 className="text-lg font-bold text-gray-900 mb-6 pb-2 border-b border-gray-100">
-              Account Metadata
-            </h2>
+          <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-xs flex items-center gap-4">
+            <div className="bg-blue-50 p-3 rounded-lg text-blue-600">
+              <CalendarDays className="h-6 w-6" />
+            </div>
+            <div>
+              <p className="text-xs text-gray-500 font-semibold uppercase tracking-wider">Upcoming</p>
+              <h3 className="text-2xl font-black text-blue-900 mt-0.5">{upcomingCount}</h3>
+            </div>
+          </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="flex items-start space-x-3">
-                <User className="h-5 w-5 text-red-600 mt-0.5" />
-                <div>
-                  <h3 className="text-xs text-gray-500 font-semibold uppercase tracking-wider">Role</h3>
-                  <p className="text-base text-gray-900 font-medium">{profile?.role}</p>
-                </div>
-              </div>
+          <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-xs flex items-center gap-4">
+            <div className="bg-green-50 p-3 rounded-lg text-green-600">
+              <Award className="h-6 w-6" />
+            </div>
+            <div>
+              <p className="text-xs text-gray-500 font-semibold uppercase tracking-wider">Completed</p>
+              <h3 className="text-2xl font-black text-green-900 mt-0.5">{completedCount}</h3>
+            </div>
+          </div>
 
-              <div className="flex items-start space-x-3">
-                <Mail className="h-5 w-5 text-red-600 mt-0.5" />
-                <div>
-                  <h3 className="text-xs text-gray-500 font-semibold uppercase tracking-wider">Email</h3>
-                  <p className="text-base text-gray-900 font-medium">{profile?.email}</p>
-                </div>
-              </div>
-
-              <div className="flex items-start space-x-3">
-                <Calendar className="h-5 w-5 text-red-600 mt-0.5" />
-                <div>
-                  <h3 className="text-xs text-gray-500 font-semibold uppercase tracking-wider">Created On</h3>
-                  <p className="text-base text-gray-900 font-medium">
-                    {profile?.createdAt ? new Date(profile.createdAt).toLocaleDateString() : 'N/A'}
-                  </p>
-                </div>
-              </div>
+          <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-xs flex items-center gap-4">
+            <div className="bg-red-50 p-3 rounded-lg text-red-600">
+              <XCircle className="h-6 w-6" />
+            </div>
+            <div>
+              <p className="text-xs text-gray-500 font-semibold uppercase tracking-wider">Cancelled</p>
+              <h3 className="text-2xl font-black text-red-900 mt-0.5">{cancelledCount}</h3>
             </div>
           </div>
         </div>
 
-        {/* Quick actions placeholder */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 flex items-start space-x-4">
-            <div className="bg-red-50 p-3 rounded-lg text-red-600">
-              <FilePlus className="h-6 w-6" />
-            </div>
-            <div>
-              <h3 className="font-bold text-gray-900 text-lg mb-1">Create Event</h3>
-              <p className="text-gray-600 text-sm mb-2">Publish a new event to the student registrations catalog.</p>
-              <span className="text-xs font-semibold text-red-600 bg-red-50 px-2 py-0.5 rounded">Upcoming in Phase 2</span>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 flex items-start space-x-4">
-            <div className="bg-red-50 p-3 rounded-lg text-red-600">
-              <LayoutGrid className="h-6 w-6" />
-            </div>
-            <div>
-              <h3 className="font-bold text-gray-900 text-lg mb-1">Manage Registrations</h3>
-              <p className="text-gray-600 text-sm mb-2">View event signups, attendance records, and student profiles.</p>
-              <span className="text-xs font-semibold text-red-600 bg-red-50 px-2 py-0.5 rounded">Upcoming in Phase 2</span>
-            </div>
+        {/* Filter Controls Bar */}
+        <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-xs flex flex-col md:flex-row justify-between items-stretch md:items-center gap-4">
+          <SearchBar search={search} setSearch={setSearch} placeholder="Search by title, venue, or organizer..." />
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 shrink-0">
+            <FilterDropdown
+              value={category}
+              setValue={setCategory}
+              options={categories}
+              label="Category"
+              allLabel="All Categories"
+            />
+            <FilterDropdown
+              value={status}
+              setValue={setStatus}
+              options={statuses}
+              label="Status"
+              allLabel="All Statuses"
+            />
           </div>
         </div>
+
+        {/* Main List Table */}
+        {loading ? (
+          <div className="py-20">
+            <Loader size="large" />
+          </div>
+        ) : error ? (
+          <div className="bg-red-50 border border-red-200 text-red-700 px-6 py-4 rounded-xl text-center">
+            {error}
+          </div>
+        ) : (
+          <EventTable
+            events={events}
+            onEdit={handleOpenEdit}
+            onDelete={handleOpenDelete}
+          />
+        )}
       </div>
+
+      {/* Popups/Modals */}
+      <EventModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onSubmit={handleCreateOrUpdate}
+        eventData={editEventData}
+        title={editEventData ? 'Modify Event' : 'Publish New Event'}
+      />
+
+      <ConfirmationDialog
+        isOpen={isConfirmOpen}
+        title="Confirm Event Deletion"
+        message="Are you sure you want to delete this event? This action cannot be undone."
+        onConfirm={handleDeleteConfirm}
+        onCancel={() => setIsConfirmOpen(false)}
+        confirmText="Delete"
+        cancelText="Cancel"
+      />
     </div>
   );
 };
