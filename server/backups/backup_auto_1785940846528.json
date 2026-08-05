@@ -1,0 +1,528 @@
+{
+  "backupDate": "2026-08-05T14:40:46.528Z",
+  "version": "1.0.0",
+  "data": {
+    "SystemSetting": [
+      {
+        "key": "appName",
+        "value": "Sri Vasavi Event Management Portal",
+        "createdAt": "2026-08-05T14:40:44.000Z",
+        "updatedAt": "2026-08-05T14:40:44.000Z"
+      },
+      {
+        "key": "certificateTemplate",
+        "value": "{\"title\":\"Certificate of Participation\",\"body\":\"This is to certify that {{name}} of department {{department}} has successfully participated in the event {{event}} organized by {{college}} on {{date}}.\"}",
+        "createdAt": "2026-08-05T14:40:44.000Z",
+        "updatedAt": "2026-08-05T14:40:44.000Z"
+      },
+      {
+        "key": "collegeLogo",
+        "value": "/sri_vasavi_logo.png",
+        "createdAt": "2026-08-05T14:40:44.000Z",
+        "updatedAt": "2026-08-05T14:40:44.000Z"
+      },
+      {
+        "key": "collegeName",
+        "value": "Sri Vasavi Engineering College",
+        "createdAt": "2026-08-05T14:40:44.000Z",
+        "updatedAt": "2026-08-05T14:40:44.000Z"
+      },
+      {
+        "key": "defaultEventCapacity",
+        "value": "120",
+        "createdAt": "2026-08-05T14:40:44.000Z",
+        "updatedAt": "2026-08-05T14:40:44.000Z"
+      },
+      {
+        "key": "maintenanceMode",
+        "value": "false",
+        "createdAt": "2026-08-05T14:40:44.000Z",
+        "updatedAt": "2026-08-05T14:40:44.000Z"
+      },
+      {
+        "key": "registrationRules",
+        "value": "{\"maxRegistrationsPerStudent\":5}",
+        "createdAt": "2026-08-05T14:40:44.000Z",
+        "updatedAt": "2026-08-05T14:40:44.000Z"
+      },
+      {
+        "key": "smtpHost",
+        "value": "smtp.mailtrap.io",
+        "createdAt": "2026-08-05T14:40:44.000Z",
+        "updatedAt": "2026-08-05T14:40:44.000Z"
+      },
+      {
+        "key": "smtpPass",
+        "value": "",
+        "createdAt": "2026-08-05T14:40:44.000Z",
+        "updatedAt": "2026-08-05T14:40:44.000Z"
+      },
+      {
+        "key": "smtpPort",
+        "value": "2525",
+        "createdAt": "2026-08-05T14:40:44.000Z",
+        "updatedAt": "2026-08-05T14:40:44.000Z"
+      },
+      {
+        "key": "smtpSecure",
+        "value": "false",
+        "createdAt": "2026-08-05T14:40:44.000Z",
+        "updatedAt": "2026-08-05T14:40:44.000Z"
+      },
+      {
+        "key": "smtpUser",
+        "value": "",
+        "createdAt": "2026-08-05T14:40:44.000Z",
+        "updatedAt": "2026-08-05T14:40:44.000Z"
+      },
+      {
+        "key": "theme",
+        "value": "light",
+        "createdAt": "2026-08-05T14:40:44.000Z",
+        "updatedAt": "2026-08-05T14:40:44.000Z"
+      }
+    ],
+    "Admin": [
+      {
+        "id": 1,
+        "username": "admin",
+        "email": "admin@college.edu",
+        "password": "$2a$10$XgeRm0OLfOs2qqz4hAe4v.MsuhsX9EUc1UBQy3n9.xpCKGetIj30i",
+        "role": "Admin",
+        "department": null,
+        "permissions": "[]",
+        "isActive": true,
+        "profileImage": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=400",
+        "resetPasswordToken": null,
+        "resetPasswordExpire": null,
+        "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwicm9sZSI6IkFkbWluIiwiaWF0IjoxNzg1OTQwODQ1LCJleHAiOjE3ODY1NDU2NDV9.rZ_IjJvhSbtWD_xJLxXULvx_2OLVYj5nmSZQqizzlIk",
+        "otpCode": null,
+        "otpExpire": null,
+        "otpAttempts": 0,
+        "passwordHistory": "[]",
+        "failedLoginAttempts": 0,
+        "lockoutUntil": null,
+        "createdAt": "2026-08-05T14:40:44.000Z",
+        "updatedAt": "2026-08-05T14:40:45.000Z"
+      }
+    ],
+    "Student": [
+      {
+        "id": 1,
+        "fullName": "Alice E2E Updated",
+        "rollNumber": "CS2026111",
+        "email": "alice.e2e@college.edu",
+        "department": "Artificial Intelligence",
+        "year": "4th Year",
+        "password": "$2a$10$hxTJw592qSMQEbTkr4u.Ru4J5VazkhwVSMtswZfJCCyWx8ombPJ7K",
+        "profileImage": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=400",
+        "resetPasswordToken": null,
+        "resetPasswordExpire": null,
+        "isVerified": true,
+        "isActive": true,
+        "verificationToken": null,
+        "refreshToken": null,
+        "verificationTokenExpire": null,
+        "otpCode": null,
+        "otpExpire": null,
+        "otpAttempts": 0,
+        "passwordHistory": "[]",
+        "failedLoginAttempts": 0,
+        "lockoutUntil": null,
+        "referralCode": "REF-ZIEGEC",
+        "referredBy": null,
+        "createdAt": "2026-08-05T14:40:45.000Z",
+        "updatedAt": "2026-08-05T14:40:46.000Z"
+      }
+    ],
+    "Event": [
+      {
+        "id": 1,
+        "title": "E2E Annual Hackathon 2026",
+        "description": "Comprehensive software building hackathon.",
+        "category": "Hackathon",
+        "venue": "Grand Auditorium - Hall A",
+        "eventDate": "2026-12-25T00:00:00.000Z",
+        "startTime": "09:00",
+        "endTime": "18:00",
+        "isTemplate": false,
+        "registrationDeadline": "2026-12-20T00:00:00.000Z",
+        "organizer": "Innovation Lab",
+        "capacity": 10,
+        "availableSeats": 10,
+        "image": "https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?auto=format&fit=crop&q=80&w=800",
+        "status": "Upcoming",
+        "createdBy": 1,
+        "fee": 0,
+        "isPaid": false,
+        "registrationType": "FREE",
+        "price": "0.00",
+        "reminderSent24h": false,
+        "reminderSent1h": false,
+        "department": "General",
+        "createdAt": "2026-08-05T14:40:45.000Z",
+        "updatedAt": "2026-08-05T14:40:46.000Z"
+      }
+    ],
+    "Registration": [
+      {
+        "id": 1,
+        "studentId": 1,
+        "eventId": 1,
+        "registrationDate": "2026-08-05T14:40:45.000Z",
+        "status": "Cancelled",
+        "qrCodeUrl": "data:image/png;base64,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",
+        "isWinner": false,
+        "createdAt": "2026-08-05T14:40:45.000Z",
+        "updatedAt": "2026-08-05T14:40:46.000Z"
+      }
+    ],
+    "Attendance": [
+      {
+        "id": 1,
+        "registrationId": 1,
+        "eventId": 1,
+        "studentId": 1,
+        "attendanceStatus": "Present",
+        "markedAt": "2026-08-05T14:40:45.000Z",
+        "createdAt": "2026-08-05T14:40:45.000Z",
+        "updatedAt": "2026-08-05T14:40:45.000Z"
+      }
+    ],
+    "Volunteer": [],
+    "VolunteerTask": [],
+    "Certificate": [
+      {
+        "id": 1,
+        "registrationId": 1,
+        "studentId": 1,
+        "eventId": 1,
+        "certificateId": "CERT-2026-0001",
+        "issueDate": "2026-08-05T14:40:45.000Z",
+        "pdfUrl": null,
+        "qrVerificationCode": "CERT-2026-0001",
+        "createdAt": "2026-08-05T14:40:45.000Z",
+        "updatedAt": "2026-08-05T14:40:45.000Z"
+      }
+    ],
+    "Notification": [
+      {
+        "id": 1,
+        "userId": 1,
+        "userRole": "Student",
+        "title": "🏅 Badge Unlocked!",
+        "message": "Awesome job! You've unlocked the badge: \"First Event\". Check it out on your achievements page.",
+        "type": "Badge",
+        "isRead": false,
+        "referenceId": null,
+        "createdAt": "2026-08-05T14:40:45.000Z",
+        "updatedAt": "2026-08-05T14:40:45.000Z"
+      },
+      {
+        "id": 2,
+        "userId": 1,
+        "userRole": "Student",
+        "title": "Attendance Confirmed & Certificate Issued!",
+        "message": "Your attendance for \"E2E Annual Hackathon 2026\" was marked Present via QR Scan. Your participation certificate is ready for download.",
+        "type": "Certificate",
+        "isRead": false,
+        "referenceId": null,
+        "createdAt": "2026-08-05T14:40:46.000Z",
+        "updatedAt": "2026-08-05T14:40:46.000Z"
+      }
+    ],
+    "AuditLog": [
+      {
+        "id": 1,
+        "userId": 1,
+        "userRole": "Admin",
+        "action": "LOGIN",
+        "details": "Admin logged in successfully",
+        "ipAddress": "::ffff:127.0.0.1",
+        "browser": "Unknown",
+        "os": "Unknown",
+        "resource": null,
+        "status": "SUCCESS",
+        "createdAt": "2026-08-05T14:40:45.000Z",
+        "updatedAt": "2026-08-05T14:40:45.000Z"
+      },
+      {
+        "id": 2,
+        "userId": 1,
+        "userRole": "Admin",
+        "action": "EVENT_CREATION",
+        "details": "Event \"E2E Annual Hackathon 2026\" created (ID: 1)",
+        "ipAddress": "::ffff:127.0.0.1",
+        "browser": "Unknown",
+        "os": "Unknown",
+        "resource": null,
+        "status": "SUCCESS",
+        "createdAt": "2026-08-05T14:40:45.000Z",
+        "updatedAt": "2026-08-05T14:40:45.000Z"
+      },
+      {
+        "id": 3,
+        "userId": 1,
+        "userRole": "Student",
+        "action": "REGISTRATION",
+        "details": "Student registered: alice.e2e@college.edu",
+        "ipAddress": "::ffff:127.0.0.1",
+        "browser": "Unknown",
+        "os": "Unknown",
+        "resource": null,
+        "status": "SUCCESS",
+        "createdAt": "2026-08-05T14:40:45.000Z",
+        "updatedAt": "2026-08-05T14:40:45.000Z"
+      },
+      {
+        "id": 4,
+        "userId": 1,
+        "userRole": "Admin",
+        "action": "QR_SCAN_ATTENDANCE",
+        "details": "Scanned registration #1 for Alice E2E Student",
+        "ipAddress": "::ffff:127.0.0.1",
+        "browser": "Unknown",
+        "os": "Unknown",
+        "resource": null,
+        "status": "SUCCESS",
+        "createdAt": "2026-08-05T14:40:46.000Z",
+        "updatedAt": "2026-08-05T14:40:46.000Z"
+      },
+      {
+        "id": 5,
+        "userId": 1,
+        "userRole": "Student",
+        "action": "PROFILE_UPDATE",
+        "details": "Student updated profile",
+        "ipAddress": "::ffff:127.0.0.1",
+        "browser": "Unknown",
+        "os": "Unknown",
+        "resource": null,
+        "status": "SUCCESS",
+        "createdAt": "2026-08-05T14:40:46.000Z",
+        "updatedAt": "2026-08-05T14:40:46.000Z"
+      }
+    ],
+    "EventGallery": [],
+    "Leaderboard": [
+      {
+        "id": 1,
+        "studentId": 1,
+        "points": 55,
+        "eventsAttended": 0,
+        "volunteerHours": 0,
+        "badges": [],
+        "createdAt": "2026-08-05T14:40:45.000Z",
+        "updatedAt": "2026-08-05T14:40:45.000Z"
+      }
+    ],
+    "Badge": [
+      {
+        "id": 1,
+        "name": "First Event",
+        "description": "Registered or attended your first campus event!",
+        "icon": "Award",
+        "ruleType": "first_event",
+        "ruleValue": 1,
+        "isCustom": false,
+        "createdAt": "2026-08-05T14:40:44.000Z",
+        "updatedAt": "2026-08-05T14:40:44.000Z"
+      },
+      {
+        "id": 2,
+        "name": "Event Explorer",
+        "description": "Attended 3 events of different categories.",
+        "icon": "Compass",
+        "ruleType": "events_attended",
+        "ruleValue": 3,
+        "isCustom": false,
+        "createdAt": "2026-08-05T14:40:44.000Z",
+        "updatedAt": "2026-08-05T14:40:44.000Z"
+      },
+      {
+        "id": 3,
+        "name": "Active Participant",
+        "description": "Attended 5 campus events.",
+        "icon": "Flame",
+        "ruleType": "events_attended",
+        "ruleValue": 5,
+        "isCustom": false,
+        "createdAt": "2026-08-05T14:40:44.000Z",
+        "updatedAt": "2026-08-05T14:40:44.000Z"
+      },
+      {
+        "id": 4,
+        "name": "Certificate Collector",
+        "description": "Earned 3 participation certificates.",
+        "icon": "FileBadge",
+        "ruleType": "certificates",
+        "ruleValue": 3,
+        "isCustom": false,
+        "createdAt": "2026-08-05T14:40:44.000Z",
+        "updatedAt": "2026-08-05T14:40:44.000Z"
+      },
+      {
+        "id": 5,
+        "name": "Volunteer Hero",
+        "description": "Completed 3 volunteer tasks.",
+        "icon": "ShieldAlert",
+        "ruleType": "volunteer_tasks",
+        "ruleValue": 3,
+        "isCustom": false,
+        "createdAt": "2026-08-05T14:40:44.000Z",
+        "updatedAt": "2026-08-05T14:40:44.000Z"
+      },
+      {
+        "id": 6,
+        "name": "Gold Volunteer",
+        "description": "Completed 5 volunteer tasks.",
+        "icon": "ShieldCheck",
+        "ruleType": "volunteer_tasks",
+        "ruleValue": 5,
+        "isCustom": false,
+        "createdAt": "2026-08-05T14:40:44.000Z",
+        "updatedAt": "2026-08-05T14:40:44.000Z"
+      },
+      {
+        "id": 7,
+        "name": "Platinum Volunteer",
+        "description": "Completed 10 volunteer tasks.",
+        "icon": "Crown",
+        "ruleType": "volunteer_tasks",
+        "ruleValue": 10,
+        "isCustom": false,
+        "createdAt": "2026-08-05T14:40:44.000Z",
+        "updatedAt": "2026-08-05T14:40:44.000Z"
+      },
+      {
+        "id": 8,
+        "name": "Campus Star",
+        "description": "Accumulated 1000 engagement points.",
+        "icon": "Star",
+        "ruleType": "points",
+        "ruleValue": 1000,
+        "isCustom": false,
+        "createdAt": "2026-08-05T14:40:44.000Z",
+        "updatedAt": "2026-08-05T14:40:44.000Z"
+      },
+      {
+        "id": 9,
+        "name": "Event Champion",
+        "description": "Won a competition event!",
+        "icon": "Trophy",
+        "ruleType": "competition_wins",
+        "ruleValue": 1,
+        "isCustom": false,
+        "createdAt": "2026-08-05T14:40:44.000Z",
+        "updatedAt": "2026-08-05T14:40:44.000Z"
+      },
+      {
+        "id": 10,
+        "name": "Tech Enthusiast",
+        "description": "Attended 3 technology/coding events.",
+        "icon": "Laptop",
+        "ruleType": "custom",
+        "ruleValue": 3,
+        "isCustom": false,
+        "createdAt": "2026-08-05T14:40:44.000Z",
+        "updatedAt": "2026-08-05T14:40:44.000Z"
+      },
+      {
+        "id": 11,
+        "name": "Sports Champion",
+        "description": "Attended or won a sports competition event.",
+        "icon": "Activity",
+        "ruleType": "custom",
+        "ruleValue": 3,
+        "isCustom": false,
+        "createdAt": "2026-08-05T14:40:44.000Z",
+        "updatedAt": "2026-08-05T14:40:44.000Z"
+      },
+      {
+        "id": 12,
+        "name": "Cultural Icon",
+        "description": "Participated in 3 cultural events.",
+        "icon": "Music",
+        "ruleType": "custom",
+        "ruleValue": 3,
+        "isCustom": false,
+        "createdAt": "2026-08-05T14:40:44.000Z",
+        "updatedAt": "2026-08-05T14:40:44.000Z"
+      },
+      {
+        "id": 13,
+        "name": "Innovation Leader",
+        "description": "Won 2 competition events.",
+        "icon": "Lightbulb",
+        "ruleType": "custom",
+        "ruleValue": 2,
+        "isCustom": false,
+        "createdAt": "2026-08-05T14:40:44.000Z",
+        "updatedAt": "2026-08-05T14:40:44.000Z"
+      },
+      {
+        "id": 14,
+        "name": "Community Builder",
+        "description": "Referred 3 students to the events portal.",
+        "icon": "Users",
+        "ruleType": "custom",
+        "ruleValue": 3,
+        "isCustom": false,
+        "createdAt": "2026-08-05T14:40:44.000Z",
+        "updatedAt": "2026-08-05T14:40:44.000Z"
+      }
+    ],
+    "StudentBadge": [
+      {
+        "id": 1,
+        "studentId": 1,
+        "badgeId": 1,
+        "earnedDate": "2026-08-05T14:40:45.000Z",
+        "createdAt": "2026-08-05T14:40:45.000Z",
+        "updatedAt": "2026-08-05T14:40:45.000Z"
+      }
+    ],
+    "ActivityLog": [
+      {
+        "id": 1,
+        "studentId": 1,
+        "type": "REGISTER_EVENT",
+        "pointsAwarded": 10,
+        "description": "Registered for event: E2E Annual Hackathon 2026",
+        "referenceId": 1,
+        "createdAt": "2026-08-05T14:40:45.000Z",
+        "updatedAt": "2026-08-05T14:40:45.000Z"
+      },
+      {
+        "id": 2,
+        "studentId": 1,
+        "type": "UNLOCK_BADGE",
+        "pointsAwarded": 0,
+        "description": "Unlocked badge: First Event",
+        "referenceId": 1,
+        "createdAt": "2026-08-05T14:40:45.000Z",
+        "updatedAt": "2026-08-05T14:40:45.000Z"
+      },
+      {
+        "id": 3,
+        "studentId": 1,
+        "type": "ATTEND_EVENT",
+        "pointsAwarded": 25,
+        "description": "Attended event: E2E Annual Hackathon 2026",
+        "referenceId": 1,
+        "createdAt": "2026-08-05T14:40:45.000Z",
+        "updatedAt": "2026-08-05T14:40:45.000Z"
+      },
+      {
+        "id": 4,
+        "studentId": 1,
+        "type": "CERTIFICATE_EARNED",
+        "pointsAwarded": 20,
+        "description": "Earned Certificate for event: E2E Annual Hackathon 2026",
+        "referenceId": 1,
+        "createdAt": "2026-08-05T14:40:45.000Z",
+        "updatedAt": "2026-08-05T14:40:45.000Z"
+      }
+    ]
+  }
+}

@@ -106,6 +106,15 @@ const StudentLogin = ({ setToast }) => {
                 placeholder="Password"
               />
               {formErrors.password && <p className="mt-1 text-xs text-red-500">{formErrors.password}</p>}
+              
+              <div className="flex justify-end mt-2">
+                <Link
+                  to="/forgot-password"
+                  className="text-xs font-semibold text-primary-600 hover:text-primary-500 transition-colors"
+                >
+                  Forgot Password?
+                </Link>
+              </div>
             </div>
           </div>
 

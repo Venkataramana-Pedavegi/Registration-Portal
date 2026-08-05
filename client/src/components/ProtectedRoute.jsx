@@ -15,15 +15,14 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
   }
 
   if (!token) {
-    const isAskingForAdmin = allowedRoles?.some((r) =>
-      ['Admin', 'Super Admin', 'Event Coordinator', 'Faculty Coordinator'].includes(r)
-    );
+    const adminRolesList = ['Admin', 'Super Admin', 'Event Coordinator', 'Faculty Coordinator', 'Coordinator', 'Volunteer Coordinator'];
+    const isAskingForAdmin = allowedRoles?.some((r) => adminRolesList.includes(r));
     const redirectPath = isAskingForAdmin ? '/admin-login' : '/student-login';
     return <Navigate to={redirectPath} replace />;
   }
 
   if (allowedRoles) {
-    const adminGroup = ['Admin', 'Super Admin', 'Event Coordinator', 'Faculty Coordinator'];
+    const adminGroup = ['Admin', 'Super Admin', 'Event Coordinator', 'Faculty Coordinator', 'Coordinator', 'Volunteer Coordinator'];
     const studentGroup = ['Student', 'Volunteer'];
 
     const userHasAccess = allowedRoles.some((allowed) => {

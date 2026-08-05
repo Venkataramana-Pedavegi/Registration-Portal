@@ -9,7 +9,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 import ErrorBoundary from './components/ErrorBoundary';
 import Loader from './components/Loader';
 import Toast from './components/Toast';
-import AIChatbotWidget from './components/AIChatbotWidget';
+import AIChatWidget from './components/AIChatWidget';
 
 // Lazy Loaded Pages
 const Home = lazy(() => import('./pages/Home'));
@@ -47,9 +47,26 @@ const PublicCertificateVerify = lazy(() => import('./pages/PublicCertificateVeri
 const VolunteerManagement = lazy(() => import('./pages/VolunteerManagement'));
 const LeaderboardPage = lazy(() => import('./pages/LeaderboardPage'));
 const Gallery = lazy(() => import('./pages/Gallery'));
+// Sprint 6 Enterprise Admin Pages
+const AdminManagement = lazy(() => import('./pages/AdminManagement'));
+const RoleManagement = lazy(() => import('./pages/RoleManagement'));
+const Permissions = lazy(() => import('./pages/Permissions'));
+const BulkOperations = lazy(() => import('./pages/BulkOperations'));
+const Settings = lazy(() => import('./pages/Settings'));
+const BackupManager = lazy(() => import('./pages/BackupManager'));
+const AnnouncementManager = lazy(() => import('./pages/AnnouncementManager'));
+const StudentManager = lazy(() => import('./pages/StudentManager'));
+const VolunteerManager = lazy(() => import('./pages/VolunteerManager'));
+const EventTemplates = lazy(() => import('./pages/EventTemplates'));
 const VerifyEmail = lazy(() => import('./pages/VerifyEmail'));
 const Achievements = lazy(() => import('./pages/Achievements'));
 const Badges = lazy(() => import('./pages/Badges'));
+
+// Sprint 8 AI Pages
+const AIRecommendations = lazy(() => import('./pages/AIRecommendations'));
+const AISearch = lazy(() => import('./pages/AISearch'));
+const AIAssistant = lazy(() => import('./pages/AIAssistant'));
+const AIFeedbackAnalysis = lazy(() => import('./pages/AIFeedbackAnalysis'));
 
 function App() {
   const [toast, setToast] = useState(null);
@@ -77,7 +94,7 @@ function App() {
                   <Route path="/student-register" element={<StudentRegister setToast={setToast} />} />
                   <Route path="/student-login" element={<StudentLogin setToast={setToast} />} />
                   <Route path="/admin-login" element={<AdminLogin setToast={setToast} />} />
-                  <Route path="/forgot-password" element={<ForgotPassword />} />
+                  <Route path="/forgot-password" element={<ForgotPassword setToast={setToast} />} />
                   <Route path="/reset-password/:token" element={<ResetPassword />} />
                   <Route path="/verify-email" element={<VerifyEmail />} />
                   <Route path="/500" element={<Error500 />} />
@@ -199,6 +216,87 @@ function App() {
                       </ProtectedRoute>
                     }
                   />
+                  {/* Sprint 6 Enterprise Admin Routes */}
+                  <Route
+                    path="/admin/admins"
+                    element={
+                      <ProtectedRoute allowedRoles={['Admin']}>
+                        <AdminManagement />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/admin/roles"
+                    element={
+                      <ProtectedRoute allowedRoles={['Admin']}>
+                        <RoleManagement />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/admin/permissions"
+                    element={
+                      <ProtectedRoute allowedRoles={['Admin']}>
+                        <Permissions />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/admin/bulk"
+                    element={
+                      <ProtectedRoute allowedRoles={['Admin']}>
+                        <BulkOperations />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/admin/system-settings"
+                    element={
+                      <ProtectedRoute allowedRoles={['Admin']}>
+                        <Settings />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/admin/backups"
+                    element={
+                      <ProtectedRoute allowedRoles={['Admin']}>
+                        <BackupManager />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/admin/announcements"
+                    element={
+                      <ProtectedRoute allowedRoles={['Admin']}>
+                        <AnnouncementManager />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/admin/students"
+                    element={
+                      <ProtectedRoute allowedRoles={['Admin']}>
+                        <StudentManager />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/admin/volunteer-network"
+                    element={
+                      <ProtectedRoute allowedRoles={['Admin']}>
+                        <VolunteerManager />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/admin/templates"
+                    element={
+                      <ProtectedRoute allowedRoles={['Admin']}>
+                        <EventTemplates />
+                      </ProtectedRoute>
+                    }
+                  />
                   <Route
                     path="/audit-logs"
                     element={
@@ -258,6 +356,39 @@ function App() {
                     }
                   />
 
+                  <Route
+                    path="/ai-recommendations"
+                    element={
+                      <ProtectedRoute allowedRoles={['Student', 'Admin']}>
+                        <AIRecommendations />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/ai-search"
+                    element={
+                      <ProtectedRoute allowedRoles={['Admin']}>
+                        <AISearch />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/ai-assistant"
+                    element={
+                      <ProtectedRoute allowedRoles={['Student', 'Admin']}>
+                        <AIAssistant />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/ai-feedback-analysis"
+                    element={
+                      <ProtectedRoute allowedRoles={['Admin']}>
+                        <AIFeedbackAnalysis />
+                      </ProtectedRoute>
+                    }
+                  />
+
                   <Route path="*" element={<Error404 />} />
                 </Routes>
               </Suspense>
@@ -265,7 +396,7 @@ function App() {
             <Footer />
             
             {/* Floating AI Chatbot Widget */}
-            <AIChatbotWidget />
+            <AIChatWidget />
 
             {toast && (
               <Toast

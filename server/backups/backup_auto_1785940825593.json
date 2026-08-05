@@ -1,0 +1,542 @@
+{
+  "backupDate": "2026-08-05T14:40:25.593Z",
+  "version": "1.0.0",
+  "data": {
+    "SystemSetting": [
+      {
+        "key": "appName",
+        "value": "Sri Vasavi Event Management Portal",
+        "createdAt": "2026-08-05T14:40:23.000Z",
+        "updatedAt": "2026-08-05T14:40:23.000Z"
+      },
+      {
+        "key": "certificateTemplate",
+        "value": "{\"title\":\"Certificate of Participation\",\"body\":\"This is to certify that {{name}} of department {{department}} has successfully participated in the event {{event}} organized by {{college}} on {{date}}.\"}",
+        "createdAt": "2026-08-05T14:40:23.000Z",
+        "updatedAt": "2026-08-05T14:40:23.000Z"
+      },
+      {
+        "key": "collegeLogo",
+        "value": "/sri_vasavi_logo.png",
+        "createdAt": "2026-08-05T14:40:23.000Z",
+        "updatedAt": "2026-08-05T14:40:23.000Z"
+      },
+      {
+        "key": "collegeName",
+        "value": "Sri Vasavi Engineering College",
+        "createdAt": "2026-08-05T14:40:23.000Z",
+        "updatedAt": "2026-08-05T14:40:23.000Z"
+      },
+      {
+        "key": "defaultEventCapacity",
+        "value": "120",
+        "createdAt": "2026-08-05T14:40:23.000Z",
+        "updatedAt": "2026-08-05T14:40:23.000Z"
+      },
+      {
+        "key": "maintenanceMode",
+        "value": "false",
+        "createdAt": "2026-08-05T14:40:23.000Z",
+        "updatedAt": "2026-08-05T14:40:23.000Z"
+      },
+      {
+        "key": "registrationRules",
+        "value": "{\"maxRegistrationsPerStudent\":5}",
+        "createdAt": "2026-08-05T14:40:23.000Z",
+        "updatedAt": "2026-08-05T14:40:23.000Z"
+      },
+      {
+        "key": "smtpHost",
+        "value": "smtp.mailtrap.io",
+        "createdAt": "2026-08-05T14:40:23.000Z",
+        "updatedAt": "2026-08-05T14:40:23.000Z"
+      },
+      {
+        "key": "smtpPass",
+        "value": "",
+        "createdAt": "2026-08-05T14:40:23.000Z",
+        "updatedAt": "2026-08-05T14:40:23.000Z"
+      },
+      {
+        "key": "smtpPort",
+        "value": "2525",
+        "createdAt": "2026-08-05T14:40:23.000Z",
+        "updatedAt": "2026-08-05T14:40:23.000Z"
+      },
+      {
+        "key": "smtpSecure",
+        "value": "false",
+        "createdAt": "2026-08-05T14:40:23.000Z",
+        "updatedAt": "2026-08-05T14:40:23.000Z"
+      },
+      {
+        "key": "smtpUser",
+        "value": "",
+        "createdAt": "2026-08-05T14:40:23.000Z",
+        "updatedAt": "2026-08-05T14:40:23.000Z"
+      },
+      {
+        "key": "theme",
+        "value": "light",
+        "createdAt": "2026-08-05T14:40:23.000Z",
+        "updatedAt": "2026-08-05T14:40:23.000Z"
+      }
+    ],
+    "Admin": [
+      {
+        "id": 1,
+        "username": "admin",
+        "email": "admin@college.edu",
+        "password": "$2a$10$agSiGwD.cPJaaxd4mVFT5es.Wm1BdDRb1YmYb9FM4XbDmJqdi1QM6",
+        "role": "Admin",
+        "department": null,
+        "permissions": "[]",
+        "isActive": true,
+        "profileImage": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=400",
+        "resetPasswordToken": null,
+        "resetPasswordExpire": null,
+        "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwicm9sZSI6IkFkbWluIiwiaWF0IjoxNzg1OTQwODIzLCJleHAiOjE3ODY1NDU2MjN9.NNH-P702YCZE8AhKoozcTRumb_lDob9CrN_RaqAPCFY",
+        "otpCode": null,
+        "otpExpire": null,
+        "otpAttempts": 0,
+        "passwordHistory": "[]",
+        "failedLoginAttempts": 0,
+        "lockoutUntil": null,
+        "createdAt": "2026-08-05T14:40:20.000Z",
+        "updatedAt": "2026-08-05T14:40:23.000Z"
+      }
+    ],
+    "Student": [
+      {
+        "id": 1,
+        "fullName": "Updated Phase5 Student",
+        "rollNumber": "CS2026555",
+        "email": "phase5@college.edu",
+        "department": "Computer Science",
+        "year": "4th Year",
+        "password": "$2a$10$hWJzOBSt7PB1yEZw8EMbAuEWMeNHvDLTn9HZp3MjCJcC0bsiM6Bue",
+        "profileImage": "https://example.com/avatar.png",
+        "resetPasswordToken": null,
+        "resetPasswordExpire": null,
+        "isVerified": true,
+        "isActive": true,
+        "verificationToken": null,
+        "refreshToken": null,
+        "verificationTokenExpire": null,
+        "otpCode": "54877946661c9f1cd0c02b7a80e3da255b2f408d9b2f52b0f949d35ea93091e7",
+        "otpExpire": "2026-08-05T14:50:25.000Z",
+        "otpAttempts": 0,
+        "passwordHistory": "[]",
+        "failedLoginAttempts": 0,
+        "lockoutUntil": null,
+        "referralCode": "REF-QP29X1",
+        "referredBy": null,
+        "createdAt": "2026-08-05T14:40:23.000Z",
+        "updatedAt": "2026-08-05T14:40:25.000Z"
+      }
+    ],
+    "Event": [
+      {
+        "id": 1,
+        "title": "Phase 5 Security Conference",
+        "description": "Enterprise security & cloud architecture.",
+        "category": "Conference",
+        "venue": "Main Auditorium",
+        "eventDate": "2026-12-10T00:00:00.000Z",
+        "startTime": "09:00",
+        "endTime": "17:00",
+        "isTemplate": false,
+        "registrationDeadline": "2026-12-05T00:00:00.000Z",
+        "organizer": "Cybersecurity Cell",
+        "capacity": 50,
+        "availableSeats": 49,
+        "image": "https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?auto=format&fit=crop&q=80&w=800",
+        "status": "Upcoming",
+        "createdBy": 1,
+        "fee": 0,
+        "isPaid": false,
+        "registrationType": "FREE",
+        "price": "0.00",
+        "reminderSent24h": false,
+        "reminderSent1h": false,
+        "department": "General",
+        "createdAt": "2026-08-05T14:40:24.000Z",
+        "updatedAt": "2026-08-05T14:40:24.000Z"
+      }
+    ],
+    "Registration": [
+      {
+        "id": 1,
+        "studentId": 1,
+        "eventId": 1,
+        "registrationDate": "2026-08-05T14:40:24.000Z",
+        "status": "Registered",
+        "qrCodeUrl": "data:image/png;base64,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",
+        "isWinner": false,
+        "createdAt": "2026-08-05T14:40:24.000Z",
+        "updatedAt": "2026-08-05T14:40:24.000Z"
+      }
+    ],
+    "Attendance": [
+      {
+        "id": 1,
+        "registrationId": 1,
+        "eventId": 1,
+        "studentId": 1,
+        "attendanceStatus": "Present",
+        "markedAt": "2026-08-05T14:40:25.000Z",
+        "createdAt": "2026-08-05T14:40:25.000Z",
+        "updatedAt": "2026-08-05T14:40:25.000Z"
+      }
+    ],
+    "Volunteer": [],
+    "VolunteerTask": [],
+    "Certificate": [
+      {
+        "id": 1,
+        "registrationId": 1,
+        "studentId": 1,
+        "eventId": 1,
+        "certificateId": "CERT-2026-0001",
+        "issueDate": "2026-08-05T14:40:25.000Z",
+        "pdfUrl": null,
+        "qrVerificationCode": "CERT-2026-0001",
+        "createdAt": "2026-08-05T14:40:25.000Z",
+        "updatedAt": "2026-08-05T14:40:25.000Z"
+      }
+    ],
+    "Notification": [
+      {
+        "id": 1,
+        "userId": 1,
+        "userRole": "Student",
+        "title": "🏅 Badge Unlocked!",
+        "message": "Awesome job! You've unlocked the badge: \"First Event\". Check it out on your achievements page.",
+        "type": "Badge",
+        "isRead": false,
+        "referenceId": null,
+        "createdAt": "2026-08-05T14:40:24.000Z",
+        "updatedAt": "2026-08-05T14:40:24.000Z"
+      },
+      {
+        "id": 2,
+        "userId": 1,
+        "userRole": "Student",
+        "title": "Attendance Confirmed & Certificate Issued!",
+        "message": "Your attendance for \"Phase 5 Security Conference\" was marked Present via QR Scan. Your participation certificate is ready for download.",
+        "type": "Certificate",
+        "isRead": false,
+        "referenceId": null,
+        "createdAt": "2026-08-05T14:40:25.000Z",
+        "updatedAt": "2026-08-05T14:40:25.000Z"
+      }
+    ],
+    "AuditLog": [
+      {
+        "id": 1,
+        "userId": 1,
+        "userRole": "Admin",
+        "action": "LOGIN",
+        "details": "Admin logged in successfully",
+        "ipAddress": "::ffff:127.0.0.1",
+        "browser": "Unknown",
+        "os": "Unknown",
+        "resource": null,
+        "status": "SUCCESS",
+        "createdAt": "2026-08-05T14:40:23.000Z",
+        "updatedAt": "2026-08-05T14:40:23.000Z"
+      },
+      {
+        "id": 2,
+        "userId": 1,
+        "userRole": "Student",
+        "action": "REGISTRATION",
+        "details": "Student registered: phase5@college.edu",
+        "ipAddress": "::ffff:127.0.0.1",
+        "browser": "Unknown",
+        "os": "Unknown",
+        "resource": null,
+        "status": "SUCCESS",
+        "createdAt": "2026-08-05T14:40:23.000Z",
+        "updatedAt": "2026-08-05T14:40:23.000Z"
+      },
+      {
+        "id": 3,
+        "userId": 1,
+        "userRole": "Admin",
+        "action": "EVENT_CREATION",
+        "details": "Event \"Phase 5 Security Conference\" created (ID: 1)",
+        "ipAddress": "::ffff:127.0.0.1",
+        "browser": "Unknown",
+        "os": "Unknown",
+        "resource": null,
+        "status": "SUCCESS",
+        "createdAt": "2026-08-05T14:40:24.000Z",
+        "updatedAt": "2026-08-05T14:40:24.000Z"
+      },
+      {
+        "id": 4,
+        "userId": 1,
+        "userRole": "Student",
+        "action": "PROFILE_UPDATE",
+        "details": "Student updated profile",
+        "ipAddress": "::ffff:127.0.0.1",
+        "browser": "Unknown",
+        "os": "Unknown",
+        "resource": null,
+        "status": "SUCCESS",
+        "createdAt": "2026-08-05T14:40:25.000Z",
+        "updatedAt": "2026-08-05T14:40:25.000Z"
+      },
+      {
+        "id": 5,
+        "userId": 1,
+        "userRole": "Student",
+        "action": "FORGOT_PASSWORD_REQUEST",
+        "details": "OTP generated for phase5@college.edu",
+        "ipAddress": "::ffff:127.0.0.1",
+        "browser": "Unknown",
+        "os": "Unknown",
+        "resource": null,
+        "status": "SUCCESS",
+        "createdAt": "2026-08-05T14:40:25.000Z",
+        "updatedAt": "2026-08-05T14:40:25.000Z"
+      },
+      {
+        "id": 6,
+        "userId": 1,
+        "userRole": "Admin",
+        "action": "QR_SCAN_ATTENDANCE",
+        "details": "Scanned registration #1 for Updated Phase5 Student",
+        "ipAddress": "::ffff:127.0.0.1",
+        "browser": "Unknown",
+        "os": "Unknown",
+        "resource": null,
+        "status": "SUCCESS",
+        "createdAt": "2026-08-05T14:40:25.000Z",
+        "updatedAt": "2026-08-05T14:40:25.000Z"
+      }
+    ],
+    "EventGallery": [],
+    "Leaderboard": [
+      {
+        "id": 1,
+        "studentId": 1,
+        "points": 55,
+        "eventsAttended": 0,
+        "volunteerHours": 0,
+        "badges": [],
+        "createdAt": "2026-08-05T14:40:24.000Z",
+        "updatedAt": "2026-08-05T14:40:25.000Z"
+      }
+    ],
+    "Badge": [
+      {
+        "id": 1,
+        "name": "First Event",
+        "description": "Registered or attended your first campus event!",
+        "icon": "Award",
+        "ruleType": "first_event",
+        "ruleValue": 1,
+        "isCustom": false,
+        "createdAt": "2026-08-05T14:40:23.000Z",
+        "updatedAt": "2026-08-05T14:40:23.000Z"
+      },
+      {
+        "id": 2,
+        "name": "Event Explorer",
+        "description": "Attended 3 events of different categories.",
+        "icon": "Compass",
+        "ruleType": "events_attended",
+        "ruleValue": 3,
+        "isCustom": false,
+        "createdAt": "2026-08-05T14:40:23.000Z",
+        "updatedAt": "2026-08-05T14:40:23.000Z"
+      },
+      {
+        "id": 3,
+        "name": "Active Participant",
+        "description": "Attended 5 campus events.",
+        "icon": "Flame",
+        "ruleType": "events_attended",
+        "ruleValue": 5,
+        "isCustom": false,
+        "createdAt": "2026-08-05T14:40:23.000Z",
+        "updatedAt": "2026-08-05T14:40:23.000Z"
+      },
+      {
+        "id": 4,
+        "name": "Certificate Collector",
+        "description": "Earned 3 participation certificates.",
+        "icon": "FileBadge",
+        "ruleType": "certificates",
+        "ruleValue": 3,
+        "isCustom": false,
+        "createdAt": "2026-08-05T14:40:23.000Z",
+        "updatedAt": "2026-08-05T14:40:23.000Z"
+      },
+      {
+        "id": 5,
+        "name": "Volunteer Hero",
+        "description": "Completed 3 volunteer tasks.",
+        "icon": "ShieldAlert",
+        "ruleType": "volunteer_tasks",
+        "ruleValue": 3,
+        "isCustom": false,
+        "createdAt": "2026-08-05T14:40:23.000Z",
+        "updatedAt": "2026-08-05T14:40:23.000Z"
+      },
+      {
+        "id": 6,
+        "name": "Gold Volunteer",
+        "description": "Completed 5 volunteer tasks.",
+        "icon": "ShieldCheck",
+        "ruleType": "volunteer_tasks",
+        "ruleValue": 5,
+        "isCustom": false,
+        "createdAt": "2026-08-05T14:40:23.000Z",
+        "updatedAt": "2026-08-05T14:40:23.000Z"
+      },
+      {
+        "id": 7,
+        "name": "Platinum Volunteer",
+        "description": "Completed 10 volunteer tasks.",
+        "icon": "Crown",
+        "ruleType": "volunteer_tasks",
+        "ruleValue": 10,
+        "isCustom": false,
+        "createdAt": "2026-08-05T14:40:23.000Z",
+        "updatedAt": "2026-08-05T14:40:23.000Z"
+      },
+      {
+        "id": 8,
+        "name": "Campus Star",
+        "description": "Accumulated 1000 engagement points.",
+        "icon": "Star",
+        "ruleType": "points",
+        "ruleValue": 1000,
+        "isCustom": false,
+        "createdAt": "2026-08-05T14:40:23.000Z",
+        "updatedAt": "2026-08-05T14:40:23.000Z"
+      },
+      {
+        "id": 9,
+        "name": "Event Champion",
+        "description": "Won a competition event!",
+        "icon": "Trophy",
+        "ruleType": "competition_wins",
+        "ruleValue": 1,
+        "isCustom": false,
+        "createdAt": "2026-08-05T14:40:23.000Z",
+        "updatedAt": "2026-08-05T14:40:23.000Z"
+      },
+      {
+        "id": 10,
+        "name": "Tech Enthusiast",
+        "description": "Attended 3 technology/coding events.",
+        "icon": "Laptop",
+        "ruleType": "custom",
+        "ruleValue": 3,
+        "isCustom": false,
+        "createdAt": "2026-08-05T14:40:23.000Z",
+        "updatedAt": "2026-08-05T14:40:23.000Z"
+      },
+      {
+        "id": 11,
+        "name": "Sports Champion",
+        "description": "Attended or won a sports competition event.",
+        "icon": "Activity",
+        "ruleType": "custom",
+        "ruleValue": 3,
+        "isCustom": false,
+        "createdAt": "2026-08-05T14:40:23.000Z",
+        "updatedAt": "2026-08-05T14:40:23.000Z"
+      },
+      {
+        "id": 12,
+        "name": "Cultural Icon",
+        "description": "Participated in 3 cultural events.",
+        "icon": "Music",
+        "ruleType": "custom",
+        "ruleValue": 3,
+        "isCustom": false,
+        "createdAt": "2026-08-05T14:40:23.000Z",
+        "updatedAt": "2026-08-05T14:40:23.000Z"
+      },
+      {
+        "id": 13,
+        "name": "Innovation Leader",
+        "description": "Won 2 competition events.",
+        "icon": "Lightbulb",
+        "ruleType": "custom",
+        "ruleValue": 2,
+        "isCustom": false,
+        "createdAt": "2026-08-05T14:40:23.000Z",
+        "updatedAt": "2026-08-05T14:40:23.000Z"
+      },
+      {
+        "id": 14,
+        "name": "Community Builder",
+        "description": "Referred 3 students to the events portal.",
+        "icon": "Users",
+        "ruleType": "custom",
+        "ruleValue": 3,
+        "isCustom": false,
+        "createdAt": "2026-08-05T14:40:23.000Z",
+        "updatedAt": "2026-08-05T14:40:23.000Z"
+      }
+    ],
+    "StudentBadge": [
+      {
+        "id": 1,
+        "studentId": 1,
+        "badgeId": 1,
+        "earnedDate": "2026-08-05T14:40:24.000Z",
+        "createdAt": "2026-08-05T14:40:24.000Z",
+        "updatedAt": "2026-08-05T14:40:24.000Z"
+      }
+    ],
+    "ActivityLog": [
+      {
+        "id": 1,
+        "studentId": 1,
+        "type": "REGISTER_EVENT",
+        "pointsAwarded": 10,
+        "description": "Registered for event: Phase 5 Security Conference",
+        "referenceId": 1,
+        "createdAt": "2026-08-05T14:40:24.000Z",
+        "updatedAt": "2026-08-05T14:40:24.000Z"
+      },
+      {
+        "id": 2,
+        "studentId": 1,
+        "type": "UNLOCK_BADGE",
+        "pointsAwarded": 0,
+        "description": "Unlocked badge: First Event",
+        "referenceId": 1,
+        "createdAt": "2026-08-05T14:40:24.000Z",
+        "updatedAt": "2026-08-05T14:40:24.000Z"
+      },
+      {
+        "id": 3,
+        "studentId": 1,
+        "type": "ATTEND_EVENT",
+        "pointsAwarded": 25,
+        "description": "Attended event: Phase 5 Security Conference",
+        "referenceId": 1,
+        "createdAt": "2026-08-05T14:40:25.000Z",
+        "updatedAt": "2026-08-05T14:40:25.000Z"
+      },
+      {
+        "id": 4,
+        "studentId": 1,
+        "type": "CERTIFICATE_EARNED",
+        "pointsAwarded": 20,
+        "description": "Earned Certificate for event: Phase 5 Security Conference",
+        "referenceId": 1,
+        "createdAt": "2026-08-05T14:40:25.000Z",
+        "updatedAt": "2026-08-05T14:40:25.000Z"
+      }
+    ]
+  }
+}

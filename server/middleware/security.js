@@ -81,10 +81,23 @@ const sanitizeXSS = (req, res, next) => {
   next();
 };
 
+// Rate limit forgot password requests (Max 5 requests per hour)
+const forgotPasswordRateLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hour
+  max: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  statusCode: 429,
+  message: {
+    message: 'Too many password reset requests from this IP. Please try again after an hour.',
+  },
+});
+
 module.exports = {
   apiRateLimiter,
   authRateLimiter,
   registerRateLimiter,
+  forgotPasswordRateLimiter,
   configureHelmet,
   sanitizeXSS,
   compression,

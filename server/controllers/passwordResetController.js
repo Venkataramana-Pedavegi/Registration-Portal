@@ -4,6 +4,7 @@ const sendEmail = require('../utils/sendEmail');
 const { logAudit } = require('../middleware/auditLogger');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
+const logDebug = require('../utils/debugLogger');
 
 // Helper to determine if user exists and get role
 const findUserByEmail = async (email) => {
@@ -29,28 +30,53 @@ const forgotPassword = async (req, res) => {
     const { user, role } = await findUserByEmail(email);
 
     if (!user) {
-      // Return 200 for security to prevent account enumeration
-      return res.json({ message: 'If an account exists with that email, a password reset link has been sent (OTP code included).' });
+      return res.status(404).json({ message: 'Email is not registered.' });
     }
 
     // Generate 6-digit OTP
     const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
+    logDebug(`[ForgotPassword] Generated plain OTP for ${email}: ${otpCode}`);
     const hashedOtp = crypto.createHash('sha256').update(otpCode).digest('hex');
 
     user.otpCode = hashedOtp;
-    user.otpExpire = new Date(Date.now() + 5 * 60 * 1000); // 5 Minutes
+    user.otpExpire = new Date(Date.now() + 10 * 60 * 1000); // 10 Minutes
     user.otpAttempts = 0;
     await user.save();
 
+    const name = user.fullName || user.username || 'Student';
+
     const html = `
-      <div style="font-family: Arial, sans-serif; padding: 25px; color: #1f2937; max-width: 600px; margin: 0 auto; border: 1px solid #e5e7eb; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
-        <h2 style="color: #2563eb; font-size: 20px; font-weight: bold; border-bottom: 2px solid #eff6ff; padding-bottom: 10px; margin-top: 0;">Sri Vasavi Event Portal - Password Reset OTP</h2>
-        <p>You requested to reset your password. Please use the following 6-digit One-Time Password (OTP) to verify your identity:</p>
-        <div style="font-size: 28px; font-weight: bold; background-color: #f3f4f6; padding: 20px; text-align: center; border-radius: 10px; margin: 25px 0; color: #1e3a8a; letter-spacing: 6px;">
-          ${otpCode}
+      <div style="font-family: 'Segoe UI', Arial, sans-serif; padding: 30px; color: #1f2937; max-width: 600px; margin: 0 auto; border: 1px solid #e5e7eb; border-radius: 16px; background-color: #ffffff; box-shadow: 0 4px 10px rgba(0,0,0,0.03);">
+        <div style="text-align: center; margin-bottom: 20px;">
+          <img src="https://raw.githubusercontent.com/Ramana-pedavegi/Registration-Portal/main/server/sri_vasavi_logo.png" alt="Sri Vasavi Engineering College" style="height: 60px; object-contain; margin-bottom: 10px;" />
+          <h2 style="color: #1e3a8a; font-size: 22px; font-weight: 800; margin: 0;">Sri Vasavi Engineering College</h2>
+          <p style="color: #6b7280; font-size: 13px; margin: 2px 0 0 0;">Campus Event & Registration Portal</p>
         </div>
-        <p style="color: #ef4444; font-weight: 600; font-size: 13px;">⚠️ This OTP is valid for 5 minutes only. Do not share this OTP with anyone.</p>
-        <p style="margin-top: 25px; font-size: 12px; color: #6b7280; border-top: 1px solid #f3f4f6; padding-top: 15px;">If you did not request this password reset, please ignore this email or contact support if you suspect unauthorized access.</p>
+        
+        <div style="border-top: 1px solid #f3f4f6; padding-top: 20px;">
+          <p style="font-size: 14px; line-height: 1.5; color: #374151;">Dear <strong>${name}</strong>,</p>
+          <p style="font-size: 14px; line-height: 1.5; color: #4b5563;">You recently requested to reset the password associated with your account. Use the secure One-Time Password (OTP) verification code below to authorize this change:</p>
+          
+          <div style="font-size: 32px; font-weight: 800; background-color: #f8fafc; border: 1px dashed #cbd5e1; padding: 18px; text-align: center; border-radius: 12px; margin: 25px 0; color: #2563eb; letter-spacing: 8px; font-family: monospace;">
+            ${otpCode}
+          </div>
+          
+          <p style="font-size: 13px; line-height: 1.5; color: #475569;">
+            🕒 This code is valid for exactly <strong>10 minutes</strong>. After expiration, you will need to request a new verification OTP.
+          </p>
+          
+          <div style="margin: 25px 0; padding: 15px; background-color: #fef2f2; border: 1px solid #fee2e2; border-radius: 12px; display: flex; gap: 10px;">
+            <div style="color: #dc2626; font-weight: bold; font-size: 13px;">⚠️ Security Advisory:</div>
+            <div style="color: #991b1b; font-size: 12px; line-height: 1.4;">
+              Do not share this OTP code with anyone under any circumstances. Support staff will never ask for your verification code. If you did not trigger this request, please ignore this notice.
+            </div>
+          </div>
+        </div>
+        
+        <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #f3f4f6; font-size: 11px; color: #94a3b8; text-align: center; line-height: 1.5;">
+          For support inquiries, contact us at <a href="mailto:support@srivasavi.edu" style="color: #2563eb; text-decoration: none;">support@srivasavi.edu</a><br />
+          &copy; ${new Date().getFullYear()} Sri Vasavi Engineering College. All rights reserved.
+        </div>
       </div>
     `;
 

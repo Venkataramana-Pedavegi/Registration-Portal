@@ -20,6 +20,12 @@ const EventGallery = require('./EventGallery');
 const Badge = require('./Badge');
 const StudentBadge = require('./StudentBadge');
 const ActivityLog = require('./ActivityLog');
+const SystemSetting = require('./SystemSetting');
+
+// Sprint 8 AI Models
+const AIConversation = require('./AIConversation');
+const AIRecommendation = require('./AIRecommendation');
+const AIInsight = require('./AIInsight');
 
 // Existing Relationships
 Admin.hasMany(Event, { foreignKey: 'createdBy', onDelete: 'CASCADE' });
@@ -98,6 +104,12 @@ StudentBadge.belongsTo(Badge, { foreignKey: 'badgeId' });
 Student.hasMany(ActivityLog, { foreignKey: 'studentId', onDelete: 'CASCADE' });
 ActivityLog.belongsTo(Student, { foreignKey: 'studentId' });
 
+// Sprint 8 AI Recommendations Relationships
+Student.hasMany(AIRecommendation, { foreignKey: 'studentId', onDelete: 'CASCADE' });
+AIRecommendation.belongsTo(Student, { foreignKey: 'studentId' });
+Event.hasMany(AIRecommendation, { foreignKey: 'eventId', onDelete: 'CASCADE' });
+AIRecommendation.belongsTo(Event, { foreignKey: 'eventId' });
+
 module.exports = {
   sequelize,
   Student,
@@ -119,4 +131,8 @@ module.exports = {
   Badge,
   StudentBadge,
   ActivityLog,
+  SystemSetting,
+  AIConversation,
+  AIRecommendation,
+  AIInsight,
 };

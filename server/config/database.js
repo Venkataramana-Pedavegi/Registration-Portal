@@ -1,6 +1,10 @@
 const { Sequelize } = require('sequelize');
 require('dotenv').config();
 
+if (process.env.NODE_ENV === 'test') {
+  process.env.DB_NAME = 'college_event_registration_test';
+}
+
 const sequelize = new Sequelize(
   process.env.DB_NAME || 'college_event_registration',
   process.env.DB_USER || 'root',
@@ -9,7 +13,7 @@ const sequelize = new Sequelize(
     host: process.env.DB_HOST || '127.0.0.1',
     port: process.env.DB_PORT || 3306,
     dialect: 'mysql',
-    logging: false, // Set to true to debug SQL statements
+    logging: console.log, // Set to true to debug SQL statements
     pool: {
       max: 5,
       min: 0,

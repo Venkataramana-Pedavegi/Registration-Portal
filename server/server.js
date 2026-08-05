@@ -6,6 +6,7 @@ const path = require('path');
 const { sequelize, Admin } = require('./models');
 const { configureHelmet, apiRateLimiter, sanitizeXSS, compression } = require('./middleware/security');
 const { initSocket } = require('./utils/socket');
+const logDebug = require('./utils/debugLogger');
 
 // Load environment variables
 dotenv.config();
@@ -40,12 +41,44 @@ const seedAdmin = async () => {
         username: 'admin',
         email: 'admin@college.edu',
         password: 'adminpassword',
-        role: 'Admin',
+        role: 'Super Admin',
+        permissions: '["Events", "Certificates", "Attendance", "Gallery", "Notifications", "Reports", "Students", "Volunteers", "Settings", "Audit Logs", "Analytics", "Admins"]',
+        isActive: true,
       });
-      console.log('Default Admin seeded successfully: admin@college.edu / adminpassword');
+      console.log('Default Super Admin seeded successfully: admin@college.edu / adminpassword');
     }
   } catch (error) {
     console.error('Error seeding admin user:', error.message);
+  }
+};
+
+// Seed default system settings
+const seedSettings = async () => {
+  try {
+    const { SystemSetting } = require('./models');
+    const settingsCount = await SystemSetting.count();
+    if (settingsCount === 0) {
+      console.log('Seeding default system settings...');
+      const defaults = [
+        { key: 'collegeName', value: 'Sri Vasavi Engineering College' },
+        { key: 'collegeLogo', value: '/sri_vasavi_logo.png' },
+        { key: 'smtpHost', value: 'smtp.mailtrap.io' },
+        { key: 'smtpPort', value: '2525' },
+        { key: 'smtpUser', value: '' },
+        { key: 'smtpPass', value: '' },
+        { key: 'smtpSecure', value: 'false' },
+        { key: 'appName', value: 'Sri Vasavi Event Management Portal' },
+        { key: 'theme', value: 'light' },
+        { key: 'maintenanceMode', value: 'false' },
+        { key: 'defaultEventCapacity', value: '120' },
+        { key: 'registrationRules', value: '{"maxRegistrationsPerStudent":5}' },
+        { key: 'certificateTemplate', value: '{"title":"Certificate of Participation","body":"This is to certify that {{name}} of department {{department}} has successfully participated in the event {{event}} organized by {{college}} on {{date}}."}' },
+      ];
+      await SystemSetting.bulkCreate(defaults);
+      console.log('Default system settings seeded successfully.');
+    }
+  } catch (error) {
+    console.error('Error seeding system settings:', error.message);
   }
 };
 
@@ -68,6 +101,12 @@ const updateDatabaseSchema = async () => {
       await sequelize.query("ALTER TABLE `Events` ADD COLUMN `reminderSent1h` TINYINT(1) NOT NULL DEFAULT 0");
     }
 
+    const [templateCols] = await sequelize.query("SHOW COLUMNS FROM `Events` LIKE 'isTemplate'");
+    if (templateCols.length === 0) {
+      console.log('Adding isTemplate column to Events table...');
+      await sequelize.query("ALTER TABLE `Events` ADD COLUMN `isTemplate` TINYINT(1) NOT NULL DEFAULT 0");
+    }
+
     // Check Students columns
     const [studentVerifyCols] = await sequelize.query("SHOW COLUMNS FROM `Students` LIKE 'isVerified'");
     if (studentVerifyCols.length === 0) {
@@ -82,6 +121,31 @@ const updateDatabaseSchema = async () => {
     if (adminTokenCols.length === 0) {
       console.log('Adding refreshToken to Admins table...');
       await sequelize.query("ALTER TABLE `Admins` ADD COLUMN `refreshToken` VARCHAR(255) NULL");
+    }
+
+    const [adminDeptCols] = await sequelize.query("SHOW COLUMNS FROM `Admins` LIKE 'department'");
+    if (adminDeptCols.length === 0) {
+      console.log('Adding department to Admins table...');
+      await sequelize.query("ALTER TABLE `Admins` ADD COLUMN `department` VARCHAR(255) NULL DEFAULT NULL");
+    }
+
+    const [adminPermCols] = await sequelize.query("SHOW COLUMNS FROM `Admins` LIKE 'permissions'");
+    if (adminPermCols.length === 0) {
+      console.log('Adding permissions to Admins table...');
+      await sequelize.query("ALTER TABLE `Admins` ADD COLUMN `permissions` TEXT NULL");
+    }
+
+    const [adminActiveCols] = await sequelize.query("SHOW COLUMNS FROM `Admins` LIKE 'isActive'");
+    if (adminActiveCols.length === 0) {
+      console.log('Adding isActive to Admins table...');
+      await sequelize.query("ALTER TABLE `Admins` ADD COLUMN `isActive` TINYINT(1) NOT NULL DEFAULT 1");
+    }
+
+    // Check Students isActive column
+    const [studentActiveCols] = await sequelize.query("SHOW COLUMNS FROM `Students` LIKE 'isActive'");
+    if (studentActiveCols.length === 0) {
+      console.log('Adding isActive to Students table...');
+      await sequelize.query("ALTER TABLE `Students` ADD COLUMN `isActive` TINYINT(1) NOT NULL DEFAULT 1");
     }
 
     // Check Notifications columns
@@ -168,22 +232,40 @@ const startDb = async () => {
   await initDb();
   try {
     await sequelize.authenticate();
-    console.log('MySQL Database Connected successfully...');
+    const [[dbResult]] = await sequelize.query('SELECT DATABASE() as db');
+    const dbName = dbResult.db;
+    logDebug(`Database connected: ${dbName}`);
+    logDebug(`Environment: ${process.env.NODE_ENV}`);
     await updateDatabaseSchema();
     await sequelize.sync();
-    console.log('Database tables synchronized successfully.');
+    logDebug('Database tables synchronized successfully.');
     await seedAdmin();
+    await seedSettings();
     // Initialize gamification badges
     const { seedBadges } = require('./services/GamificationService');
     await seedBadges();
     // Initialize background reminders scheduler
     const { initReminderScheduler } = require('./services/reminderService');
     initReminderScheduler();
+    
+    // Initialize background auto backup (runs once on startup, then every 24 hours in production)
+    if (process.env.NODE_ENV === 'production') {
+      const { runAutoBackup } = require('./controllers/backupController');
+      runAutoBackup();
+      setInterval(runAutoBackup, 24 * 60 * 60 * 1000);
+    }
   } catch (err) {
     console.error('Database connection or synchronization failed:', err.message);
   }
 };
-startDb();
+if (process.env.NODE_ENV !== 'test') {
+  startDb();
+}
+
+
+// Maintenance Mode Middleware
+const checkMaintenanceMode = require('./middleware/maintenanceMiddleware');
+app.use('/api', checkMaintenanceMode);
 
 // Core Routes
 app.use('/api/auth', require('./routes/authRoutes'));
@@ -207,6 +289,7 @@ app.use('/api/volunteers', require('./routes/volunteerRoutes'));
 app.use('/api/ai', require('./routes/aiRoutes'));
 app.use('/api/leaderboard', require('./routes/leaderboardRoutes'));
 app.use('/api/gallery', require('./routes/galleryRoutes'));
+app.use('/api/bi', require('./routes/biRoutes'));
 
 // Root Endpoint
 app.get('/', (req, res) => {
@@ -257,15 +340,21 @@ app.use(errorHandler);
 
 const PORT = process.env.PORT || 5000;
 
-const serverInstance = server.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-}).on('error', (err) => {
-  if (err.code === 'EADDRINUSE') {
-    console.error(`\n⚠️  Port ${PORT} is already in use by another running server instance.`);
-    console.error(`Backend is already running and accessible at http://localhost:${PORT}\n`);
-  } else {
-    console.error('Server error:', err);
-  }
-});
+let serverInstance;
+if (process.env.NODE_ENV !== 'test') {
+  serverInstance = server.listen(PORT, () => {
+    logDebug(`Server running on port ${PORT}`);
+    logDebug(`Environment: ${process.env.NODE_ENV}`);
+  }).on('error', (err) => {
+    if (err.code === 'EADDRINUSE') {
+      logDebug(`⚠️  Port ${PORT} is already in use by another running server instance.`);
+      logDebug(`Backend is already running and accessible at http://localhost:${PORT}`);
+    } else {
+      logDebug(`Server error: ${err.message}`);
+    }
+  });
+} else {
+  serverInstance = server;
+}
 
 module.exports = { app, server: serverInstance };

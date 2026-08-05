@@ -243,6 +243,104 @@ const getVolunteerDashboard = async (req, res) => {
   }
 };
 
+const updateVolunteerHours = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { hours } = req.body;
+    const volunteer = await Volunteer.findByPk(id);
+    if (!volunteer) return res.status(404).json({ message: 'Volunteer record not found' });
+    volunteer.hours = parseInt(hours) || 0;
+    await volunteer.save();
+
+    // Update leaderboard volunteer hours too!
+    let leaderboard = await Leaderboard.findOne({ where: { studentId: volunteer.studentId } });
+    if (leaderboard) {
+      const allVol = await Volunteer.findAll({ where: { studentId: volunteer.studentId } });
+      const totalHours = allVol.reduce((acc, curr) => acc + (curr.hours || 0), 0);
+      leaderboard.volunteerHours = totalHours;
+      await leaderboard.save();
+    }
+
+    res.json({ message: 'Volunteer hours updated successfully', volunteer });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+const issueVolunteerCertificate = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const volunteer = await Volunteer.findByPk(id, {
+      include: [{ model: Student }, { model: Event }]
+    });
+    if (!volunteer) return res.status(404).json({ message: 'Volunteer record not found' });
+
+    const certCode = `VOL-CERT-2026-${volunteer.id.toString().padStart(4, '0')}`;
+
+    const { Registration, Certificate, Notification } = require('../models');
+    let registration = await Registration.findOne({
+      where: { studentId: volunteer.studentId, eventId: volunteer.eventId }
+    });
+
+    if (!registration) {
+      registration = await Registration.create({
+        studentId: volunteer.studentId,
+        eventId: volunteer.eventId,
+        status: 'Registered',
+        registrationDate: new Date()
+      });
+    }
+
+    const [certificate, created] = await Certificate.findOrCreate({
+      where: { registrationId: registration.id },
+      defaults: {
+        registrationId: registration.id,
+        studentId: volunteer.studentId,
+        eventId: volunteer.eventId,
+        certificateId: certCode,
+        issueDate: new Date(),
+        qrVerificationCode: certCode,
+      }
+    });
+
+    await Notification.create({
+      userId: volunteer.studentId,
+      userRole: 'Student',
+      title: 'Volunteer Certificate Issued',
+      message: `Your volunteering certificate for event "${volunteer.Event?.title}" is ready!`,
+      type: 'Certificate',
+    }).catch(err => console.error(err));
+
+    res.json({ message: 'Volunteer certificate generated successfully', certificate });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+const getVolunteerAnalytics = async (req, res) => {
+  try {
+    const approvedCount = await Volunteer.count({ where: { status: 'approved' } });
+    const totalHours = await Volunteer.sum('hours', { where: { status: 'approved' } }) || 0;
+    const completedTasks = await VolunteerTask.count({ where: { status: 'completed' } });
+
+    const topVolunteers = await Volunteer.findAll({
+      where: { status: 'approved' },
+      include: [{ model: Student, attributes: ['id', 'fullName', 'rollNumber', 'department'] }],
+      order: [['hours', 'DESC']],
+      limit: 5
+    });
+
+    res.json({
+      approvedCount,
+      totalHours,
+      completedTasks,
+      topVolunteers
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 module.exports = {
   applyVolunteer,
   getVolunteers,
@@ -250,4 +348,7 @@ module.exports = {
   assignTask,
   updateTaskStatus,
   getVolunteerDashboard,
+  updateVolunteerHours,
+  issueVolunteerCertificate,
+  getVolunteerAnalytics,
 };

@@ -1,0 +1,404 @@
+{
+  "backupDate": "2026-08-05T14:53:12.905Z",
+  "version": "1.0.0",
+  "data": {
+    "SystemSetting": [
+      {
+        "key": "appName",
+        "value": "Sri Vasavi Event Management Portal",
+        "createdAt": "2026-08-05T14:43:29.000Z",
+        "updatedAt": "2026-08-05T14:43:29.000Z"
+      },
+      {
+        "key": "certificateTemplate",
+        "value": "{\"title\":\"Certificate of Participation\",\"body\":\"This is to certify that {{name}} of department {{department}} has successfully participated in the event {{event}} organized by {{college}} on {{date}}.\"}",
+        "createdAt": "2026-08-05T14:43:29.000Z",
+        "updatedAt": "2026-08-05T14:43:29.000Z"
+      },
+      {
+        "key": "collegeLogo",
+        "value": "/sri_vasavi_logo.png",
+        "createdAt": "2026-08-05T14:43:29.000Z",
+        "updatedAt": "2026-08-05T14:43:29.000Z"
+      },
+      {
+        "key": "collegeName",
+        "value": "Sri Vasavi Engineering College",
+        "createdAt": "2026-08-05T14:43:29.000Z",
+        "updatedAt": "2026-08-05T14:43:29.000Z"
+      },
+      {
+        "key": "defaultEventCapacity",
+        "value": "120",
+        "createdAt": "2026-08-05T14:43:29.000Z",
+        "updatedAt": "2026-08-05T14:43:29.000Z"
+      },
+      {
+        "key": "maintenanceMode",
+        "value": "false",
+        "createdAt": "2026-08-05T14:43:29.000Z",
+        "updatedAt": "2026-08-05T14:43:29.000Z"
+      },
+      {
+        "key": "registrationRules",
+        "value": "{\"maxRegistrationsPerStudent\":5}",
+        "createdAt": "2026-08-05T14:43:29.000Z",
+        "updatedAt": "2026-08-05T14:43:29.000Z"
+      },
+      {
+        "key": "smtpHost",
+        "value": "smtp.mailtrap.io",
+        "createdAt": "2026-08-05T14:43:29.000Z",
+        "updatedAt": "2026-08-05T14:43:29.000Z"
+      },
+      {
+        "key": "smtpPass",
+        "value": "",
+        "createdAt": "2026-08-05T14:43:29.000Z",
+        "updatedAt": "2026-08-05T14:43:29.000Z"
+      },
+      {
+        "key": "smtpPort",
+        "value": "2525",
+        "createdAt": "2026-08-05T14:43:29.000Z",
+        "updatedAt": "2026-08-05T14:43:29.000Z"
+      },
+      {
+        "key": "smtpSecure",
+        "value": "false",
+        "createdAt": "2026-08-05T14:43:29.000Z",
+        "updatedAt": "2026-08-05T14:43:29.000Z"
+      },
+      {
+        "key": "smtpUser",
+        "value": "",
+        "createdAt": "2026-08-05T14:43:29.000Z",
+        "updatedAt": "2026-08-05T14:43:29.000Z"
+      },
+      {
+        "key": "theme",
+        "value": "light",
+        "createdAt": "2026-08-05T14:43:29.000Z",
+        "updatedAt": "2026-08-05T14:43:29.000Z"
+      }
+    ],
+    "Admin": [
+      {
+        "id": 1,
+        "username": "admin",
+        "email": "admin@college.edu",
+        "password": "$2a$10$Ih5GQzi3PGcTzj/gIKaluORGTCq9NprazoHk4EpFAcszI8TD1X1bu",
+        "role": "Super Admin",
+        "department": null,
+        "permissions": "[\"Events\", \"Certificates\", \"Attendance\", \"Gallery\", \"Notifications\", \"Reports\", \"Students\", \"Volunteers\", \"Settings\", \"Audit Logs\", \"Analytics\", \"Admins\"]",
+        "isActive": true,
+        "profileImage": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=400",
+        "resetPasswordToken": null,
+        "resetPasswordExpire": null,
+        "refreshToken": null,
+        "otpCode": null,
+        "otpExpire": null,
+        "otpAttempts": 0,
+        "passwordHistory": "[]",
+        "failedLoginAttempts": 0,
+        "lockoutUntil": null,
+        "createdAt": "2026-08-05T14:43:29.000Z",
+        "updatedAt": "2026-08-05T14:43:29.000Z"
+      }
+    ],
+    "Student": [
+      {
+        "id": 1,
+        "fullName": "Test Student",
+        "rollNumber": "CS12345",
+        "email": "test@college.edu",
+        "department": "CSE",
+        "year": "4th Year",
+        "password": "$2a$10$ynnLMcVYv.I4vdO0/fOOVOVI1bJFB5WIFxoQR3Nb3Fj33gLj6eFcK",
+        "profileImage": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=400",
+        "resetPasswordToken": null,
+        "resetPasswordExpire": null,
+        "isVerified": true,
+        "isActive": true,
+        "verificationToken": null,
+        "refreshToken": "dummy_token",
+        "verificationTokenExpire": null,
+        "otpCode": null,
+        "otpExpire": null,
+        "otpAttempts": 0,
+        "passwordHistory": "[]",
+        "failedLoginAttempts": 0,
+        "lockoutUntil": null,
+        "referralCode": null,
+        "referredBy": null,
+        "createdAt": "2026-08-05T14:43:04.000Z",
+        "updatedAt": "2026-08-05T14:43:04.000Z"
+      },
+      {
+        "id": 2,
+        "fullName": "Pedavegi Venkataramana",
+        "rollNumber": "644",
+        "email": "venkataramanapedavegi9@gmail.com",
+        "department": "Electrical & Electronics",
+        "year": "4th Year",
+        "password": "$2a$10$.x3eF2jsajilHozTnMZihOCskh/LzBmT7fFWXo89nLHW6cHAUgIJG",
+        "profileImage": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=400",
+        "resetPasswordToken": null,
+        "resetPasswordExpire": null,
+        "isVerified": false,
+        "isActive": true,
+        "verificationToken": "18f42b4d0281d0902a1e9b76e8e9abf22492ca9c98187a9724399f24eda328bf",
+        "refreshToken": null,
+        "verificationTokenExpire": "2026-08-06T14:47:26.000Z",
+        "otpCode": null,
+        "otpExpire": null,
+        "otpAttempts": 0,
+        "passwordHistory": "[]",
+        "failedLoginAttempts": 0,
+        "lockoutUntil": null,
+        "referralCode": "REF-2APUHT",
+        "referredBy": null,
+        "createdAt": "2026-08-05T14:47:26.000Z",
+        "updatedAt": "2026-08-05T14:47:26.000Z"
+      },
+      {
+        "id": 3,
+        "fullName": "ramana",
+        "rollNumber": "24A81A0643",
+        "email": "student@college.edu",
+        "department": "Civil",
+        "year": "1st Year",
+        "password": "$2a$10$/uBy7hmGghb75NG43Ewv0eh43cpFYY8dolnhQCR36HuB/TfPKcsnq",
+        "profileImage": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=400",
+        "resetPasswordToken": null,
+        "resetPasswordExpire": null,
+        "isVerified": false,
+        "isActive": true,
+        "verificationToken": "cbf5e58afa21b74de268a5420e6a1efd63058b75461b78195e082d861fac35ce",
+        "refreshToken": null,
+        "verificationTokenExpire": "2026-08-06T14:50:17.000Z",
+        "otpCode": null,
+        "otpExpire": null,
+        "otpAttempts": 0,
+        "passwordHistory": "[]",
+        "failedLoginAttempts": 0,
+        "lockoutUntil": null,
+        "referralCode": "REF-8UCM29",
+        "referredBy": null,
+        "createdAt": "2026-08-05T14:50:17.000Z",
+        "updatedAt": "2026-08-05T14:50:17.000Z"
+      }
+    ],
+    "Event": [
+      {
+        "id": 1,
+        "title": "test1",
+        "description": "ergdfgdf",
+        "category": "Technical",
+        "venue": "orange seminar hall",
+        "eventDate": "2026-08-22T00:00:00.000Z",
+        "startTime": "21:18",
+        "endTime": "23:18",
+        "isTemplate": false,
+        "registrationDeadline": "2026-08-21T00:00:00.000Z",
+        "organizer": "ramana",
+        "capacity": 50,
+        "availableSeats": 50,
+        "image": "https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?auto=format&fit=crop&q=80&w=800",
+        "status": "Upcoming",
+        "createdBy": 1,
+        "fee": 0,
+        "isPaid": false,
+        "registrationType": "FREE",
+        "price": "0.00",
+        "reminderSent24h": false,
+        "reminderSent1h": false,
+        "department": "General",
+        "createdAt": "2026-08-05T14:48:35.000Z",
+        "updatedAt": "2026-08-05T14:48:35.000Z"
+      }
+    ],
+    "Registration": [],
+    "Attendance": [],
+    "Volunteer": [],
+    "VolunteerTask": [],
+    "Certificate": [],
+    "Notification": [],
+    "AuditLog": [
+      {
+        "id": 1,
+        "userId": 1,
+        "userRole": "Admin",
+        "action": "EVENT_CREATION",
+        "details": "Event \"test1\" created (ID: 1)",
+        "ipAddress": "::ffff:127.0.0.1",
+        "browser": "Chrome",
+        "os": "Windows",
+        "resource": null,
+        "status": "SUCCESS",
+        "createdAt": "2026-08-05T14:48:35.000Z",
+        "updatedAt": "2026-08-05T14:48:35.000Z"
+      }
+    ],
+    "EventGallery": [],
+    "Leaderboard": [],
+    "Badge": [
+      {
+        "id": 1,
+        "name": "First Event",
+        "description": "Registered or attended your first campus event!",
+        "icon": "Award",
+        "ruleType": "first_event",
+        "ruleValue": 1,
+        "isCustom": false,
+        "createdAt": "2026-08-05T14:43:29.000Z",
+        "updatedAt": "2026-08-05T14:43:29.000Z"
+      },
+      {
+        "id": 2,
+        "name": "Event Explorer",
+        "description": "Attended 3 events of different categories.",
+        "icon": "Compass",
+        "ruleType": "events_attended",
+        "ruleValue": 3,
+        "isCustom": false,
+        "createdAt": "2026-08-05T14:43:29.000Z",
+        "updatedAt": "2026-08-05T14:43:29.000Z"
+      },
+      {
+        "id": 3,
+        "name": "Active Participant",
+        "description": "Attended 5 campus events.",
+        "icon": "Flame",
+        "ruleType": "events_attended",
+        "ruleValue": 5,
+        "isCustom": false,
+        "createdAt": "2026-08-05T14:43:29.000Z",
+        "updatedAt": "2026-08-05T14:43:29.000Z"
+      },
+      {
+        "id": 4,
+        "name": "Certificate Collector",
+        "description": "Earned 3 participation certificates.",
+        "icon": "FileBadge",
+        "ruleType": "certificates",
+        "ruleValue": 3,
+        "isCustom": false,
+        "createdAt": "2026-08-05T14:43:29.000Z",
+        "updatedAt": "2026-08-05T14:43:29.000Z"
+      },
+      {
+        "id": 5,
+        "name": "Volunteer Hero",
+        "description": "Completed 3 volunteer tasks.",
+        "icon": "ShieldAlert",
+        "ruleType": "volunteer_tasks",
+        "ruleValue": 3,
+        "isCustom": false,
+        "createdAt": "2026-08-05T14:43:29.000Z",
+        "updatedAt": "2026-08-05T14:43:29.000Z"
+      },
+      {
+        "id": 6,
+        "name": "Gold Volunteer",
+        "description": "Completed 5 volunteer tasks.",
+        "icon": "ShieldCheck",
+        "ruleType": "volunteer_tasks",
+        "ruleValue": 5,
+        "isCustom": false,
+        "createdAt": "2026-08-05T14:43:29.000Z",
+        "updatedAt": "2026-08-05T14:43:29.000Z"
+      },
+      {
+        "id": 7,
+        "name": "Platinum Volunteer",
+        "description": "Completed 10 volunteer tasks.",
+        "icon": "Crown",
+        "ruleType": "volunteer_tasks",
+        "ruleValue": 10,
+        "isCustom": false,
+        "createdAt": "2026-08-05T14:43:29.000Z",
+        "updatedAt": "2026-08-05T14:43:29.000Z"
+      },
+      {
+        "id": 8,
+        "name": "Campus Star",
+        "description": "Accumulated 1000 engagement points.",
+        "icon": "Star",
+        "ruleType": "points",
+        "ruleValue": 1000,
+        "isCustom": false,
+        "createdAt": "2026-08-05T14:43:29.000Z",
+        "updatedAt": "2026-08-05T14:43:29.000Z"
+      },
+      {
+        "id": 9,
+        "name": "Event Champion",
+        "description": "Won a competition event!",
+        "icon": "Trophy",
+        "ruleType": "competition_wins",
+        "ruleValue": 1,
+        "isCustom": false,
+        "createdAt": "2026-08-05T14:43:29.000Z",
+        "updatedAt": "2026-08-05T14:43:29.000Z"
+      },
+      {
+        "id": 10,
+        "name": "Tech Enthusiast",
+        "description": "Attended 3 technology/coding events.",
+        "icon": "Laptop",
+        "ruleType": "custom",
+        "ruleValue": 3,
+        "isCustom": false,
+        "createdAt": "2026-08-05T14:43:29.000Z",
+        "updatedAt": "2026-08-05T14:43:29.000Z"
+      },
+      {
+        "id": 11,
+        "name": "Sports Champion",
+        "description": "Attended or won a sports competition event.",
+        "icon": "Activity",
+        "ruleType": "custom",
+        "ruleValue": 3,
+        "isCustom": false,
+        "createdAt": "2026-08-05T14:43:29.000Z",
+        "updatedAt": "2026-08-05T14:43:29.000Z"
+      },
+      {
+        "id": 12,
+        "name": "Cultural Icon",
+        "description": "Participated in 3 cultural events.",
+        "icon": "Music",
+        "ruleType": "custom",
+        "ruleValue": 3,
+        "isCustom": false,
+        "createdAt": "2026-08-05T14:43:29.000Z",
+        "updatedAt": "2026-08-05T14:43:29.000Z"
+      },
+      {
+        "id": 13,
+        "name": "Innovation Leader",
+        "description": "Won 2 competition events.",
+        "icon": "Lightbulb",
+        "ruleType": "custom",
+        "ruleValue": 2,
+        "isCustom": false,
+        "createdAt": "2026-08-05T14:43:29.000Z",
+        "updatedAt": "2026-08-05T14:43:29.000Z"
+      },
+      {
+        "id": 14,
+        "name": "Community Builder",
+        "description": "Referred 3 students to the events portal.",
+        "icon": "Users",
+        "ruleType": "custom",
+        "ruleValue": 3,
+        "isCustom": false,
+        "createdAt": "2026-08-05T14:43:29.000Z",
+        "updatedAt": "2026-08-05T14:43:29.000Z"
+      }
+    ],
+    "StudentBadge": [],
+    "ActivityLog": []
+  }
+}

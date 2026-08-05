@@ -1,0 +1,555 @@
+{
+  "backupDate": "2026-08-05T14:41:32.293Z",
+  "version": "1.0.0",
+  "data": {
+    "SystemSetting": [
+      {
+        "key": "appName",
+        "value": "Sri Vasavi Event Management Portal",
+        "createdAt": "2026-08-05T14:40:58.000Z",
+        "updatedAt": "2026-08-05T14:40:58.000Z"
+      },
+      {
+        "key": "certificateTemplate",
+        "value": "{\"title\":\"Certificate of Participation\",\"body\":\"This is to certify that {{name}} of department {{department}} has successfully participated in the event {{event}} organized by {{college}} on {{date}}.\"}",
+        "createdAt": "2026-08-05T14:40:58.000Z",
+        "updatedAt": "2026-08-05T14:40:58.000Z"
+      },
+      {
+        "key": "collegeLogo",
+        "value": "/sri_vasavi_logo.png",
+        "createdAt": "2026-08-05T14:40:58.000Z",
+        "updatedAt": "2026-08-05T14:40:58.000Z"
+      },
+      {
+        "key": "collegeName",
+        "value": "Sri Vasavi Engineering College",
+        "createdAt": "2026-08-05T14:40:58.000Z",
+        "updatedAt": "2026-08-05T14:40:58.000Z"
+      },
+      {
+        "key": "defaultEventCapacity",
+        "value": "120",
+        "createdAt": "2026-08-05T14:40:58.000Z",
+        "updatedAt": "2026-08-05T14:40:58.000Z"
+      },
+      {
+        "key": "maintenanceMode",
+        "value": "false",
+        "createdAt": "2026-08-05T14:40:58.000Z",
+        "updatedAt": "2026-08-05T14:40:58.000Z"
+      },
+      {
+        "key": "registrationRules",
+        "value": "{\"maxRegistrationsPerStudent\":5}",
+        "createdAt": "2026-08-05T14:40:58.000Z",
+        "updatedAt": "2026-08-05T14:40:58.000Z"
+      },
+      {
+        "key": "smtpHost",
+        "value": "smtp.mailtrap.io",
+        "createdAt": "2026-08-05T14:40:58.000Z",
+        "updatedAt": "2026-08-05T14:40:58.000Z"
+      },
+      {
+        "key": "smtpPass",
+        "value": "",
+        "createdAt": "2026-08-05T14:40:58.000Z",
+        "updatedAt": "2026-08-05T14:40:58.000Z"
+      },
+      {
+        "key": "smtpPort",
+        "value": "2525",
+        "createdAt": "2026-08-05T14:40:58.000Z",
+        "updatedAt": "2026-08-05T14:40:58.000Z"
+      },
+      {
+        "key": "smtpSecure",
+        "value": "false",
+        "createdAt": "2026-08-05T14:40:58.000Z",
+        "updatedAt": "2026-08-05T14:40:58.000Z"
+      },
+      {
+        "key": "smtpUser",
+        "value": "",
+        "createdAt": "2026-08-05T14:40:58.000Z",
+        "updatedAt": "2026-08-05T14:40:58.000Z"
+      },
+      {
+        "key": "theme",
+        "value": "light",
+        "createdAt": "2026-08-05T14:40:58.000Z",
+        "updatedAt": "2026-08-05T14:40:58.000Z"
+      }
+    ],
+    "Admin": [
+      {
+        "id": 1,
+        "username": "admin",
+        "email": "admin@college.edu",
+        "password": "$2a$10$HmWYnQRfa.qjuVl0BxFOAuJbzPFO0USBK9NTBdkqFdHW6LBfIW7nG",
+        "role": "Admin",
+        "department": null,
+        "permissions": "[]",
+        "isActive": true,
+        "profileImage": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=400",
+        "resetPasswordToken": null,
+        "resetPasswordExpire": null,
+        "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwicm9sZSI6IkFkbWluIiwiaWF0IjoxNzg1OTQwODU4LCJleHAiOjE3ODY1NDU2NTh9.Ig5JZp9T5_N1L5bJNz_CcLWc2FlMAt5RuzlfhCbb5jI",
+        "otpCode": null,
+        "otpExpire": null,
+        "otpAttempts": 0,
+        "passwordHistory": "[]",
+        "failedLoginAttempts": 0,
+        "lockoutUntil": null,
+        "createdAt": "2026-08-05T14:40:57.000Z",
+        "updatedAt": "2026-08-05T14:40:58.000Z"
+      }
+    ],
+    "Student": [
+      {
+        "id": 1,
+        "fullName": "Alex Smith",
+        "rollNumber": "CS202688",
+        "email": "alexsmith@college.edu",
+        "department": "Information Technology",
+        "year": "2nd Year",
+        "password": "$2a$10$/fKuyqXo6qwSVLSti6txAesnwTlp5LxsBqDuyihvK0.ZRuCxd3/WW",
+        "profileImage": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=400",
+        "resetPasswordToken": null,
+        "resetPasswordExpire": null,
+        "isVerified": true,
+        "isActive": true,
+        "verificationToken": null,
+        "refreshToken": null,
+        "verificationTokenExpire": null,
+        "otpCode": null,
+        "otpExpire": null,
+        "otpAttempts": 0,
+        "passwordHistory": "[]",
+        "failedLoginAttempts": 0,
+        "lockoutUntil": null,
+        "referralCode": "REF-S4TSKG",
+        "referredBy": null,
+        "createdAt": "2026-08-05T14:40:58.000Z",
+        "updatedAt": "2026-08-05T14:40:58.000Z"
+      },
+      {
+        "id": 2,
+        "fullName": "QR Test Student",
+        "rollNumber": "QR2026001",
+        "email": "qrstudent@college.edu",
+        "department": "CSE",
+        "year": "3rd Year",
+        "password": "$2a$10$J1fwYQLzV6gPp9bTe7xiw.wEgvIJCcPoOkTibehLevNNAOZgyzlLe",
+        "profileImage": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=400",
+        "resetPasswordToken": null,
+        "resetPasswordExpire": null,
+        "isVerified": true,
+        "isActive": true,
+        "verificationToken": null,
+        "refreshToken": null,
+        "verificationTokenExpire": null,
+        "otpCode": null,
+        "otpExpire": null,
+        "otpAttempts": 0,
+        "passwordHistory": "[]",
+        "failedLoginAttempts": 0,
+        "lockoutUntil": null,
+        "referralCode": null,
+        "referredBy": null,
+        "createdAt": "2026-08-05T14:41:00.000Z",
+        "updatedAt": "2026-08-05T14:41:00.000Z"
+      }
+    ],
+    "Event": [
+      {
+        "id": 2,
+        "title": "QR Code Tech Symposium 2026",
+        "description": "Full E2E QR test event",
+        "category": "Technical",
+        "venue": "Main Auditorium",
+        "eventDate": "2026-08-06T14:41:00.000Z",
+        "startTime": "10:00 AM",
+        "endTime": "04:00 PM",
+        "isTemplate": false,
+        "registrationDeadline": "2026-08-06T02:41:00.000Z",
+        "organizer": "CSE Dept",
+        "capacity": 50,
+        "availableSeats": 49,
+        "image": "https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?auto=format&fit=crop&q=80&w=800",
+        "status": "Upcoming",
+        "createdBy": 1,
+        "fee": 0,
+        "isPaid": false,
+        "registrationType": "FREE",
+        "price": "0.00",
+        "reminderSent24h": false,
+        "reminderSent1h": false,
+        "department": "General",
+        "createdAt": "2026-08-05T14:41:00.000Z",
+        "updatedAt": "2026-08-05T14:41:00.000Z"
+      }
+    ],
+    "Registration": [
+      {
+        "id": 1,
+        "studentId": 2,
+        "eventId": 2,
+        "registrationDate": "2026-08-05T14:41:00.000Z",
+        "status": "Registered",
+        "qrCodeUrl": "data:image/png;base64,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",
+        "isWinner": false,
+        "createdAt": "2026-08-05T14:41:00.000Z",
+        "updatedAt": "2026-08-05T14:41:01.000Z"
+      }
+    ],
+    "Attendance": [
+      {
+        "id": 1,
+        "registrationId": 1,
+        "eventId": 2,
+        "studentId": 2,
+        "attendanceStatus": "Present",
+        "markedAt": "2026-08-05T14:41:01.000Z",
+        "createdAt": "2026-08-05T14:41:01.000Z",
+        "updatedAt": "2026-08-05T14:41:01.000Z"
+      }
+    ],
+    "Volunteer": [],
+    "VolunteerTask": [],
+    "Certificate": [
+      {
+        "id": 1,
+        "registrationId": 1,
+        "studentId": 2,
+        "eventId": 2,
+        "certificateId": "CERT-2026-0001",
+        "issueDate": "2026-08-05T14:41:01.000Z",
+        "pdfUrl": null,
+        "qrVerificationCode": "CERT-2026-0001",
+        "createdAt": "2026-08-05T14:41:01.000Z",
+        "updatedAt": "2026-08-05T14:41:01.000Z"
+      }
+    ],
+    "Notification": [
+      {
+        "id": 1,
+        "userId": 2,
+        "userRole": "Student",
+        "title": "🏅 Badge Unlocked!",
+        "message": "Awesome job! You've unlocked the badge: \"First Event\". Check it out on your achievements page.",
+        "type": "Badge",
+        "isRead": false,
+        "referenceId": null,
+        "createdAt": "2026-08-05T14:41:01.000Z",
+        "updatedAt": "2026-08-05T14:41:01.000Z"
+      },
+      {
+        "id": 2,
+        "userId": 2,
+        "userRole": "Student",
+        "title": "Attendance Confirmed & Certificate Issued!",
+        "message": "Your attendance for \"QR Code Tech Symposium 2026\" was marked Present via QR Scan. Your participation certificate is ready for download.",
+        "type": "Certificate",
+        "isRead": false,
+        "referenceId": null,
+        "createdAt": "2026-08-05T14:41:01.000Z",
+        "updatedAt": "2026-08-05T14:41:01.000Z"
+      }
+    ],
+    "AuditLog": [
+      {
+        "id": 1,
+        "userId": 1,
+        "userRole": "Admin",
+        "action": "LOGIN",
+        "details": "Admin logged in successfully",
+        "ipAddress": "::ffff:127.0.0.1",
+        "browser": "Unknown",
+        "os": "Unknown",
+        "resource": null,
+        "status": "SUCCESS",
+        "createdAt": "2026-08-05T14:40:58.000Z",
+        "updatedAt": "2026-08-05T14:40:58.000Z"
+      },
+      {
+        "id": 2,
+        "userId": 1,
+        "userRole": "Student",
+        "action": "REGISTRATION",
+        "details": "Student registered: alexsmith@college.edu",
+        "ipAddress": "::ffff:127.0.0.1",
+        "browser": "Unknown",
+        "os": "Unknown",
+        "resource": null,
+        "status": "SUCCESS",
+        "createdAt": "2026-08-05T14:40:59.000Z",
+        "updatedAt": "2026-08-05T14:40:59.000Z"
+      },
+      {
+        "id": 3,
+        "userId": 1,
+        "userRole": "Admin",
+        "action": "EVENT_CREATION",
+        "details": "Event \"Hackathon 2026\" created (ID: 1)",
+        "ipAddress": "::ffff:127.0.0.1",
+        "browser": "Unknown",
+        "os": "Unknown",
+        "resource": null,
+        "status": "SUCCESS",
+        "createdAt": "2026-08-05T14:40:59.000Z",
+        "updatedAt": "2026-08-05T14:40:59.000Z"
+      },
+      {
+        "id": 4,
+        "userId": 1,
+        "userRole": "Admin",
+        "action": "EVENT_DELETION",
+        "details": "Event \"Hackathon 2026 Extended\" deleted (ID: 1)",
+        "ipAddress": "::ffff:127.0.0.1",
+        "browser": "Unknown",
+        "os": "Unknown",
+        "resource": null,
+        "status": "SUCCESS",
+        "createdAt": "2026-08-05T14:40:59.000Z",
+        "updatedAt": "2026-08-05T14:40:59.000Z"
+      },
+      {
+        "id": 5,
+        "userId": 1,
+        "userRole": "Admin",
+        "action": "QR_SCAN_ATTENDANCE",
+        "details": "Scanned registration #1 for QR Test Student",
+        "ipAddress": "::ffff:127.0.0.1",
+        "browser": "Unknown",
+        "os": "Unknown",
+        "resource": null,
+        "status": "SUCCESS",
+        "createdAt": "2026-08-05T14:41:01.000Z",
+        "updatedAt": "2026-08-05T14:41:01.000Z"
+      }
+    ],
+    "EventGallery": [],
+    "Leaderboard": [
+      {
+        "id": 1,
+        "studentId": 2,
+        "points": 55,
+        "eventsAttended": 0,
+        "volunteerHours": 0,
+        "badges": [],
+        "createdAt": "2026-08-05T14:41:01.000Z",
+        "updatedAt": "2026-08-05T14:41:01.000Z"
+      }
+    ],
+    "Badge": [
+      {
+        "id": 1,
+        "name": "First Event",
+        "description": "Registered or attended your first campus event!",
+        "icon": "Award",
+        "ruleType": "first_event",
+        "ruleValue": 1,
+        "isCustom": false,
+        "createdAt": "2026-08-05T14:40:58.000Z",
+        "updatedAt": "2026-08-05T14:40:58.000Z"
+      },
+      {
+        "id": 2,
+        "name": "Event Explorer",
+        "description": "Attended 3 events of different categories.",
+        "icon": "Compass",
+        "ruleType": "events_attended",
+        "ruleValue": 3,
+        "isCustom": false,
+        "createdAt": "2026-08-05T14:40:58.000Z",
+        "updatedAt": "2026-08-05T14:40:58.000Z"
+      },
+      {
+        "id": 3,
+        "name": "Active Participant",
+        "description": "Attended 5 campus events.",
+        "icon": "Flame",
+        "ruleType": "events_attended",
+        "ruleValue": 5,
+        "isCustom": false,
+        "createdAt": "2026-08-05T14:40:58.000Z",
+        "updatedAt": "2026-08-05T14:40:58.000Z"
+      },
+      {
+        "id": 4,
+        "name": "Certificate Collector",
+        "description": "Earned 3 participation certificates.",
+        "icon": "FileBadge",
+        "ruleType": "certificates",
+        "ruleValue": 3,
+        "isCustom": false,
+        "createdAt": "2026-08-05T14:40:58.000Z",
+        "updatedAt": "2026-08-05T14:40:58.000Z"
+      },
+      {
+        "id": 5,
+        "name": "Volunteer Hero",
+        "description": "Completed 3 volunteer tasks.",
+        "icon": "ShieldAlert",
+        "ruleType": "volunteer_tasks",
+        "ruleValue": 3,
+        "isCustom": false,
+        "createdAt": "2026-08-05T14:40:58.000Z",
+        "updatedAt": "2026-08-05T14:40:58.000Z"
+      },
+      {
+        "id": 6,
+        "name": "Gold Volunteer",
+        "description": "Completed 5 volunteer tasks.",
+        "icon": "ShieldCheck",
+        "ruleType": "volunteer_tasks",
+        "ruleValue": 5,
+        "isCustom": false,
+        "createdAt": "2026-08-05T14:40:58.000Z",
+        "updatedAt": "2026-08-05T14:40:58.000Z"
+      },
+      {
+        "id": 7,
+        "name": "Platinum Volunteer",
+        "description": "Completed 10 volunteer tasks.",
+        "icon": "Crown",
+        "ruleType": "volunteer_tasks",
+        "ruleValue": 10,
+        "isCustom": false,
+        "createdAt": "2026-08-05T14:40:58.000Z",
+        "updatedAt": "2026-08-05T14:40:58.000Z"
+      },
+      {
+        "id": 8,
+        "name": "Campus Star",
+        "description": "Accumulated 1000 engagement points.",
+        "icon": "Star",
+        "ruleType": "points",
+        "ruleValue": 1000,
+        "isCustom": false,
+        "createdAt": "2026-08-05T14:40:58.000Z",
+        "updatedAt": "2026-08-05T14:40:58.000Z"
+      },
+      {
+        "id": 9,
+        "name": "Event Champion",
+        "description": "Won a competition event!",
+        "icon": "Trophy",
+        "ruleType": "competition_wins",
+        "ruleValue": 1,
+        "isCustom": false,
+        "createdAt": "2026-08-05T14:40:58.000Z",
+        "updatedAt": "2026-08-05T14:40:58.000Z"
+      },
+      {
+        "id": 10,
+        "name": "Tech Enthusiast",
+        "description": "Attended 3 technology/coding events.",
+        "icon": "Laptop",
+        "ruleType": "custom",
+        "ruleValue": 3,
+        "isCustom": false,
+        "createdAt": "2026-08-05T14:40:58.000Z",
+        "updatedAt": "2026-08-05T14:40:58.000Z"
+      },
+      {
+        "id": 11,
+        "name": "Sports Champion",
+        "description": "Attended or won a sports competition event.",
+        "icon": "Activity",
+        "ruleType": "custom",
+        "ruleValue": 3,
+        "isCustom": false,
+        "createdAt": "2026-08-05T14:40:58.000Z",
+        "updatedAt": "2026-08-05T14:40:58.000Z"
+      },
+      {
+        "id": 12,
+        "name": "Cultural Icon",
+        "description": "Participated in 3 cultural events.",
+        "icon": "Music",
+        "ruleType": "custom",
+        "ruleValue": 3,
+        "isCustom": false,
+        "createdAt": "2026-08-05T14:40:58.000Z",
+        "updatedAt": "2026-08-05T14:40:58.000Z"
+      },
+      {
+        "id": 13,
+        "name": "Innovation Leader",
+        "description": "Won 2 competition events.",
+        "icon": "Lightbulb",
+        "ruleType": "custom",
+        "ruleValue": 2,
+        "isCustom": false,
+        "createdAt": "2026-08-05T14:40:58.000Z",
+        "updatedAt": "2026-08-05T14:40:58.000Z"
+      },
+      {
+        "id": 14,
+        "name": "Community Builder",
+        "description": "Referred 3 students to the events portal.",
+        "icon": "Users",
+        "ruleType": "custom",
+        "ruleValue": 3,
+        "isCustom": false,
+        "createdAt": "2026-08-05T14:40:58.000Z",
+        "updatedAt": "2026-08-05T14:40:58.000Z"
+      }
+    ],
+    "StudentBadge": [
+      {
+        "id": 1,
+        "studentId": 2,
+        "badgeId": 1,
+        "earnedDate": "2026-08-05T14:41:01.000Z",
+        "createdAt": "2026-08-05T14:41:01.000Z",
+        "updatedAt": "2026-08-05T14:41:01.000Z"
+      }
+    ],
+    "ActivityLog": [
+      {
+        "id": 1,
+        "studentId": 2,
+        "type": "REGISTER_EVENT",
+        "pointsAwarded": 10,
+        "description": "Registered for event: QR Code Tech Symposium 2026",
+        "referenceId": 2,
+        "createdAt": "2026-08-05T14:41:01.000Z",
+        "updatedAt": "2026-08-05T14:41:01.000Z"
+      },
+      {
+        "id": 2,
+        "studentId": 2,
+        "type": "UNLOCK_BADGE",
+        "pointsAwarded": 0,
+        "description": "Unlocked badge: First Event",
+        "referenceId": 1,
+        "createdAt": "2026-08-05T14:41:01.000Z",
+        "updatedAt": "2026-08-05T14:41:01.000Z"
+      },
+      {
+        "id": 3,
+        "studentId": 2,
+        "type": "ATTEND_EVENT",
+        "pointsAwarded": 25,
+        "description": "Attended event: QR Code Tech Symposium 2026",
+        "referenceId": 2,
+        "createdAt": "2026-08-05T14:41:01.000Z",
+        "updatedAt": "2026-08-05T14:41:01.000Z"
+      },
+      {
+        "id": 4,
+        "studentId": 2,
+        "type": "CERTIFICATE_EARNED",
+        "pointsAwarded": 20,
+        "description": "Earned Certificate for event: QR Code Tech Symposium 2026",
+        "referenceId": 2,
+        "createdAt": "2026-08-05T14:41:01.000Z",
+        "updatedAt": "2026-08-05T14:41:01.000Z"
+      }
+    ]
+  }
+}

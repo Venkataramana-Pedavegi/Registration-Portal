@@ -1,9 +1,31 @@
 const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
-const { Student, LoginHistory } = require('../models');
+const { Student, LoginHistory, sequelize } = require('../models');
 const generateToken = require('../utils/generateToken');
 const { logAudit, parseUserAgent } = require('../middleware/auditLogger');
 const sendEmail = require('../utils/sendEmail');
+const logDebug = require('../utils/debugLogger');
+
+const logModelAndDbDetails = async (actionName, req) => {
+  try {
+    const [[dbResult]] = await sequelize.query('SELECT DATABASE() as db');
+    const dbName = dbResult.db;
+    
+    const modelName = Student.name;
+    const tableName = Student.tableName;
+    
+    logDebug(`[${actionName}] Verification Check:`);
+    logDebug(`  - Request URL: ${req.originalUrl || req.url}`);
+    logDebug(`  - Controller Executed: studentController.${actionName}`);
+    logDebug(`  - Node Environment (NODE_ENV): ${process.env.NODE_ENV}`);
+    logDebug(`  - Database currently connected: ${dbName}`);
+    logDebug(`  - Student Model Name: ${modelName}`);
+    logDebug(`  - Student Table Name: ${tableName}`);
+    logDebug(`  - Sequelize Instance matches model: ${Student.sequelize === sequelize}`);
+  } catch (err) {
+    logDebug(`[${actionName}] Verification Check Failed: ${err.message}`);
+  }
+};
 
 // @desc    Register a new student
 // @route   POST /api/student/register
@@ -11,14 +33,24 @@ const sendEmail = require('../utils/sendEmail');
 const registerStudent = async (req, res) => {
   try {
     const { fullName, rollNumber, email, department, year, password } = req.body;
+    await logModelAndDbDetails('registerStudent', req);
+    logDebug(`[registerStudent] Incoming request body: ${JSON.stringify({ fullName, rollNumber, email, department, year })}`);
 
-    const emailExists = await Student.findOne({ where: { email: email.toLowerCase() } });
+    const emailExists = await Student.findOne({ 
+      where: { email: email.toLowerCase() },
+      logging: (sql) => logDebug(`[registerStudent] Email check SQL: ${sql}`)
+    });
     if (emailExists) {
+      logDebug(`[registerStudent] Registration rejected: Email ${email} already exists.`);
       return res.status(400).json({ message: 'A student with this email already exists' });
     }
 
-    const rollExists = await Student.findOne({ where: { rollNumber: rollNumber.toUpperCase() } });
+    const rollExists = await Student.findOne({ 
+      where: { rollNumber: rollNumber.toUpperCase() },
+      logging: (sql) => logDebug(`[registerStudent] Roll number check SQL: ${sql}`)
+    });
     if (rollExists) {
+      logDebug(`[registerStudent] Registration rejected: Roll number ${rollNumber} already exists.`);
       return res.status(400).json({ message: 'A student with this roll number already exists' });
     }
 
@@ -48,7 +80,19 @@ const registerStudent = async (req, res) => {
       verificationTokenExpire: isTest ? null : verificationTokenExpire,
       referralCode,
       referredBy,
+    }, {
+      logging: (sql) => logDebug(`[registerStudent] Insert Student SQL: ${sql}`)
     });
+
+    // Verification check immediately after registration
+    const verifyExists = await Student.findOne({ 
+      where: { email: email.toLowerCase() },
+      logging: (sql) => logDebug(`[registerStudent] Immediately query DB check SQL: ${sql}`)
+    });
+    logDebug(`[Student Register API] Immediately queried DB for ${email}. Row exists: ${!!verifyExists}`);
+    if (verifyExists) {
+      logDebug(`[Student Register API] Existing record detail: ID = ${verifyExists.id}, Email = ${verifyExists.email}, isVerified = ${verifyExists.isVerified}, isActive = ${verifyExists.isActive}`);
+    }
 
     if (student) {
       if (referredBy) {
@@ -210,23 +254,42 @@ const resendVerification = async (req, res) => {
 const loginStudent = async (req, res) => {
   try {
     const { email, password } = req.body;
+    await logModelAndDbDetails('loginStudent', req);
+    logDebug(`[loginStudent] Incoming email: ${email}`);
 
-    const student = await Student.findOne({ where: { email: email.toLowerCase() } });
+    let querySql = '';
+    const student = await Student.findOne({ 
+      where: { email: email.toLowerCase() },
+      logging: (sql) => {
+        querySql = sql;
+        logDebug(`[loginStudent] SQL Query executed: ${sql}`);
+      }
+    });
+
+    logDebug(`[loginStudent] Student record returned by Sequelize: ${student ? JSON.stringify(student.toJSON()) : 'null'}`);
 
     if (!student) {
-      return res.status(401).json({ message: 'Invalid email or password' });
+      logDebug(`[loginStudent] Student NOT found with email: ${email}`);
+      return res.status(401).json({ message: 'No student account found with this email' });
     }
+
+    logDebug(`[loginStudent] Student found: ${email} (ID: ${student.id})`);
 
     // Lockout policy check
     if (student.lockoutUntil && new Date() < new Date(student.lockoutUntil)) {
       const minutesLeft = Math.ceil((new Date(student.lockoutUntil) - new Date()) / 60000);
+      logDebug(`[loginStudent] Login rejected: Locked out for ${minutesLeft} minutes.`);
       return res.status(423).json({
         message: `Account is temporarily locked out due to multiple failed login attempts. Please try again in ${minutesLeft} minute(s).`
       });
     }
 
-    if (await student.comparePassword(password)) {
+    const isPasswordMatch = await student.comparePassword(password);
+    logDebug(`[loginStudent] Password comparison result for ${email}: ${isPasswordMatch}`);
+
+    if (isPasswordMatch) {
       if (!student.isVerified) {
+        logDebug(`[loginStudent] Login rejected: Email not verified for ${email}`);
         await logAudit({ req, userId: student.id, userRole: 'Student', action: 'LOGIN_UNVERIFIED', status: 'FAILED', details: 'Login rejected: email not verified' });
         return res.status(401).json({ message: 'Please verify your email address before logging in.' });
       }
@@ -236,6 +299,12 @@ const loginStudent = async (req, res) => {
       student.lockoutUntil = null;
 
       const token = generateToken(student.id, 'Student');
+      if (token) {
+        logDebug(`[loginStudent] JWT token generated successfully for ${email}`);
+      } else {
+        logDebug(`[loginStudent] JWT token generation FAILED for ${email}`);
+      }
+
       const newRefreshToken = jwt.sign(
         { id: student.id, role: 'Student' },
         process.env.JWT_REFRESH_SECRET || 'fallback_refresh_secret_for_dev_only',
@@ -313,7 +382,7 @@ const loginStudent = async (req, res) => {
     } else {
       // Handle failed password attempts
       student.failedLoginAttempts += 1;
-      let lockoutMsg = 'Invalid email or password';
+      let lockoutMsg = 'Incorrect password';
 
       if (student.failedLoginAttempts >= 5) {
         student.lockoutUntil = new Date(Date.now() + 15 * 60 * 1000); // 15 Min Lock

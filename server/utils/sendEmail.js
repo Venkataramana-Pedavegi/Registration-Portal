@@ -1,9 +1,58 @@
-const transporter = require('../config/mailConfig');
+const defaultTransporter = require('../config/mailConfig');
+const nodemailer = require('nodemailer');
+
+const getTransporter = async () => {
+  try {
+    const { SystemSetting } = require('../models');
+    const settings = await SystemSetting.findAll();
+    const settingsMap = {};
+    settings.forEach((s) => {
+      settingsMap[s.key] = s.value;
+    });
+
+    if (settingsMap.smtpHost && settingsMap.smtpUser && settingsMap.smtpPass) {
+      return nodemailer.createTransport({
+        host: settingsMap.smtpHost,
+        port: parseInt(settingsMap.smtpPort, 10) || 587,
+        secure: settingsMap.smtpSecure === 'true',
+        auth: {
+          user: settingsMap.smtpUser,
+          pass: settingsMap.smtpPass,
+        },
+      });
+    }
+  } catch (err) {
+    console.error('Failed to load system SMTP settings:', err.message);
+  }
+  return defaultTransporter;
+};
+
+const getEmailBranding = async () => {
+  try {
+    const { SystemSetting } = require('../models');
+    const settings = await SystemSetting.findAll();
+    const settingsMap = {};
+    settings.forEach((s) => {
+      settingsMap[s.key] = s.value;
+    });
+    return {
+      collegeName: settingsMap.collegeName || 'Sri Vasavi Engineering College',
+      appName: settingsMap.appName || 'Campus Event Management Portal',
+      smtpUser: settingsMap.smtpUser || process.env.EMAIL_USER || 'admin@college.edu',
+    };
+  } catch (err) {
+    return {
+      collegeName: 'Sri Vasavi Engineering College',
+      appName: 'Campus Event Management Portal',
+      smtpUser: process.env.EMAIL_USER || 'admin@college.edu',
+    };
+  }
+};
 
 /**
- * Generates responsive HTML wrapper with Sri Vasavi Engineering College logo header
+ * Generates responsive HTML wrapper with college logo header
  */
-const buildEmailTemplate = ({ title, bodyContent }) => {
+const buildEmailTemplate = ({ title, bodyContent, branding }) => {
   return `
     <!DOCTYPE html>
     <html>
@@ -23,15 +72,15 @@ const buildEmailTemplate = ({ title, bodyContent }) => {
     <body>
       <div class="container">
         <div class="header">
-          <h1 class="title">Sri Vasavi Engineering College</h1>
-          <p class="subtitle">Campus Event Management Portal</p>
+          <h1 class="title">${branding.collegeName}</h1>
+          <p class="subtitle">${branding.appName}</p>
         </div>
         <div class="content">
           <div class="badge">${title}</div>
           ${bodyContent}
         </div>
         <div class="footer">
-          &copy; ${new Date().getFullYear()} Sri Vasavi Engineering College. All rights reserved.<br/>
+          &copy; ${new Date().getFullYear()} ${branding.collegeName}. All rights reserved.<br/>
           Pedatadepalli, Tadepalligudem, Andhra Pradesh 534101
         </div>
       </div>
@@ -56,13 +105,15 @@ const sendEmail = async (options, subjectArg, htmlArg) => {
       html = htmlArg;
     }
 
+    const branding = await getEmailBranding();
+
     if (!to) {
-      to = process.env.EMAIL_USER;
+      to = branding.smtpUser;
     }
 
     const formattedHtml = (html && html.includes('<!DOCTYPE html>'))
       ? html
-      : buildEmailTemplate({ title: templateTitle || subject || 'Campus Event Notification', bodyContent: html || '' });
+      : buildEmailTemplate({ title: templateTitle || subject || 'Campus Event Notification', bodyContent: html || '', branding });
 
     // Fallback simulation mode in test environment
     if (process.env.NODE_ENV === 'test') {
@@ -71,9 +122,9 @@ const sendEmail = async (options, subjectArg, htmlArg) => {
     }
 
     const mailOptions = {
-      from: `"${process.env.EMAIL_FROM_NAME || 'Sri Vasavi Event Portal'}" <${process.env.EMAIL_USER}>`,
+      from: `"${process.env.EMAIL_FROM_NAME || branding.appName}" <${branding.smtpUser}>`,
       to,
-      subject: subject ? `[Sri Vasavi Events] ${subject}` : '[Sri Vasavi Events]',
+      subject: subject ? `[${branding.collegeName}] ${subject}` : `[${branding.collegeName}]`,
       text: text || (html ? html.replace(/<[^>]*>?/gm, '') : ''),
       html: formattedHtml,
     };
@@ -82,7 +133,8 @@ const sendEmail = async (options, subjectArg, htmlArg) => {
       mailOptions.attachments = options.attachments;
     }
 
-    const info = await transporter.sendMail(mailOptions);
+    const activeTransporter = await getTransporter();
+    const info = await activeTransporter.sendMail(mailOptions);
 
     console.log(`✅ Email sent successfully to ${to}: ${info.messageId}`);
     return { success: true, messageId: info.messageId, response: info.response, info };

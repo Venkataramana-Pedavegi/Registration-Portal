@@ -1,5 +1,5 @@
 import React, { useState, useContext } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import { ShieldAlert, Loader2 } from 'lucide-react';
 
@@ -100,6 +100,15 @@ const AdminLogin = ({ setToast }) => {
                 placeholder="Password"
               />
               {formErrors.password && <p className="mt-1 text-xs text-red-500">{formErrors.password}</p>}
+              
+              <div className="flex justify-end mt-2">
+                <Link
+                  to="/forgot-password"
+                  className="text-xs font-semibold text-red-600 hover:text-red-500 transition-colors"
+                >
+                  Forgot Password?
+                </Link>
+              </div>
             </div>
           </div>
 

@@ -1,6 +1,10 @@
 const mysql = require('mysql2/promise');
 require('dotenv').config();
 
+if (process.env.NODE_ENV === 'test') {
+  process.env.DB_NAME = 'college_event_registration_test';
+}
+
 /**
  * Initializes the MySQL database by creating it if it doesn't already exist.
  */

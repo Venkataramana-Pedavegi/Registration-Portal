@@ -30,23 +30,27 @@ const createEvent = async (req, res) => {
       image,
       registrationType,
       price,
+      isTemplate,
     } = req.body;
 
     const createdBy = req.user.id;
 
-    // Check duplicate event with same title, venue, and date
-    const duplicate = await Event.findOne({
-      where: {
-        title: title.trim(),
-        venue: venue.trim(),
-        eventDate: new Date(eventDate),
-      },
-    });
-
-    if (duplicate) {
-      return res.status(400).json({
-        message: 'An event with the same title, venue, and date already exists',
+    // Check duplicate event with same title, venue, and date (skip check for templates)
+    if (!isTemplate) {
+      const duplicate = await Event.findOne({
+        where: {
+          title: title.trim(),
+          venue: venue.trim(),
+          eventDate: new Date(eventDate),
+          isTemplate: false,
+        },
       });
+
+      if (duplicate) {
+        return res.status(400).json({
+          message: 'An event with the same title, venue, and date already exists',
+        });
+      }
     }
 
     const newEvent = await Event.create({
@@ -67,6 +71,7 @@ const createEvent = async (req, res) => {
       price: price !== undefined ? Number(price) : 0,
       fee: price !== undefined ? Number(price) : 0,
       isPaid: registrationType === 'PAID',
+      isTemplate: !!isTemplate,
     });
 
     const fullEvent = await Event.findByPk(newEvent.id, {
@@ -87,9 +92,17 @@ const createEvent = async (req, res) => {
 // @access  Public
 const getAllEvents = async (req, res) => {
   try {
-    const { category, status, search, sort } = req.query;
+    const { category, status, search, sort, isTemplate } = req.query;
 
     const whereClause = {};
+
+    if (isTemplate === 'true' || isTemplate === '1') {
+      whereClause.isTemplate = true;
+    } else if (isTemplate === 'all') {
+      // Do nothing, include both templates and normal events
+    } else {
+      whereClause.isTemplate = false;
+    }
 
     if (category) {
       whereClause.category = category;
@@ -234,6 +247,10 @@ const updateEvent = async (req, res) => {
     if (req.body.price !== undefined) {
       event.price = Number(req.body.price);
       event.fee = Number(req.body.price);
+    }
+
+    if (req.body.isTemplate !== undefined) {
+      event.isTemplate = !!req.body.isTemplate;
     }
 
     await event.save();

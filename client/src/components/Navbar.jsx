@@ -16,6 +16,8 @@ const Navbar = () => {
 
   const isAdminRole = ['Admin', 'Super Admin', 'Event Coordinator', 'Faculty Coordinator'].includes(role);
 
+  const [adminMenuOpen, setAdminMenuOpen] = useState(false);
+
   return (
     <nav className="bg-white shadow-xs border-b border-gray-200 sticky top-0 z-40">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-4 xl:px-8">
@@ -71,6 +73,9 @@ const Navbar = () => {
                     <Link to="/achievements" className="hover:text-primary-600 px-1 lg:px-1.5 xl:px-2 py-1.5 rounded-md flex items-center gap-0.5 flex-shrink-0">
                       <Award className="w-3 h-3" /> Achievements
                     </Link>
+                    <Link to="/ai-recommendations" className="hover:text-indigo-600 text-indigo-650 px-1 lg:px-1.5 xl:px-2 py-1.5 rounded-md flex items-center gap-0.5 flex-shrink-0 font-bold">
+                      ⭐ Recommendations
+                    </Link>
                   </>
                 ) : (
                   <>
@@ -86,12 +91,37 @@ const Navbar = () => {
                     <Link to="/volunteers" className="hover:text-primary-600 px-1 lg:px-1.5 xl:px-2 py-1.5 rounded-md flex-shrink-0">
                       Volunteers
                     </Link>
-                    <Link to="/reports" className="hover:text-primary-600 px-1 lg:px-1.5 xl:px-2 py-1.5 rounded-md flex-shrink-0">
-                      Reports
-                    </Link>
-                    <Link to="/audit-logs" className="hover:text-primary-600 px-1 lg:px-1.5 xl:px-2 py-1.5 rounded-md flex-shrink-0">
-                      Audit
-                    </Link>
+                    
+                    {/* Admin Hub dropdown */}
+                    <div className="relative">
+                      <button
+                        onClick={() => setAdminMenuOpen(!adminMenuOpen)}
+                        className="hover:text-primary-600 px-1.5 lg:px-2.5 py-1.5 rounded-md flex items-center gap-1 flex-shrink-0 focus:outline-none"
+                      >
+                        <Shield className="h-3.5 w-3.5 text-primary-600" />
+                        <span>Admin Hub</span>
+                      </button>
+                      
+                      {adminMenuOpen && (
+                        <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-xl shadow-lg py-1.5 z-50 text-[11px] font-bold text-gray-700">
+                          <Link to="/admin/admins" onClick={() => setAdminMenuOpen(false)} className="block px-4 py-2 hover:bg-gray-50 hover:text-primary-650">Admins List</Link>
+                          <Link to="/admin/roles" onClick={() => setAdminMenuOpen(false)} className="block px-4 py-2 hover:bg-gray-50 hover:text-primary-650">Roles Info</Link>
+                          <Link to="/admin/permissions" onClick={() => setAdminMenuOpen(false)} className="block px-4 py-2 hover:bg-gray-50 hover:text-primary-650">Permissions Matrix</Link>
+                          <Link to="/admin/students" onClick={() => setAdminMenuOpen(false)} className="block px-4 py-2 hover:bg-gray-50 hover:text-primary-650">Students Directory</Link>
+                          <Link to="/admin/volunteer-network" onClick={() => setAdminMenuOpen(false)} className="block px-4 py-2 hover:bg-gray-50 hover:text-primary-650">Volunteer Center</Link>
+                          <Link to="/admin/templates" onClick={() => setAdminMenuOpen(false)} className="block px-4 py-2 hover:bg-gray-50 hover:text-primary-650">Templates & Cloning</Link>
+                          <Link to="/admin/bulk" onClick={() => setAdminMenuOpen(false)} className="block px-4 py-2 hover:bg-gray-50 hover:text-primary-650">Bulk Operations</Link>
+                          <Link to="/admin/announcements" onClick={() => setAdminMenuOpen(false)} className="block px-4 py-2 hover:bg-gray-50 hover:text-primary-650">Broadcasting Center</Link>
+                          <Link to="/admin/system-settings" onClick={() => setAdminMenuOpen(false)} className="block px-4 py-2 hover:bg-gray-50 hover:text-primary-650">System Settings</Link>
+                          <Link to="/admin/backups" onClick={() => setAdminMenuOpen(false)} className="block px-4 py-2 hover:bg-gray-50 hover:text-primary-650">Backups & Recovery</Link>
+                          <Link to="/audit-logs" onClick={() => setAdminMenuOpen(false)} className="block px-4 py-2 hover:bg-gray-50 hover:text-primary-650">Security Audit Logs</Link>
+                          <hr className="my-1 border-gray-100" />
+                          <Link to="/ai-search" onClick={() => setAdminMenuOpen(false)} className="block px-4 py-2 hover:bg-gray-50 hover:text-indigo-600 text-indigo-650 font-bold">Smart Search (AI)</Link>
+                          <Link to="/ai-assistant" onClick={() => setAdminMenuOpen(false)} className="block px-4 py-2 hover:bg-gray-50 hover:text-indigo-600 text-indigo-650 font-bold">Copilot Assistant (AI)</Link>
+                          <Link to="/ai-feedback-analysis" onClick={() => setAdminMenuOpen(false)} className="block px-4 py-2 hover:bg-gray-50 hover:text-indigo-600 text-indigo-650 font-bold">Feedback Analysis (AI)</Link>
+                        </div>
+                      )}
+                    </div>
                   </>
                 )}
 

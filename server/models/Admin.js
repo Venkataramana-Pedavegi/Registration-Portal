@@ -50,6 +50,21 @@ const Admin = sequelize.define(
       type: DataTypes.STRING,
       defaultValue: 'Admin',
     },
+    department: {
+      type: DataTypes.STRING,
+      allowNull: true,
+      defaultValue: null,
+    },
+    permissions: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+      defaultValue: '[]',
+    },
+    isActive: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: true,
+    },
     profileImage: {
       type: DataTypes.TEXT,
       allowNull: true,

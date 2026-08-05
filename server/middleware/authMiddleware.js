@@ -19,7 +19,7 @@ const protect = async (req, res, next) => {
 
       const decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback_secret_for_dev_only');
 
-      const adminRoles = ['Admin', 'Super Admin', 'Event Coordinator', 'Faculty Coordinator'];
+      const adminRoles = ['Admin', 'Super Admin', 'Event Coordinator', 'Faculty Coordinator', 'Coordinator', 'Volunteer Coordinator'];
 
       if (adminRoles.includes(decoded.role)) {
         req.user = await Admin.findByPk(decoded.id, {
@@ -37,6 +37,11 @@ const protect = async (req, res, next) => {
         return res.status(401).json({ message: 'Not authorized, user not found' });
       }
 
+      // Check if user is active
+      if (req.user.isActive === false) {
+        return res.status(403).json({ message: 'Not authorized, account is deactivated' });
+      }
+
       next();
     } catch (error) {
       if (error.name === 'TokenExpiredError') {
@@ -52,7 +57,7 @@ const protect = async (req, res, next) => {
 };
 
 const adminOnly = (req, res, next) => {
-  const allowedAdminRoles = ['Admin', 'Super Admin', 'Event Coordinator', 'Faculty Coordinator'];
+  const allowedAdminRoles = ['Admin', 'Super Admin', 'Event Coordinator', 'Faculty Coordinator', 'Coordinator', 'Volunteer Coordinator'];
   if (req.user && allowedAdminRoles.includes(req.role)) {
     next();
   } else {
@@ -78,4 +83,31 @@ const authorizeRoles = (...roles) => {
   };
 };
 
-module.exports = { protect, adminOnly, studentOnly, authorizeRoles };
+const checkPermission = (permission) => {
+  return (req, res, next) => {
+    if (!req.user) {
+      return res.status(401).json({ message: 'Not authorized' });
+    }
+
+    if (req.role === 'Super Admin') {
+      return next();
+    }
+
+    let permissions = [];
+    try {
+      permissions = typeof req.user.permissions === 'string'
+        ? JSON.parse(req.user.permissions)
+        : (req.user.permissions || []);
+    } catch (e) {
+      permissions = [];
+    }
+
+    if (permissions.includes(permission)) {
+      return next();
+    }
+
+    return res.status(403).json({ message: `Access denied: Requires '${permission}' permission` });
+  };
+};
+
+module.exports = { protect, adminOnly, studentOnly, authorizeRoles, checkPermission };

@@ -85,6 +85,11 @@ const Student = sequelize.define(
       allowNull: false,
       defaultValue: true,
     },
+    isActive: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: true,
+    },
     verificationToken: {
       type: DataTypes.STRING,
       allowNull: true,
