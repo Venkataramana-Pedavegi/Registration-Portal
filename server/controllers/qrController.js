@@ -118,6 +118,29 @@ const scanQRCode = async (req, res) => {
       },
     });
 
+    // Award Attendance (+25 XP) and Certificate (+20 XP) points
+    try {
+      const { awardPoints } = require('../services/GamificationService');
+      await awardPoints(
+        registration.studentId,
+        25,
+        'ATTEND_EVENT',
+        `Attended event: ${registration.Event?.title || 'Event'}`,
+        registration.eventId,
+        req
+      );
+      await awardPoints(
+        registration.studentId,
+        20,
+        'CERTIFICATE_EARNED',
+        `Earned Certificate for event: ${registration.Event?.title || 'Event'}`,
+        registration.eventId,
+        req
+      );
+    } catch (gErr) {
+      console.error('Non-blocking QR attendance points error:', gErr.message);
+    }
+
     // Notify student
     await Notification.create({
       userId: registration.studentId,

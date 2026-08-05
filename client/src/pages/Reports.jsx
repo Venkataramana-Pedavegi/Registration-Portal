@@ -47,7 +47,14 @@ const Reports = () => {
             </h1>
             <p className="text-sm text-gray-500 mt-1">Detailed statistical summary of event capacities, occupancy rates, and attendance percentages.</p>
           </div>
-          <ExportButton endpoint="/export/events" filename="events_performance_report.csv" label="Download Events CSV" />
+          <div className="flex flex-wrap items-center gap-2 shrink-0">
+            <ExportButton endpoint="/export/events" filename="events_report.csv" label="Events CSV" />
+            <ExportButton endpoint="/export/participants" filename="registrations_report.csv" label="Registrations CSV" />
+            <ExportButton endpoint="/export/attendance" filename="attendance_report.csv" label="Attendance CSV" />
+            <ExportButton endpoint="/export/revenue" filename="revenue_report.csv" label="Revenue CSV" />
+            <ExportButton endpoint="/export/volunteers" filename="volunteers_report.csv" label="Volunteers CSV" />
+            <ExportButton endpoint="/export/audit-logs" filename="audit_logs_report.csv" label="Audit Logs CSV" />
+          </div>
         </div>
 
         {error && (

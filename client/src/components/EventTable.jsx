@@ -1,8 +1,8 @@
 import React from 'react';
-import { Eye, Edit2, Trash2, Calendar, MapPin, Users } from 'lucide-react';
+import { Eye, Edit2, Trash2, Calendar, MapPin, Users, Copy } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
-const EventTable = ({ events, onEdit, onDelete }) => {
+const EventTable = ({ events, onEdit, onDelete, onDuplicate }) => {
   const getStatusClass = (status) => {
     switch (status) {
       case 'Upcoming':
@@ -95,8 +95,15 @@ const EventTable = ({ events, onEdit, onDelete }) => {
                       <Eye className="h-4.5 w-4.5" />
                     </Link>
                     <button
+                      onClick={() => onDuplicate(event.id || event._id)}
+                      className="text-gray-500 hover:text-indigo-650 p-1.5 hover:bg-gray-100 rounded-lg transition-colors duration-150 cursor-pointer"
+                      title="Duplicate Event"
+                    >
+                      <Copy className="h-4.5 w-4.5" />
+                    </button>
+                    <button
                       onClick={() => onEdit(event)}
-                      className="text-gray-500 hover:text-yellow-600 p-1.5 hover:bg-gray-100 rounded-lg transition-colors duration-150"
+                      className="text-gray-500 hover:text-yellow-605 p-1.5 hover:bg-gray-100 rounded-lg transition-colors duration-150 cursor-pointer"
                       title="Edit Event"
                     >
                       <Edit2 className="h-4.5 w-4.5" />

@@ -51,7 +51,9 @@ const downloadCertificate = async (req, res) => {
 
     const pdfBuffer = await generateCertificatePDF({
       studentName: cert.Student?.fullName || 'Student Participant',
+      rollNumber: cert.Student?.rollNumber,
       eventTitle: cert.Event?.title || 'Campus Event',
+      eventDate: cert.Event?.eventDate,
       organizer: cert.Event?.organizer || 'College Event Committee',
       certificateId: cert.certificateId,
       issueDate: cert.issueDate,
@@ -66,7 +68,72 @@ const downloadCertificate = async (req, res) => {
   }
 };
 
+// @desc    Regenerate Certificate (Admin)
+// @route   POST /api/certificates/:id/regenerate
+// @access  Private/Admin
+const regenerateCertificate = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const cert = await Certificate.findByPk(id, {
+      include: [
+        { model: Student, attributes: ['fullName', 'rollNumber', 'email'] },
+        { model: Event, attributes: ['title'] },
+      ],
+    });
+
+    if (!cert) {
+      return res.status(404).json({ message: 'Certificate record not found' });
+    }
+
+    cert.issueDate = new Date();
+    await cert.save();
+
+    res.json({ message: 'Certificate regenerated successfully', certificate: cert });
+  } catch (error) {
+    res.status(500).json({ message: 'Server error regenerating certificate', error: error.message });
+  }
+};
+
+// @desc    Public Certificate Verification
+// @route   GET /api/certificates/verify/:certificateId
+// @access  Public
+const verifyCertificatePublic = async (req, res) => {
+  try {
+    const { certificateId } = req.params;
+
+    const cert = await Certificate.findOne({
+      where: { certificateId },
+      include: [
+        { model: Student, attributes: ['id', 'fullName', 'name', 'rollNumber', 'department'] },
+        { model: Event, attributes: ['id', 'title', 'category', 'eventDate', 'organizer', 'venue'] },
+      ],
+    });
+
+    if (!cert) {
+      return res.status(404).json({ isValid: false, message: 'Certificate not found or invalid Certificate ID' });
+    }
+
+    res.json({
+      isValid: true,
+      certificateId: cert.certificateId,
+      studentName: cert.Student?.fullName || cert.Student?.name || 'Verified Student',
+      rollNumber: cert.Student?.rollNumber,
+      department: cert.Student?.department,
+      eventName: cert.Event?.title || 'Campus Event',
+      eventCategory: cert.Event?.category,
+      eventDate: cert.Event?.eventDate,
+      organizer: cert.Event?.organizer,
+      issueDate: cert.issueDate,
+    });
+  } catch (error) {
+    res.status(500).json({ isValid: false, message: 'Server error verifying certificate', error: error.message });
+  }
+};
+
 module.exports = {
   getCertificates,
   downloadCertificate,
+  regenerateCertificate,
+  verifyCertificatePublic,
 };

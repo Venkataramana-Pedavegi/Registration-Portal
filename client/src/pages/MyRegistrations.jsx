@@ -4,7 +4,8 @@ import api from '../services/api';
 import Loader from '../components/Loader';
 import EmptyState from '../components/EmptyState';
 import ConfirmationDialog from '../components/ConfirmationDialog';
-import { Calendar, MapPin, Building, Eye, XCircle, Clock } from 'lucide-react';
+import QRCodeModal from '../components/QRCodeModal';
+import { Calendar, MapPin, Building, Eye, XCircle, Clock, QrCode } from 'lucide-react';
 
 const MyRegistrations = () => {
   const [registrations, setRegistrations] = useState([]);
@@ -14,6 +15,7 @@ const MyRegistrations = () => {
   // Modal state
   const [cancelId, setCancelId] = useState(null);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+  const [qrModalRegistrationId, setQrModalRegistrationId] = useState(null);
 
   const fetchRegistrations = async () => {
     try {
@@ -133,17 +135,24 @@ const MyRegistrations = () => {
                     </div>
                   </div>
 
-                  <div className="bg-gray-50 px-5 py-3 border-t border-gray-100 flex gap-2 justify-end">
+                  <div className="bg-gray-50 px-5 py-3 border-t border-gray-100 flex flex-wrap gap-2 justify-end">
+                    <button
+                      onClick={() => setQrModalRegistrationId(reg.id)}
+                      className="bg-primary-600 hover:bg-primary-700 text-white font-bold px-3 py-1.5 rounded-lg text-xs transition duration-150 flex items-center gap-1 shadow-xs"
+                    >
+                      <QrCode className="h-4 w-4" />
+                      <span>View QR Code</span>
+                    </button>
                     <Link
                       to={`/events/${event.id}`}
-                      className="bg-white hover:bg-gray-100 text-gray-700 border border-gray-300 font-bold px-3.5 py-1.5 rounded-lg text-xs transition duration-150 flex items-center gap-1"
+                      className="bg-white hover:bg-gray-100 text-gray-700 border border-gray-300 font-bold px-3 py-1.5 rounded-lg text-xs transition duration-150 flex items-center gap-1"
                     >
                       <Eye className="h-4 w-4" />
                       <span>Details</span>
                     </Link>
                     <button
                       onClick={() => handleCancelClick(reg.id)}
-                      className="bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 font-bold px-3.5 py-1.5 rounded-lg text-xs transition duration-150 flex items-center gap-1"
+                      className="bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 font-bold px-3 py-1.5 rounded-lg text-xs transition duration-150 flex items-center gap-1"
                     >
                       <XCircle className="h-4 w-4" />
                       <span>Cancel</span>
@@ -155,6 +164,12 @@ const MyRegistrations = () => {
           </div>
         )}
       </div>
+
+      <QRCodeModal
+        isOpen={Boolean(qrModalRegistrationId)}
+        onClose={() => setQrModalRegistrationId(null)}
+        registrationId={qrModalRegistrationId}
+      />
 
       <ConfirmationDialog
         isOpen={isConfirmOpen}

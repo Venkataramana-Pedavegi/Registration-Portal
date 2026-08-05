@@ -59,10 +59,13 @@ const StudentLogin = ({ setToast }) => {
     <div className="flex-grow flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8 bg-white p-8 rounded-xl shadow-md border border-gray-100">
         <div className="text-center">
-          <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-primary-100 text-primary-600 mb-4">
-            <LogIn className="h-6 w-6" />
-          </div>
-          <h2 className="text-3xl font-extrabold text-gray-900">Student Login</h2>
+          <img
+            src="/sri_vasavi_logo.png"
+            alt="Sri Vasavi Engineering College Logo"
+            className="mx-auto h-16 w-16 object-contain rounded-full shadow-sm border border-primary-100 bg-white p-0.5 mb-3"
+          />
+          <h2 className="text-2xl font-extrabold text-gray-900">Sri Vasavi Engineering College</h2>
+          <p className="text-sm font-semibold text-primary-700 mt-1 mb-2">Student Portal Login</p>
           <p className="mt-2 text-sm text-gray-600">
             Don't have an account?{' '}
             <Link to="/student-register" className="font-medium text-primary-600 hover:text-primary-500">

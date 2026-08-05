@@ -34,7 +34,7 @@ const Notification = sequelize.define(
       allowNull: false,
       defaultValue: 'System',
       validate: {
-        isIn: [['Event', 'Registration', 'Certificate', 'System', 'Attendance']],
+        isIn: [['Event', 'Registration', 'Certificate', 'System', 'Attendance', 'Badge', 'Announcement']],
       },
     },
     isRead: {
@@ -42,8 +42,32 @@ const Notification = sequelize.define(
       allowNull: false,
       defaultValue: false,
     },
+    referenceId: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+    },
   },
   {
+    hooks: {
+      afterCreate: async (notification, options) => {
+        try {
+          const { getIO } = require('../utils/socket');
+          const io = getIO();
+          if (io) {
+            const plain = notification.toJSON();
+            plain._id = plain.id;
+            io.to(`user_${notification.userId}`).emit('notificationCreated', plain);
+            io.to(`user_${notification.userId}`).emit('notification:new', plain);
+            if (notification.userRole === 'Admin') {
+              io.to('admin-dashboard').emit('notificationCreated', plain);
+              io.to('admin-dashboard').emit('notification:new', plain);
+            }
+          }
+        } catch (err) {
+          console.error('Error in Notification afterCreate hook:', err.message);
+        }
+      },
+    },
     indexes: [
       { fields: ['userId', 'userRole'] },
       { fields: ['isRead'] },

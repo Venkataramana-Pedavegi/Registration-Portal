@@ -43,6 +43,11 @@ const Registration = sequelize.define(
       type: DataTypes.TEXT,
       allowNull: true,
     },
+    isWinner: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: false,
+    },
   },
   {
     indexes: [

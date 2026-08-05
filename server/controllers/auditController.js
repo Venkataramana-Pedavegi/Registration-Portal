@@ -10,20 +10,43 @@ const getAuditLogs = async (req, res) => {
     const limit = parseInt(req.query.limit, 10) || 20;
     const offset = (page - 1) * limit;
     const search = req.query.search || '';
+    const roleFilter = req.query.role || '';
+    const statusFilter = req.query.status || '';
+    const actionFilter = req.query.action || '';
+    const sortBy = req.query.sort || 'createdAt';
+    const sortOrder = req.query.order || 'DESC';
 
-    const whereClause = search
-      ? {
-          [Op.or]: [
-            { action: { [Op.like]: `%${search}%` } },
-            { details: { [Op.like]: `%${search}%` } },
-            { ipAddress: { [Op.like]: `%${search}%` } },
-          ],
-        }
-      : {};
+    // Construct Sequelize query conditions
+    const whereClause = {};
+
+    if (search) {
+      whereClause[Op.or] = [
+        { action: { [Op.like]: `%${search}%` } },
+        { details: { [Op.like]: `%${search}%` } },
+        { ipAddress: { [Op.like]: `%${search}%` } },
+      ];
+    }
+
+    if (roleFilter) {
+      whereClause.userRole = roleFilter;
+    }
+
+    if (statusFilter) {
+      whereClause.status = statusFilter;
+    }
+
+    if (actionFilter) {
+      whereClause.action = actionFilter;
+    }
+
+    // Allowed sort fields for security
+    const allowedSortFields = ['createdAt', 'action', 'userRole', 'userId', 'ipAddress', 'status'];
+    const finalSortBy = allowedSortFields.includes(sortBy) ? sortBy : 'createdAt';
+    const finalSortOrder = ['ASC', 'DESC'].includes(sortOrder.toUpperCase()) ? sortOrder.toUpperCase() : 'DESC';
 
     const { count, rows } = await AuditLog.findAndCountAll({
       where: whereClause,
-      order: [['createdAt', 'DESC']],
+      order: [[finalSortBy, finalSortOrder]],
       limit,
       offset,
     });

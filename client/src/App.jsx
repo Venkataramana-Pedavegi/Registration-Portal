@@ -1,12 +1,15 @@
 import React, { useState, Suspense, lazy } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
+import { SocketProvider } from './context/SocketProvider';
+import { NotificationProvider } from './context/NotificationContext';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import ProtectedRoute from './components/ProtectedRoute';
 import ErrorBoundary from './components/ErrorBoundary';
 import Loader from './components/Loader';
 import Toast from './components/Toast';
+import AIChatbotWidget from './components/AIChatbotWidget';
 
 // Lazy Loaded Pages
 const Home = lazy(() => import('./pages/Home'));
@@ -38,6 +41,16 @@ const Error404 = lazy(() => import('./pages/Error404'));
 const Error500 = lazy(() => import('./pages/Error500'));
 const NotFound = lazy(() => import('./pages/NotFound'));
 
+// New Enterprise Feature Pages
+const EventCalendar = lazy(() => import('./pages/EventCalendar'));
+const PublicCertificateVerify = lazy(() => import('./pages/PublicCertificateVerify'));
+const VolunteerManagement = lazy(() => import('./pages/VolunteerManagement'));
+const LeaderboardPage = lazy(() => import('./pages/LeaderboardPage'));
+const Gallery = lazy(() => import('./pages/Gallery'));
+const VerifyEmail = lazy(() => import('./pages/VerifyEmail'));
+const Achievements = lazy(() => import('./pages/Achievements'));
+const Badges = lazy(() => import('./pages/Badges'));
+
 function App() {
   const [toast, setToast] = useState(null);
 
@@ -48,8 +61,10 @@ function App() {
   return (
     <ErrorBoundary>
       <AuthProvider>
-        <Router>
-          <div className="flex flex-col min-h-screen bg-gray-50">
+        <SocketProvider>
+          <NotificationProvider>
+            <Router>
+              <div className="flex flex-col min-h-screen bg-gray-50">
             <Navbar />
             <main className="flex-grow flex flex-col">
               <Suspense fallback={
@@ -64,7 +79,26 @@ function App() {
                   <Route path="/admin-login" element={<AdminLogin setToast={setToast} />} />
                   <Route path="/forgot-password" element={<ForgotPassword />} />
                   <Route path="/reset-password/:token" element={<ResetPassword />} />
+                  <Route path="/verify-email" element={<VerifyEmail />} />
                   <Route path="/500" element={<Error500 />} />
+
+                  {/* Public Enterprise Routes */}
+                  <Route path="/calendar" element={<EventCalendar />} />
+                  <Route path="/gallery" element={<Gallery />} />
+                  <Route path="/verify-certificate" element={<PublicCertificateVerify />} />
+                  <Route path="/verify-certificate/:certificateId" element={<PublicCertificateVerify />} />
+                  <Route path="/leaderboard" element={<LeaderboardPage />} />
+
+                  {/* Shared Protected Routes */}
+                  <Route
+                    path="/volunteers"
+                    element={
+                      <ProtectedRoute allowedRoles={['Student', 'Admin']}>
+                        <VolunteerManagement />
+                      </ProtectedRoute>
+                    }
+                  />
+
 
                   {/* Student Protected Routes */}
                   <Route
@@ -96,6 +130,22 @@ function App() {
                     element={
                       <ProtectedRoute allowedRoles={['Student']}>
                         <Certificates />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/achievements"
+                    element={
+                      <ProtectedRoute allowedRoles={['Student']}>
+                        <Achievements />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/badges"
+                    element={
+                      <ProtectedRoute allowedRoles={['Student']}>
+                        <Badges />
                       </ProtectedRoute>
                     }
                   />
@@ -166,7 +216,7 @@ function App() {
                     }
                   />
 
-                  {/* Shared Protected Routes */}
+                  {/* Shared Profile & Event Routes */}
                   <Route
                     path="/profile"
                     element={
@@ -214,6 +264,9 @@ function App() {
             </main>
             <Footer />
             
+            {/* Floating AI Chatbot Widget */}
+            <AIChatbotWidget />
+
             {toast && (
               <Toast
                 type={toast.type}
@@ -223,6 +276,8 @@ function App() {
             )}
           </div>
         </Router>
+          </NotificationProvider>
+        </SocketProvider>
       </AuthProvider>
     </ErrorBoundary>
   );

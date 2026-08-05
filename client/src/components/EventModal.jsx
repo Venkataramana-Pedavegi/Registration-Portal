@@ -15,6 +15,8 @@ const EventModal = ({ isOpen, onClose, onSubmit, eventData = null, title = 'Add 
     capacity: 50,
     image: '',
     status: 'Upcoming',
+    registrationType: 'FREE',
+    price: 0,
   });
 
   const [formErrors, setFormErrors] = useState({});
@@ -45,6 +47,8 @@ const EventModal = ({ isOpen, onClose, onSubmit, eventData = null, title = 'Add 
         capacity: eventData.capacity || 50,
         image: eventData.image || '',
         status: eventData.status || 'Upcoming',
+        registrationType: eventData.registrationType || 'FREE',
+        price: eventData.price !== undefined ? eventData.price : 0,
       });
     } else {
       // Reset form
@@ -61,6 +65,8 @@ const EventModal = ({ isOpen, onClose, onSubmit, eventData = null, title = 'Add 
         capacity: 50,
         image: '',
         status: 'Upcoming',
+        registrationType: 'FREE',
+        price: 0,
       });
     }
     setFormErrors({});
@@ -110,6 +116,14 @@ const EventModal = ({ isOpen, onClose, onSubmit, eventData = null, title = 'Add 
       if (deadDate > evDate) {
         errors.registrationDeadline = 'Registration deadline cannot be after event date';
       }
+    }
+
+    if (formData.registrationType === 'PAID') {
+      if (formData.price === undefined || formData.price === null || isNaN(formData.price) || Number(formData.price) <= 0) {
+        errors.price = 'Paid event fee must be greater than zero';
+      }
+    } else {
+      formData.price = 0;
     }
 
     return errors;
@@ -334,6 +348,61 @@ const EventModal = ({ isOpen, onClose, onSubmit, eventData = null, title = 'Add 
               className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500"
               placeholder="e.g. https://images.unsplash.com/... or leave blank"
             />
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">Registration Type</label>
+              <div className="flex items-center gap-4 mt-2">
+                <label className="inline-flex items-center text-sm text-gray-700">
+                  <input
+                    type="radio"
+                    name="registrationType"
+                    value="FREE"
+                    checked={formData.registrationType === 'FREE'}
+                    onChange={(e) => {
+                      setFormData({ ...formData, registrationType: 'FREE', price: 0 });
+                      if (formErrors.price) setFormErrors({ ...formErrors, price: '' });
+                    }}
+                    className="h-4 w-4 text-primary-600 border-gray-300 focus:ring-primary-500"
+                  />
+                  <span className="ml-2">Free Event</span>
+                </label>
+                <label className="inline-flex items-center text-sm text-gray-700">
+                  <input
+                    type="radio"
+                    name="registrationType"
+                    value="PAID"
+                    checked={formData.registrationType === 'PAID'}
+                    onChange={(e) => setFormData({ ...formData, registrationType: 'PAID' })}
+                    className="h-4 w-4 text-primary-600 border-gray-300 focus:ring-primary-500"
+                  />
+                  <span className="ml-2">Paid Event</span>
+                </label>
+              </div>
+            </div>
+
+            {formData.registrationType === 'PAID' && (
+              <div>
+                <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">Registration Fee (₹)</label>
+                <input
+                  type="number"
+                  name="price"
+                  value={formData.price}
+                  onChange={(e) => {
+                    setFormData({ ...formData, price: Number(e.target.value) });
+                    if (formErrors.price) setFormErrors({ ...formErrors, price: '' });
+                  }}
+                  className={`w-full px-3 py-2 border ${
+                    formErrors.price ? 'border-red-300' : 'border-gray-300'
+                  } rounded-lg text-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500`}
+                  placeholder="0.00"
+                  min="0.01"
+                  step="0.01"
+                />
+                {formErrors.price && <p className="mt-0.5 text-xs text-red-500">{formErrors.price}</p>}
+              </div>
+            )}
           </div>
 
           <div className="pt-4 flex justify-end gap-3 border-t border-gray-100">

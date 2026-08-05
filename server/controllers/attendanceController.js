@@ -62,11 +62,87 @@ const markAttendance = async (req, res) => {
         message: `Your participation certificate for event #${registration.eventId} is ready to download.`,
         type: 'Certificate',
       });
+
+      // Fetch student email for notifications
+      const fullReg = await Registration.findByPk(registrationId, {
+        include: [
+          { model: Student, attributes: ['fullName', 'email'] },
+          { model: Event, attributes: ['title'] },
+        ],
+      });
+
+      if (fullReg && fullReg.Student?.email) {
+        const sendEmail = require('../utils/sendEmail');
+        await sendEmail({
+          to: fullReg.Student.email,
+          subject: `Attendance Confirmed & Certificate Issued - ${fullReg.Event?.title}`,
+          templateTitle: 'Attendance & Certificate Confirmed',
+          html: `
+            <p>Dear <strong>${fullReg.Student.fullName}</strong>,</p>
+            <p>Your attendance for <strong>${fullReg.Event?.title}</strong> has been marked <strong>PRESENT</strong>!</p>
+            <p>Your official Certificate of Participation (Certificate ID: <strong>${certCode}</strong>) is now generated and ready for instant PDF download in your student portal.</p>
+          `,
+        });
+      }
+    }
+
+    // Log audit logs
+    const { logAudit } = require('../middleware/auditLogger');
+    await logAudit({
+      req,
+      userId: req.user.id,
+      userRole: req.role || 'Admin',
+      action: 'ATTENDANCE_UPDATE',
+      details: `Attendance marked ${status} for student ${registration.studentId} on event ${registration.eventId}`,
+    });
+
+    if (status === 'Present') {
+      await logAudit({
+        req,
+        userId: registration.studentId,
+        userRole: 'Student',
+        action: 'CERTIFICATE_GENERATION',
+        details: `Certificate generated for student ${registration.studentId} on event ${registration.eventId}`,
+      });
+
+      // Award Attendance (+25 XP) and Certificate (+20 XP) points
+      try {
+        const { awardPoints } = require('../services/GamificationService');
+        const eventObj = await Event.findByPk(registration.eventId, { attributes: ['title'] });
+        await awardPoints(
+          registration.studentId,
+          25,
+          'ATTEND_EVENT',
+          `Attended event: ${eventObj?.title || 'Event'}`,
+          registration.eventId,
+          req
+        );
+        await awardPoints(
+          registration.studentId,
+          20,
+          'CERTIFICATE_EARNED',
+          `Earned Certificate for event: ${eventObj?.title || 'Event'}`,
+          registration.eventId,
+          req
+        );
+      } catch (gErr) {
+        console.error('Non-blocking attendance/certificate points allocation error:', gErr.message);
+      }
     }
 
     // Format response
     const result = attendance.toJSON();
     result._id = result.id;
+
+    const { broadcastAttendanceUpdated, broadcastCertificateGenerated } = require('../utils/socket');
+    broadcastAttendanceUpdated(registration.eventId, attendance);
+    if (status === 'Present') {
+      const cert = await Certificate.findOne({ where: { registrationId: registration.id } });
+      if (cert) {
+        broadcastCertificateGenerated(registration.studentId, cert);
+      }
+    }
+
     res.status(created ? 201 : 200).json(result);
   } catch (error) {
     res.status(500).json({ message: 'Server error marking attendance', error: error.message });
@@ -108,6 +184,30 @@ const updateAttendance = async (req, res) => {
             qrVerificationCode: certCode,
           },
         });
+
+        // Award Attendance (+25 XP) and Certificate (+20 XP) points
+        try {
+          const { awardPoints } = require('../services/GamificationService');
+          const eventObj = await Event.findByPk(attendance.eventId, { attributes: ['title'] });
+          await awardPoints(
+            attendance.studentId,
+            25,
+            'ATTEND_EVENT',
+            `Attended event: ${eventObj?.title || 'Event'}`,
+            attendance.eventId,
+            req
+          );
+          await awardPoints(
+            attendance.studentId,
+            20,
+            'CERTIFICATE_EARNED',
+            `Earned Certificate for event: ${eventObj?.title || 'Event'}`,
+            attendance.eventId,
+            req
+          );
+        } catch (gErr) {
+          console.error('Non-blocking update attendance points allocation error:', gErr.message);
+        }
       }
     }
 

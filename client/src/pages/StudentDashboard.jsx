@@ -1,13 +1,32 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
+import { useSocket } from '../context/SocketProvider';
 import Loader from '../components/Loader';
 import SearchBar from '../components/SearchBar';
 import FilterDropdown from '../components/FilterDropdown';
 import EventCard from '../components/EventCard';
 import ConfirmationDialog from '../components/ConfirmationDialog';
-import { User, BookOpen, GraduationCap, Calendar, Compass, ArrowUpDown, Bookmark, Clock, CheckCircle, AlertTriangle } from 'lucide-react';
+import {
+  User,
+  BookOpen,
+  GraduationCap,
+  Calendar,
+  Compass,
+  ArrowUpDown,
+  Bookmark,
+  Clock,
+  CheckCircle,
+  AlertTriangle,
+  Heart,
+  Trophy,
+  Star,
+  Download
+} from 'lucide-react';
 
 const StudentDashboard = () => {
+  const navigate = useNavigate();
+  const socket = useSocket();
   const [profile, setProfile] = useState(null);
   const [events, setEvents] = useState([]);
   const [registrations, setRegistrations] = useState([]);
@@ -24,6 +43,18 @@ const StudentDashboard = () => {
   const [category, setCategory] = useState('');
   const [status, setStatus] = useState('');
   const [sort, setSort] = useState('date_asc');
+
+  // Tab switcher
+  const [dashboardTab, setDashboardTab] = useState('explorer');
+
+  // Extra Gamification states
+  const [gamificationStats, setGamificationStats] = useState(null);
+  const [volunteerDashboard, setVolunteerDashboard] = useState(null);
+  const [certificates, setCertificates] = useState([]);
+  const [loadingExtra, setLoadingExtra] = useState(false);
+
+  // Favorites list saved locally
+  const [favorites, setFavorites] = useState([]);
 
   const categories = ['Technical', 'Cultural', 'Sports', 'Seminar', 'Workshop', 'Other'];
   const statuses = ['Upcoming', 'Ongoing', 'Completed', 'Cancelled'];
@@ -57,6 +88,109 @@ const StudentDashboard = () => {
     fetchRegistrations();
   }, []);
 
+  // Fetch bookmarks
+  useEffect(() => {
+    if (profile?.id) {
+      const saved = localStorage.getItem(`saved_events_${profile.id}`);
+      if (saved) {
+        setFavorites(JSON.parse(saved));
+      }
+    }
+  }, [profile]);
+
+  const toggleFavorite = (eventId) => {
+    if (!profile?.id) return;
+    let updated;
+    if (favorites.includes(eventId)) {
+      updated = favorites.filter(id => id !== eventId);
+    } else {
+      updated = [...favorites, eventId];
+    }
+    setFavorites(updated);
+    localStorage.setItem(`saved_events_${profile.id}`, JSON.stringify(updated));
+  };
+
+  // Fetch gamification & volunteer logs on demand
+  const fetchExtraStats = async () => {
+    try {
+      setLoadingExtra(true);
+      const [resStats, resVol, resCert] = await Promise.all([
+        api.get('/leaderboard/stats').catch(() => ({ data: { points: 0, eventsAttended: 0, volunteerHours: 0, badges: [] } })),
+        api.get('/volunteers/dashboard').catch(() => ({ data: { applications: [], totalHours: 0 } })),
+        api.get('/certificates').catch(() => ({ data: [] })),
+      ]);
+      setGamificationStats(resStats.data);
+      setVolunteerDashboard(resVol.data);
+      setCertificates(resCert.data);
+    } catch (err) {
+      console.error('Failed to load sub-stats:', err);
+    } finally {
+      setLoadingExtra(false);
+    }
+  };
+
+  useEffect(() => {
+    if (dashboardTab !== 'explorer') {
+      fetchExtraStats();
+    }
+  }, [dashboardTab]);
+
+  useEffect(() => {
+    if (!socket) return;
+
+    const handleLiveUpdate = (update) => {
+      setEvents((prevEvents) =>
+        prevEvents.map((evt) =>
+          evt.id === update.eventId
+            ? { ...evt, availableSeats: update.remainingSeats }
+            : evt
+        )
+      );
+    };
+
+    const handleEventCreated = (newEvent) => {
+      setEvents((prevEvents) => {
+        const exists = prevEvents.some((evt) => evt.id === newEvent.id);
+        if (exists) return prevEvents;
+        return [newEvent, ...prevEvents];
+      });
+    };
+
+    const handleEventUpdated = (updatedEvent) => {
+      setEvents((prevEvents) =>
+        prevEvents.map((evt) => (evt.id === updatedEvent.id ? { ...evt, ...updatedEvent } : evt))
+      );
+    };
+
+    const handleEventDeleted = (data) => {
+      setEvents((prevEvents) => prevEvents.filter((evt) => evt.id !== data.eventId));
+    };
+
+    socket.on('live_counter_update', handleLiveUpdate);
+    socket.on('seatCountUpdated', handleLiveUpdate);
+    socket.on('seat:updated', handleLiveUpdate);
+    
+    socket.on('eventCreated', handleEventCreated);
+    socket.on('event:created', handleEventCreated);
+    socket.on('eventUpdated', handleEventUpdated);
+    socket.on('event:updated', handleEventUpdated);
+    socket.on('eventDeleted', handleEventDeleted);
+    socket.on('event:deleted', handleEventDeleted);
+
+    return () => {
+      socket.off('live_counter_update', handleLiveUpdate);
+      socket.off('seatCountUpdated', handleLiveUpdate);
+      socket.off('seat:updated', handleLiveUpdate);
+      
+      socket.off('eventCreated', handleEventCreated);
+      socket.off('event:created', handleEventCreated);
+      socket.off('eventUpdated', handleEventUpdated);
+      socket.off('event:updated', handleEventUpdated);
+      socket.off('eventDeleted', handleEventDeleted);
+      socket.off('event:deleted', handleEventDeleted);
+    };
+  }, [socket]);
+
   // Fetch events list
   const fetchEvents = async () => {
     try {
@@ -89,7 +223,6 @@ const StudentDashboard = () => {
     try {
       await api.post('/registrations', { eventId });
       alert('Event registration successful!');
-      // Refresh events grid and registrations counts
       await Promise.all([fetchEvents(), fetchRegistrations()]);
     } catch (err) {
       console.error(err);
@@ -141,9 +274,11 @@ const StudentDashboard = () => {
           profile && (
             <div className="bg-white rounded-2xl border border-gray-250 shadow-xs overflow-hidden flex flex-col md:flex-row items-stretch">
               <div className="bg-gradient-to-r from-primary-800 to-primary-600 px-6 py-6 md:px-8 text-white flex items-center gap-4 shrink-0">
-                <div className="bg-white/10 p-2.5 rounded-full border border-white/20">
-                  <User className="h-8 w-8 text-white" />
-                </div>
+                <img
+                  src="/sri_vasavi_logo.png"
+                  alt="Sri Vasavi Engineering College Emblem"
+                  className="h-12 w-12 object-contain rounded-full border border-white/40 bg-white p-0.5 shadow-sm"
+                />
                 <div>
                   <h1 className="text-xl font-bold tracking-tight">{profile.fullName}</h1>
                   <p className="text-primary-100 text-xs mt-0.5">Roll No: {profile.rollNumber}</p>
@@ -222,74 +357,336 @@ const StudentDashboard = () => {
           </div>
         </div>
 
-        {/* Explorer Heading */}
-        <div>
-          <h2 className="text-2xl font-extrabold text-gray-950 flex items-center gap-2">
-            <Compass className="h-7 w-7 text-primary-600 animate-pulse" />
-            Campus Events Explorer
-          </h2>
-          <p className="text-sm text-gray-500 mt-0.5">Explore active events, tech symposiums, workshops, and sports meets.</p>
+        {/* Dashboard Tab Switching Headers */}
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-gray-200 pb-4">
+          <div>
+            <h2 className="text-2xl font-extrabold text-gray-950 flex items-center gap-2">
+              <Compass className="h-7 w-7 text-primary-600" />
+              Student Hub
+            </h2>
+            <p className="text-sm text-gray-500 mt-0.5">Manage registrations, points, badges, volunteer duties, and certificates.</p>
+          </div>
+          
+          <div className="flex flex-wrap bg-white p-1 rounded-xl border border-gray-200 shadow-xs select-none">
+            <button
+              onClick={() => setDashboardTab('explorer')}
+              className={`px-4 py-2 rounded-lg text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${
+                dashboardTab === 'explorer' ? 'bg-primary-600 text-white shadow-xs' : 'text-gray-600 hover:text-gray-905'
+              }`}
+            >
+              <Compass className="w-4 h-4" /> Events
+            </button>
+            <button
+              onClick={() => setDashboardTab('achievements')}
+              className={`px-4 py-2 rounded-lg text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${
+                dashboardTab === 'achievements' ? 'bg-primary-600 text-white shadow-xs' : 'text-gray-600 hover:text-gray-905'
+              }`}
+            >
+              <Trophy className="w-4 h-4" /> Achievements
+            </button>
+            <button
+              onClick={() => setDashboardTab('timeline')}
+              className={`px-4 py-2 rounded-lg text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${
+                dashboardTab === 'timeline' ? 'bg-primary-600 text-white shadow-xs' : 'text-gray-600 hover:text-gray-905'
+              }`}
+            >
+              <Clock className="w-4 h-4" /> Timeline
+            </button>
+            <button
+              onClick={() => setDashboardTab('volunteering')}
+              className={`px-4 py-2 rounded-lg text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${
+                dashboardTab === 'volunteering' ? 'bg-primary-600 text-white shadow-xs' : 'text-gray-600 hover:text-gray-905'
+              }`}
+            >
+              <User className="w-4 h-4" /> Volunteering
+            </button>
+            <button
+              onClick={() => setDashboardTab('favorites')}
+              className={`px-4 py-2 rounded-lg text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${
+                dashboardTab === 'favorites' ? 'bg-primary-600 text-white shadow-xs' : 'text-gray-600 hover:text-gray-905'
+              }`}
+            >
+              <Heart className="w-4 h-4 text-red-500 fill-red-500" /> Saved
+            </button>
+          </div>
         </div>
 
-        {/* Filter Controls Bar */}
-        <div className="bg-white p-4 rounded-xl border border-gray-250 shadow-xs flex flex-col md:flex-row justify-between items-stretch md:items-center gap-4">
-          <SearchBar search={search} setSearch={setSearch} placeholder="Search by title, venue, organizer..." />
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 shrink-0">
-            <FilterDropdown
-              value={category}
-              setValue={setCategory}
-              options={categories}
-              label="Category"
-              allLabel="All Categories"
-            />
-            <FilterDropdown
-              value={status}
-              setValue={setStatus}
-              options={statuses}
-              label="Status"
-              allLabel="All Statuses"
-            />
-            <div className="flex items-center gap-2">
-              <ArrowUpDown className="h-4.5 w-4.5 text-gray-400 shrink-0" />
-              <select
-                value={sort}
-                onChange={(e) => setSort(e.target.value)}
-                className="block w-full py-2 pl-3 pr-8 border border-gray-300 rounded-lg text-gray-900 bg-white shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
-              >
-                <option value="date_asc">Date: Earliest First</option>
-                <option value="date_desc">Date: Latest First</option>
-              </select>
+        {/* Tab Layout Renderers */}
+
+        {dashboardTab === 'explorer' && (
+          <div className="space-y-6">
+            {/* Filter Controls Bar */}
+            <div className="bg-white p-4 rounded-xl border border-gray-250 shadow-xs flex flex-col md:flex-row justify-between items-stretch md:items-center gap-4">
+              <SearchBar search={search} setSearch={setSearch} placeholder="Search by title, venue, organizer..." />
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 shrink-0">
+                <FilterDropdown
+                  value={category}
+                  setValue={setCategory}
+                  options={categories}
+                  label="Category"
+                  allLabel="All Categories"
+                />
+                <FilterDropdown
+                  value={status}
+                  setValue={setStatus}
+                  options={statuses}
+                  label="Status"
+                  allLabel="All Statuses"
+                />
+                <div className="flex items-center gap-2">
+                  <ArrowUpDown className="h-4.5 w-4.5 text-gray-400 shrink-0" />
+                  <select
+                    value={sort}
+                    onChange={(e) => setSort(e.target.value)}
+                    className="block w-full py-2 pl-3 pr-8 border border-gray-300 rounded-lg text-gray-900 bg-white shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
+                  >
+                    <option value="date_asc">Date: Earliest First</option>
+                    <option value="date_desc">Date: Latest First</option>
+                  </select>
+                </div>
+              </div>
             </div>
-          </div>
-        </div>
 
-        {/* Events Grid */}
-        {loadingEvents ? (
-          <div className="py-20">
-            <Loader size="large" />
+            {/* Events Grid */}
+            {loadingEvents ? (
+              <div className="py-20">
+                <Loader size="large" />
+              </div>
+            ) : error ? (
+              <div className="bg-red-50 border border-red-200 text-red-700 px-6 py-4 rounded-xl text-center">
+                {error}
+              </div>
+            ) : events.length === 0 ? (
+              <div className="text-center py-16 bg-white rounded-xl border border-dashed border-gray-200 p-8 text-gray-500">
+                <p className="font-semibold text-gray-700">No events found matching current criteria.</p>
+                <p className="text-sm mt-1">Please try modifying search terms or filters.</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                {events.map((event) => (
+                  <div key={event.id || event._id} className="relative">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggleFavorite(event.id || event._id);
+                      }}
+                      className="absolute top-4 right-4 p-1.5 bg-white/90 backdrop-blur-xs rounded-full hover:bg-white transition shadow-sm cursor-pointer z-10"
+                    >
+                      <Heart
+                        className={`w-4 h-4 transition ${
+                          favorites.includes(event.id || event._id) ? 'text-red-500 fill-red-500 scale-110' : 'text-gray-400 hover:text-red-500'
+                        }`}
+                      />
+                    </button>
+                    <EventCard
+                      event={event}
+                      isRegistered={registeredEventMap.has(event.id)}
+                      registrationId={registeredEventMap.get(event.id)}
+                      onRegister={handleRegister}
+                      onCancel={handleCancelClick}
+                      userRole="Student"
+                    />
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
-        ) : error ? (
-          <div className="bg-red-50 border border-red-200 text-red-700 px-6 py-4 rounded-xl text-center">
-            {error}
+        )}
+
+        {dashboardTab === 'achievements' && (
+          <div className="bg-white rounded-2xl shadow-xs border p-6 space-y-6">
+            <h3 className="font-extrabold text-gray-950 text-lg">My Performance & Accomplishments</h3>
+            
+            {loadingExtra ? (
+              <div className="py-12">
+                <Loader size="medium" />
+              </div>
+            ) : (
+              <>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div className="p-5 bg-amber-50 border border-amber-100 rounded-xl">
+                    <span className="text-[10px] text-amber-850 font-bold uppercase tracking-wider block">Gamification Score</span>
+                    <span className="text-2xl font-black text-amber-600">{gamificationStats?.points || 0} pts</span>
+                  </div>
+                  <div className="p-5 bg-purple-50 border border-purple-100 rounded-xl">
+                    <span className="text-[10px] text-purple-850 font-bold uppercase tracking-wider block">Current Level</span>
+                    <span className="text-2xl font-black text-purple-600">{gamificationStats?.level || 'Beginner'}</span>
+                  </div>
+                  <div className="p-5 bg-teal-50 border border-teal-100 rounded-xl">
+                    <span className="text-[10px] text-teal-850 font-bold uppercase tracking-wider block">Volunteer Hours</span>
+                    <span className="text-2xl font-black text-teal-600">{gamificationStats?.volunteerHours || 0} hrs</span>
+                  </div>
+                </div>
+
+                {/* Badges List */}
+                <div className="space-y-3">
+                  <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider">My Earned Badges</h4>
+                  {(!gamificationStats?.badges || gamificationStats.badges.length === 0) ? (
+                    <p className="text-xs text-gray-500">No badges earned yet. Join events or volunteer to start unlocking achievements!</p>
+                  ) : (
+                    <div className="flex flex-wrap gap-2">
+                      {gamificationStats.badges.map((badge) => (
+                        <span key={badge} className="px-3.5 py-1.5 bg-amber-50 border border-amber-250 text-amber-805 text-xs font-bold rounded-full flex items-center gap-1.5 shadow-2xs">
+                          <Star className="w-3.5 h-3.5 fill-amber-500 text-amber-500" />
+                          {badge}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Certificates List */}
+                <div className="pt-4 border-t space-y-3">
+                  <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider">My Certificates</h4>
+                  {certificates.length === 0 ? (
+                    <p className="text-xs text-gray-500">No participation certificates generated yet. Complete event attendance to receive them.</p>
+                  ) : (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      {certificates.map((cert) => (
+                        <div key={cert.id} className="p-3 bg-gray-50 rounded-xl border border-gray-200 flex items-center justify-between gap-4">
+                          <div>
+                            <h4 className="font-bold text-gray-900 text-xs">{cert.Event?.title}</h4>
+                            <p className="text-[10px] text-gray-400 mt-0.5">Issued: {new Date(cert.issueDate).toLocaleDateString()}</p>
+                          </div>
+                          <a
+                            href={`${api.defaults.baseURL}/certificates/${cert.id}/download`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="p-1.5 bg-white hover:bg-gray-100 border rounded-lg text-primary-600 transition shrink-0 cursor-pointer"
+                          >
+                            <Download className="w-4 h-4" />
+                          </a>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </>
+            )}
           </div>
-        ) : events.length === 0 ? (
-          <div className="text-center py-16 bg-white rounded-xl border border-dashed border-gray-200 p-8 text-gray-500">
-            <p className="font-semibold text-gray-700">No events found matching current criteria.</p>
-            <p className="text-sm mt-1">Please try modifying search terms or filters.</p>
+        )}
+
+        {dashboardTab === 'timeline' && (
+          <div className="bg-white rounded-2xl shadow-xs border p-6 space-y-6">
+            <h3 className="font-extrabold text-gray-950 text-lg">My Timeline</h3>
+            {registrations.length === 0 ? (
+              <p className="text-xs text-gray-500">Timeline is currently empty. Register for events to build your history profile.</p>
+            ) : (
+              <div className="relative border-l-2 border-primary-200 ml-3.5 pl-6 space-y-6">
+                {registrations.map((reg) => (
+                  <div key={reg.id} className="relative">
+                    <span className="absolute -left-[31px] top-0.5 bg-primary-55 text-primary-600 border border-primary-300 rounded-full p-1">
+                      <Clock className="w-3.5 h-3.5" />
+                    </span>
+                    <div>
+                      <h4 className="font-bold text-gray-900 text-xs">Registered for {reg.Event?.title}</h4>
+                      <p className="text-[10px] text-gray-400 mt-0.5">
+                        Registration Date: {new Date(reg.registrationDate || reg.createdAt).toLocaleDateString()}
+                      </p>
+                      <span className={`inline-block text-[9px] font-bold px-2 py-0.5 rounded-full mt-1.5 ${
+                        reg.status === 'Registered' ? 'bg-green-50 text-green-705 border border-green-200' :
+                        reg.status === 'Completed' ? 'bg-blue-50 text-blue-705 border border-blue-200' : 'bg-red-50 text-red-750 border border-red-200'
+                      }`}>
+                        {reg.status}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {events.map((event) => (
-              <EventCard
-                key={event.id}
-                event={event}
-                isRegistered={registeredEventMap.has(event.id)}
-                registrationId={registeredEventMap.get(event.id)}
-                onRegister={handleRegister}
-                onCancel={handleCancelClick}
-                userRole="Student"
-              />
-            ))}
+        )}
+
+        {dashboardTab === 'volunteering' && (
+          <div className="bg-white rounded-2xl shadow-xs border p-6 space-y-6">
+            <h3 className="font-extrabold text-gray-950 text-lg">Volunteering History</h3>
+            
+            {loadingExtra ? (
+              <div className="py-12">
+                <Loader size="medium" />
+              </div>
+            ) : !volunteerDashboard?.applications || volunteerDashboard.applications.length === 0 ? (
+              <p className="text-xs text-gray-500">You have not volunteered for any events yet. Apply on the event details page to help organize!</p>
+            ) : (
+              <div className="space-y-4">
+                <div className="p-4 bg-teal-50 border border-teal-100 rounded-xl text-teal-800 font-bold text-xs">
+                  Total Volunteering Hours: {volunteerDashboard.totalHours || 0} Hours
+                </div>
+                <div className="space-y-3">
+                  {volunteerDashboard.applications.map((app) => (
+                    <div key={app.id} className="p-4 bg-gray-50 rounded-xl border border-gray-200 space-y-3">
+                      <div className="flex justify-between items-center">
+                        <h4 className="font-bold text-gray-900 text-xs">{app.Event?.title}</h4>
+                        <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full ${
+                          app.status === 'approved' ? 'bg-green-100 text-green-800' :
+                          app.status === 'rejected' ? 'bg-red-100 text-red-800' : 'bg-amber-100 text-amber-800'
+                        }`}>
+                          {app.status}
+                        </span>
+                      </div>
+                      
+                      {/* Volunteer Tasks */}
+                      {app.VolunteerTasks?.length > 0 && (
+                        <div className="pl-4 border-l-2 border-purple-200 space-y-2">
+                          <h5 className="text-[10px] font-extrabold text-purple-700 uppercase tracking-wider">Assigned Tasks</h5>
+                          {app.VolunteerTasks.map((task) => (
+                            <div key={task.id} className="text-xs bg-white p-2.5 rounded-lg border border-purple-100 flex items-center justify-between">
+                              <div>
+                                <h6 className="font-bold text-gray-900 text-xs">{task.title}</h6>
+                                <p className="text-[10px] text-gray-400 mt-0.5">{task.description}</p>
+                              </div>
+                              <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider ${
+                                task.status === 'completed' ? 'bg-green-100 text-green-800' : 'bg-amber-100 text-amber-800'
+                              }`}>
+                                {task.status}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {dashboardTab === 'favorites' && (
+          <div className="space-y-6">
+            <h3 className="font-extrabold text-gray-950 text-lg">Saved & Bookmarked Events</h3>
+            {events.filter((e) => favorites.includes(e.id || e._id)).length === 0 ? (
+              <div className="text-center py-16 bg-white rounded-xl border border-dashed border-gray-250 p-8 text-gray-500">
+                <p className="font-semibold text-sm">No saved events.</p>
+                <p className="text-xs mt-0.5">Click the heart icon on event cards in the Event Explorer tab to save them here.</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                {events.filter((e) => favorites.includes(e.id || e._id)).map((event) => (
+                  <div key={event.id || event._id} className="relative">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggleFavorite(event.id || event._id);
+                      }}
+                      className="absolute top-4 right-4 p-1.5 bg-white/90 backdrop-blur-xs rounded-full hover:bg-white transition shadow-sm cursor-pointer z-10"
+                    >
+                      <Heart
+                        className="w-4 h-4 text-red-500 fill-red-500 scale-110"
+                      />
+                    </button>
+                    <EventCard
+                      event={event}
+                      isRegistered={registeredEventMap.has(event.id)}
+                      registrationId={registeredEventMap.get(event.id)}
+                      onRegister={handleRegister}
+                      onCancel={handleCancelClick}
+                      userRole="Student"
+                    />
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
       </div>

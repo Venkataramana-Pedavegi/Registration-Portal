@@ -1,21 +1,24 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useContext } from 'react';
 import api from '../services/api';
 import Loader from '../components/Loader';
 import Pagination from '../components/Pagination';
-import { Bell, CheckCircle2, Award, Calendar, AlertCircle, Check } from 'lucide-react';
+import { Bell, CheckCircle2, Award, Calendar, AlertCircle, Check, Trash2 } from 'lucide-react';
+import { AuthContext } from '../context/AuthContext';
+import { subscribeToUserNotifications } from '../services/socketService';
 
 const Notifications = () => {
   const [notifications, setNotifications] = useState([]);
   const [pagination, setPagination] = useState({ page: 1, totalPages: 1 });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const { user } = useContext(AuthContext);
 
   const fetchNotifications = async (page = 1) => {
     try {
       setLoading(true);
       const { data } = await api.get(`/notifications?page=${page}&limit=10`);
-      setNotifications(data.notifications);
-      setPagination(data.pagination);
+      setNotifications(data.notifications || []);
+      setPagination(data.pagination || { page: 1, totalPages: 1 });
     } catch (err) {
       console.error(err);
       setError('Failed to load notifications.');
@@ -28,9 +31,36 @@ const Notifications = () => {
     fetchNotifications(1);
   }, []);
 
+  useEffect(() => {
+    if (user?.id) {
+      const unsubscribe = subscribeToUserNotifications(user.id, () => {
+        fetchNotifications(1);
+      });
+      return () => unsubscribe();
+    }
+  }, [user]);
+
   const handleMarkAllRead = async () => {
     try {
       await api.put('/notifications/read', {});
+      fetchNotifications(pagination.page);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleMarkSingleRead = async (notificationId) => {
+    try {
+      await api.put('/notifications/read', { notificationId });
+      fetchNotifications(pagination.page);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleDelete = async (id) => {
+    try {
+      await api.delete(`/notifications/${id}`);
       fetchNotifications(pagination.page);
     } catch (err) {
       console.error(err);
@@ -74,7 +104,7 @@ const Notifications = () => {
 
           <button
             onClick={handleMarkAllRead}
-            className="flex items-center gap-1.5 bg-white hover:bg-gray-50 text-gray-700 font-bold px-4 py-2 rounded-xl text-xs border border-gray-300 shadow-xs transition duration-150"
+            className="flex items-center gap-1.5 bg-white hover:bg-gray-50 text-gray-700 font-bold px-4 py-2 rounded-xl text-xs border border-gray-300 shadow-xs transition duration-150 cursor-pointer"
           >
             <Check className="h-4 w-4 text-green-600" />
             <span>Mark All as Read</span>
@@ -107,9 +137,27 @@ const Notifications = () => {
                 <div className="flex-grow space-y-1">
                   <div className="flex justify-between items-center">
                     <h4 className="font-bold text-gray-950 text-sm">{item.title}</h4>
-                    <span className="text-[11px] text-gray-400 font-medium">
-                      {new Date(item.createdAt).toLocaleString()}
-                    </span>
+                    <div className="flex items-center gap-3">
+                      <span className="text-[11px] text-gray-400 font-medium">
+                        {new Date(item.createdAt).toLocaleString()}
+                      </span>
+                      {!item.isRead && (
+                        <button
+                          onClick={() => handleMarkSingleRead(item.id || item._id)}
+                          className="p-1.5 hover:bg-gray-150 text-gray-400 hover:text-green-600 rounded-lg transition cursor-pointer"
+                          title="Mark as Read"
+                        >
+                          <Check className="h-3.5 w-3.5" />
+                        </button>
+                      )}
+                      <button
+                        onClick={() => handleDelete(item.id || item._id)}
+                        className="p-1.5 hover:bg-gray-150 text-gray-400 hover:text-red-650 rounded-lg transition cursor-pointer"
+                        title="Delete Notification"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
                   </div>
                   <p className="text-xs text-gray-650 leading-relaxed">{item.message}</p>
                 </div>

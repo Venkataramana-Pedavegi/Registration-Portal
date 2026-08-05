@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import api from '../services/api';
-import { Lock, CheckCircle2 } from 'lucide-react';
+import { Lock, ShieldCheck, ShieldAlert, ArrowLeft } from 'lucide-react';
 
 const ResetPassword = () => {
   const { token } = useParams();
@@ -12,12 +12,47 @@ const ResetPassword = () => {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState({ type: '', text: '' });
 
+  // Calculate password strength score
+  const getPasswordStrength = (pass) => {
+    if (!pass) return { score: 0, label: 'None', color: 'bg-gray-200' };
+    
+    let score = 0;
+    if (pass.length >= 8) score += 1;
+    if (/[A-Z]/.test(pass)) score += 1;
+    if (/[a-z]/.test(pass)) score += 1;
+    if (/\d/.test(pass)) score += 1;
+    if (/\W/.test(pass)) score += 1;
+
+    if (pass.length < 8) {
+      return { score: 1, label: 'Too Short (Min 8 chars)', color: 'bg-red-500', width: 'w-1/5' };
+    }
+    
+    switch (score) {
+      case 5:
+        return { score: 5, label: 'Strong (Enterprise Grade)', color: 'bg-green-600', width: 'w-full' };
+      case 4:
+        return { score: 4, label: 'Good', color: 'bg-green-400', width: 'w-4/5' };
+      case 3:
+      case 2:
+        return { score: 2, label: 'Medium (Include Symbols & Caps)', color: 'bg-yellow-400', width: 'w-2/5' };
+      default:
+        return { score: 1, label: 'Weak', color: 'bg-red-400', width: 'w-1/5' };
+    }
+  };
+
+  const strength = getPasswordStrength(newPassword);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setMessage({ type: '', text: '' });
 
     if (newPassword !== confirmPassword) {
       setMessage({ type: 'error', text: 'Passwords do not match.' });
+      return;
+    }
+
+    if (strength.score < 5) {
+      setMessage({ type: 'error', text: 'Password does not meet complexity rules. It must contain at least 8 characters, an uppercase letter, a lowercase letter, a number, and a special character.' });
       return;
     }
 
@@ -46,7 +81,7 @@ const ResetPassword = () => {
             <Lock className="h-7 w-7" />
           </div>
           <h2 className="text-2xl font-extrabold text-gray-900 tracking-tight">Reset Account Password</h2>
-          <p className="text-xs text-gray-500">Enter a new secure password for your account.</p>
+          <p className="text-xs text-gray-500">Choose a new password adhering to the college security policies.</p>
         </div>
 
         {message.text && (
@@ -63,9 +98,22 @@ const ResetPassword = () => {
               required
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
-              placeholder="Minimum 6 characters"
+              placeholder="Minimum 8 characters"
               className="w-full px-3.5 py-2.5 border border-gray-300 rounded-xl text-sm text-gray-900 focus:ring-primary-500 focus:border-primary-500 shadow-xs"
             />
+            
+            {/* Live Password Strength Meter */}
+            {newPassword && (
+              <div className="mt-2.5 space-y-1.5">
+                <div className="flex justify-between items-center text-[10px] font-bold uppercase tracking-wider">
+                  <span className="text-gray-400">Password Strength:</span>
+                  <span className={strength.score === 5 ? 'text-green-600' : 'text-gray-500'}>{strength.label}</span>
+                </div>
+                <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                  <div className={`h-full ${strength.color} ${strength.width} transition-all duration-355`} />
+                </div>
+              </div>
+            )}
           </div>
 
           <div>
@@ -82,11 +130,18 @@ const ResetPassword = () => {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-2.5 rounded-xl text-xs transition duration-150 shadow-xs"
+            className="w-full bg-purple-650 hover:bg-purple-700 text-white font-bold py-2.5 rounded-xl text-xs transition duration-150 shadow-xs"
           >
             {loading ? 'Resetting Password...' : 'Save New Password'}
           </button>
         </form>
+
+        <div className="text-center pt-2 border-t border-gray-150">
+          <Link to="/student-login" className="inline-flex items-center gap-1.5 text-xs font-semibold text-gray-600 hover:text-gray-900">
+            <ArrowLeft className="h-4 w-4" />
+            <span>Cancel and return</span>
+          </Link>
+        </div>
 
       </div>
     </div>

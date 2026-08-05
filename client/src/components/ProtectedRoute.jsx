@@ -15,14 +15,26 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
   }
 
   if (!token) {
-    // If we're trying to access admin panel, go to admin login. Otherwise student login.
-    const redirectPath = allowedRoles.includes('Admin') ? '/admin-login' : '/student-login';
+    const isAskingForAdmin = allowedRoles?.some((r) =>
+      ['Admin', 'Super Admin', 'Event Coordinator', 'Faculty Coordinator'].includes(r)
+    );
+    const redirectPath = isAskingForAdmin ? '/admin-login' : '/student-login';
     return <Navigate to={redirectPath} replace />;
   }
 
-  if (allowedRoles && !allowedRoles.includes(role)) {
-    // Role not authorized, redirect to home
-    return <Navigate to="/" replace />;
+  if (allowedRoles) {
+    const adminGroup = ['Admin', 'Super Admin', 'Event Coordinator', 'Faculty Coordinator'];
+    const studentGroup = ['Student', 'Volunteer'];
+
+    const userHasAccess = allowedRoles.some((allowed) => {
+      if (allowed === 'Admin' && adminGroup.includes(role)) return true;
+      if (allowed === 'Student' && (studentGroup.includes(role) || !role)) return true;
+      return allowed === role;
+    });
+
+    if (!userHasAccess) {
+      return <Navigate to="/" replace />;
+    }
   }
 
   return children;

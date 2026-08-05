@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Calendar, MapPin, Users, Building, CheckCircle, XCircle } from 'lucide-react';
+import { getEventImage } from '../utils/categoryImages';
 
 const EventCard = ({ event, isRegistered, registrationId, onRegister, onCancel, userRole }) => {
   const getStatusClass = (status) => {
@@ -30,7 +31,7 @@ const EventCard = ({ event, isRegistered, registrationId, onRegister, onCancel, 
       {/* Event Image */}
       <div className="h-48 w-full bg-gray-100 relative overflow-hidden shrink-0">
         <img
-          src={event.image || 'https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?auto=format&fit=crop&q=80&w=800'}
+          src={getEventImage(event)}
           alt={event.title}
           className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
         />

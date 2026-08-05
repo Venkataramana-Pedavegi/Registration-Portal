@@ -7,13 +7,26 @@ const Loader = ({ size = 'medium' }) => {
     large: 'w-16 h-16 border-4',
   };
 
+  const logoSizes = {
+    small: 'h-3.5 w-3.5',
+    medium: 'h-6 w-6',
+    large: 'h-9 w-9',
+  };
+
   return (
-    <div className="flex justify-center items-center">
-      <div
-        className={`${sizeClasses[size]} border-primary-200 border-t-primary-600 rounded-full animate-spin`}
-        role="status"
-      >
-        <span className="sr-only">Loading...</span>
+    <div className="flex flex-col justify-center items-center gap-2">
+      <div className="relative flex items-center justify-center">
+        <div
+          className={`${sizeClasses[size]} border-primary-200 border-t-primary-600 rounded-full animate-spin`}
+          role="status"
+        >
+          <span className="sr-only">Loading...</span>
+        </div>
+        <img
+          src="/sri_vasavi_logo.png"
+          alt="Sri Vasavi Logo"
+          className={`absolute ${logoSizes[size]} object-contain rounded-full`}
+        />
       </div>
     </div>
   );

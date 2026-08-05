@@ -106,6 +106,38 @@ const Event = sequelize.define(
       type: DataTypes.INTEGER,
       allowNull: false,
     },
+    fee: {
+      type: DataTypes.FLOAT,
+      defaultValue: 0,
+    },
+    isPaid: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false,
+    },
+    registrationType: {
+      type: DataTypes.ENUM('FREE', 'PAID'),
+      allowNull: false,
+      defaultValue: 'FREE',
+    },
+    price: {
+      type: DataTypes.DECIMAL(10, 2),
+      allowNull: false,
+      defaultValue: 0.00,
+    },
+    reminderSent24h: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: false,
+    },
+    reminderSent1h: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: false,
+    },
+    department: {
+      type: DataTypes.STRING,
+      defaultValue: 'General',
+    },
   },
   {
     indexes: [

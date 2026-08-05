@@ -28,6 +28,8 @@ const createEvent = async (req, res) => {
       organizer,
       capacity,
       image,
+      registrationType,
+      price,
     } = req.body;
 
     const createdBy = req.user.id;
@@ -61,11 +63,18 @@ const createEvent = async (req, res) => {
       availableSeats: capacity,
       image: image || undefined,
       createdBy,
+      registrationType: registrationType || 'FREE',
+      price: price !== undefined ? Number(price) : 0,
+      fee: price !== undefined ? Number(price) : 0,
+      isPaid: registrationType === 'PAID',
     });
 
     const fullEvent = await Event.findByPk(newEvent.id, {
       include: [{ model: Admin, attributes: ['id', 'username', 'email'] }],
     });
+
+    const { logAudit } = require('../middleware/auditLogger');
+    await logAudit({ req, userId: createdBy, userRole: req.role || 'Admin', action: 'EVENT_CREATION', details: `Event "${newEvent.title}" created (ID: ${newEvent.id})` });
 
     res.status(201).json(formatEvent(fullEvent));
   } catch (error) {
@@ -142,7 +151,15 @@ const getEventById = async (req, res) => {
       return res.status(404).json({ message: 'Event not found' });
     }
 
-    res.json(formatEvent(event));
+    const { Waitlist } = require('../models');
+    const waitlistCount = await Waitlist.count({
+      where: { eventId: id, status: 'waiting' },
+    });
+
+    const formatted = formatEvent(event);
+    formatted.waitlistCount = waitlistCount;
+
+    res.json(formatted);
   } catch (error) {
     res.status(500).json({ message: 'Server error retrieving event details', error: error.message });
   }
@@ -210,12 +227,64 @@ const updateEvent = async (req, res) => {
     }
     if (req.body.image !== undefined) event.image = req.body.image;
     if (req.body.status !== undefined) event.status = req.body.status;
+    if (req.body.registrationType !== undefined) {
+      event.registrationType = req.body.registrationType;
+      event.isPaid = req.body.registrationType === 'PAID';
+    }
+    if (req.body.price !== undefined) {
+      event.price = Number(req.body.price);
+      event.fee = Number(req.body.price);
+    }
 
     await event.save();
 
     const fullEvent = await Event.findByPk(event.id, {
       include: [{ model: Admin, attributes: ['id', 'username', 'email'] }],
     });
+
+    // Fetch registrations and send update/cancellation emails
+    try {
+      const { Student } = require('../models');
+      const registrations = await Registration.findAll({
+        where: { eventId: id, status: 'Registered' },
+        include: [{ model: Student, attributes: ['fullName', 'email'] }],
+      });
+      if (registrations.length > 0) {
+        const sendEmail = require('../utils/sendEmail');
+        const isCancelled = req.body.status === 'Cancelled';
+        const subject = isCancelled ? `Event Cancelled - ${event.title}` : `Event Updated - ${event.title}`;
+        const templateTitle = isCancelled ? 'Event Cancelled' : 'Event Details Updated';
+        const htmlBody = isCancelled
+          ? `<p>Dear Student,</p><p>We regret to inform you that the event <strong>${event.title}</strong> has been cancelled by the coordinators.</p>`
+          : `
+            <p>Dear Student,</p>
+            <p>Please note that the details for the event <strong>${event.title}</strong> have been updated by the administrator:</p>
+            <div style="background: #f8fafc; padding: 15px; border-radius: 8px; border-left: 4px solid #3b82f6; margin: 15px 0;">
+              <p style="margin: 3px 0;"><strong>Event Title:</strong> ${event.title}</p>
+              <p style="margin: 3px 0;"><strong>New Date:</strong> ${new Date(event.eventDate).toLocaleDateString()}</p>
+              <p style="margin: 3px 0;"><strong>New Time:</strong> ${event.startTime} - ${event.endTime}</p>
+              <p style="margin: 3px 0;"><strong>New Venue:</strong> ${event.venue}</p>
+            </div>
+            <p>Please update your calendar accordingly.</p>
+          `;
+
+        registrations.forEach((reg) => {
+          if (reg.Student?.email) {
+            sendEmail({
+              to: reg.Student.email,
+              subject,
+              templateTitle,
+              html: htmlBody.replace('Dear Student,', `Dear <strong>${reg.Student.fullName}</strong>,`),
+            }).catch((err) => console.error('Error sending event update email:', err.message));
+          }
+        });
+      }
+    } catch (err) {
+      console.error('Error processing event update notifications:', err.message);
+    }
+
+    const { broadcastEventUpdated } = require('../utils/socket');
+    broadcastEventUpdated(fullEvent);
 
     res.json(formatEvent(fullEvent));
   } catch (error) {
@@ -239,7 +308,41 @@ const deleteEvent = async (req, res) => {
       return res.status(404).json({ message: 'Event not found' });
     }
 
+    // Send cancellation emails before destroying
+    try {
+      const { Student } = require('../models');
+      const registrations = await Registration.findAll({
+        where: { eventId: id, status: 'Registered' },
+        include: [{ model: Student, attributes: ['fullName', 'email'] }],
+      });
+      if (registrations.length > 0) {
+        const sendEmail = require('../utils/sendEmail');
+        registrations.forEach((reg) => {
+          if (reg.Student?.email) {
+            sendEmail({
+              to: reg.Student.email,
+              subject: `Event Cancelled - ${event.title}`,
+              templateTitle: 'Event Cancelled',
+              html: `
+                <p>Dear <strong>${reg.Student.fullName}</strong>,</p>
+                <p>We regret to inform you that the event <strong>${event.title}</strong> has been cancelled by the coordinators and removed from the portal.</p>
+              `,
+            }).catch((err) => console.error('Error sending event cancellation email:', err.message));
+          }
+        });
+      }
+    } catch (err) {
+      console.error('Error processing event delete notifications:', err.message);
+    }
+
+    const { logAudit } = require('../middleware/auditLogger');
+    await logAudit({ req, userId: req.user.id, userRole: req.role || 'Admin', action: 'EVENT_DELETION', details: `Event "${event.title}" deleted (ID: ${id})` });
+
     await event.destroy();
+
+    const { broadcastEventDeleted } = require('../utils/socket');
+    broadcastEventDeleted(id);
+
     res.json({ message: 'Event deleted successfully' });
   } catch (error) {
     res.status(500).json({ message: 'Server error deleting event', error: error.message });
@@ -303,6 +406,193 @@ const getEventParticipants = async (req, res) => {
   }
 };
 
+const duplicateEvent = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const event = await Event.findByPk(id);
+    if (!event) return res.status(404).json({ message: 'Event not found' });
+
+    const duplicated = await Event.create({
+      title: `${event.title} (Copy)`,
+      description: event.description,
+      category: event.category,
+      venue: event.venue,
+      eventDate: event.eventDate,
+      registrationDeadline: event.registrationDeadline,
+      startTime: event.startTime,
+      endTime: event.endTime,
+      capacity: event.capacity,
+      availableSeats: event.capacity,
+      price: event.price,
+      fee: event.fee,
+      registrationType: event.registrationType,
+      isPaid: event.isPaid,
+      createdBy: req.user.id,
+      status: 'Upcoming',
+    });
+
+    const { logAudit } = require('../middleware/auditLogger');
+    await logAudit({ req, userId: req.user.id, userRole: 'Admin', action: 'EVENT_DUPLICATE', details: `Duplicated Event ID ${id} as Event ID ${duplicated.id}` });
+
+    res.status(201).json(formatEvent(duplicated));
+  } catch (error) {
+    res.status(500).json({ message: 'Server error duplicating event', error: error.message });
+  }
+};
+
+const bulkEmailParticipants = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { subject, message } = req.body;
+
+    if (!subject || !message) {
+      return res.status(400).json({ message: 'Subject and message body are required' });
+    }
+
+    const event = await Event.findByPk(id);
+    if (!event) return res.status(404).json({ message: 'Event not found' });
+
+    const { Student } = require('../models');
+    const registrations = await Registration.findAll({
+      where: { eventId: id, status: 'Registered' },
+      include: [{ model: Student, attributes: ['fullName', 'email'] }],
+    });
+
+    if (registrations.length === 0) {
+      return res.status(400).json({ message: 'No active participants registered for this event.' });
+    }
+
+    const sendEmail = require('../utils/sendEmail');
+    let successCount = 0;
+
+    await Promise.all(
+      registrations.map(async (reg) => {
+        if (reg.Student?.email) {
+          try {
+            await sendEmail({
+              to: reg.Student.email,
+              subject: `${subject} - ${event.title}`,
+              templateTitle: `Announcement: ${event.title}`,
+              html: `
+                <p>Dear <strong>${reg.Student.fullName}</strong>,</p>
+                <p>${message.replace(/\n/g, '<br />')}</p>
+                <p style="margin-top: 20px; font-size: 11px; color: #6b7280; border-top: 1px solid #e5e7eb; padding-top: 10px;">This email was sent by the event coordinator.</p>
+              `,
+            });
+            successCount++;
+          } catch (err) {
+            console.error('Error sending bulk email to student:', reg.Student.email, err.message);
+          }
+        }
+      })
+    );
+
+    const { logAudit } = require('../middleware/auditLogger');
+    await logAudit({ req, userId: req.user.id, userRole: 'Admin', action: 'BULK_EMAIL', details: `Bulk email sent to ${successCount} participants of Event ID ${id}` });
+
+    res.json({ message: `Bulk email processed successfully. Sent to ${successCount} of ${registrations.length} participants.` });
+  } catch (error) {
+    res.status(500).json({ message: 'Server error sending bulk emails', error: error.message });
+  }
+};
+
+const bulkAttendanceAndCertificates = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body; // 'Present' or 'Absent'
+
+    if (!status || !['Present', 'Absent'].includes(status)) {
+      return res.status(400).json({ message: 'Valid attendance status (Present or Absent) is required' });
+    }
+
+    const event = await Event.findByPk(id);
+    if (!event) return res.status(404).json({ message: 'Event not found' });
+
+    const { Student, Certificate, Notification, Attendance } = require('../models');
+    const registrations = await Registration.findAll({
+      where: { eventId: id, status: 'Registered' },
+      include: [{ model: Student, attributes: ['fullName', 'email'] }],
+    });
+
+    if (registrations.length === 0) {
+      return res.status(400).json({ message: 'No active participants registered for this event.' });
+    }
+
+    const sendEmail = require('../utils/sendEmail');
+    let markedCount = 0;
+
+    for (const reg of registrations) {
+      const [attendance, created] = await Attendance.findOrCreate({
+        where: { registrationId: reg.id },
+        defaults: {
+          registrationId: reg.id,
+          eventId: reg.eventId,
+          studentId: reg.studentId,
+          attendanceStatus: status,
+          markedAt: new Date(),
+        },
+      });
+
+      if (!created) {
+        attendance.attendanceStatus = status;
+        attendance.markedAt = new Date();
+        await attendance.save();
+      }
+
+      markedCount++;
+
+      const { broadcastAttendanceUpdated } = require('../utils/socket');
+      broadcastAttendanceUpdated(id, attendance);
+
+      if (status === 'Present') {
+        const certCode = `CERT-2026-${reg.id.toString().padStart(4, '0')}`;
+        const [certificate, certCreated] = await Certificate.findOrCreate({
+          where: { registrationId: reg.id },
+          defaults: {
+            registrationId: reg.id,
+            studentId: reg.studentId,
+            eventId: reg.eventId,
+            certificateId: certCode,
+            issueDate: new Date(),
+            qrVerificationCode: certCode,
+          },
+        });
+
+        const { broadcastCertificateGenerated } = require('../utils/socket');
+        broadcastCertificateGenerated(reg.studentId, certificate);
+
+        await Notification.create({
+          userId: reg.studentId,
+          userRole: 'Student',
+          title: 'Certificate Issued',
+          message: `Your participation certificate for "${event.title}" is ready!`,
+          type: 'Certificate',
+        }).catch(err => console.error(err));
+
+        if (reg.Student?.email) {
+          sendEmail({
+            to: reg.Student.email,
+            subject: `Attendance Confirmed & Certificate Issued - ${event.title}`,
+            templateTitle: 'Attendance & Certificate Confirmed',
+            html: `
+              <p>Dear <strong>${reg.Student.fullName}</strong>,</p>
+              <p>Your attendance for <strong>${event.title}</strong> has been marked <strong>PRESENT</strong>!</p>
+              <p>Your Certificate of Participation (Certificate ID: <strong>${certCode}</strong>) is now generated and ready in your portal.</p>
+            `,
+          }).catch((err) => console.error('Error sending attendance email:', err.message));
+        }
+      }
+    }
+
+    const { logAudit } = require('../middleware/auditLogger');
+    await logAudit({ req, userId: req.user.id, userRole: 'Admin', action: 'BULK_ATTENDANCE', details: `Bulk attendance marked as ${status} for ${markedCount} students of Event ID ${id}` });
+
+    res.json({ message: `Bulk attendance marked as ${status} for ${markedCount} registrations.` });
+  } catch (error) {
+    res.status(500).json({ message: 'Server error marking bulk attendance', error: error.message });
+  }
+};
+
 module.exports = {
   createEvent,
   getAllEvents,
@@ -311,4 +601,7 @@ module.exports = {
   updateEvent,
   deleteEvent,
   getEventParticipants,
+  duplicateEvent,
+  bulkEmailParticipants,
+  bulkAttendanceAndCertificates,
 };

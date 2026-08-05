@@ -63,6 +63,37 @@ const Admin = sequelize.define(
       type: DataTypes.DATE,
       allowNull: true,
     },
+    refreshToken: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    otpCode: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    otpExpire: {
+      type: DataTypes.DATE,
+      allowNull: true,
+    },
+    otpAttempts: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      defaultValue: 0,
+    },
+    passwordHistory: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+      defaultValue: '[]',
+    },
+    failedLoginAttempts: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      defaultValue: 0,
+    },
+    lockoutUntil: {
+      type: DataTypes.DATE,
+      allowNull: true,
+    },
   },
   {
     hooks: {

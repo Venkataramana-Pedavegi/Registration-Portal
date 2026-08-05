@@ -7,8 +7,21 @@ const Attendance = require('./Attendance');
 const Notification = require('./Notification');
 const Certificate = require('./Certificate');
 const AuditLog = require('./AuditLog');
+const LoginHistory = require('./LoginHistory');
+const TokenBlacklist = require('./TokenBlacklist');
 
-// Relationships
+// New Enterprise Models
+const Feedback = require('./Feedback');
+const Waitlist = require('./Waitlist');
+const Volunteer = require('./Volunteer');
+const VolunteerTask = require('./VolunteerTask');
+const Leaderboard = require('./Leaderboard');
+const EventGallery = require('./EventGallery');
+const Badge = require('./Badge');
+const StudentBadge = require('./StudentBadge');
+const ActivityLog = require('./ActivityLog');
+
+// Existing Relationships
 Admin.hasMany(Event, { foreignKey: 'createdBy', onDelete: 'CASCADE' });
 Event.belongsTo(Admin, { foreignKey: 'createdBy' });
 
@@ -39,6 +52,52 @@ Certificate.belongsTo(Student, { foreignKey: 'studentId' });
 Event.hasMany(Certificate, { foreignKey: 'eventId', onDelete: 'CASCADE' });
 Certificate.belongsTo(Event, { foreignKey: 'eventId' });
 
+// New Relationships: Feedback
+Event.hasMany(Feedback, { foreignKey: 'eventId', onDelete: 'CASCADE' });
+Feedback.belongsTo(Event, { foreignKey: 'eventId' });
+Student.hasMany(Feedback, { foreignKey: 'studentId', onDelete: 'CASCADE' });
+Feedback.belongsTo(Student, { foreignKey: 'studentId' });
+
+// New Relationships: Waitlist
+Event.hasMany(Waitlist, { foreignKey: 'eventId', onDelete: 'CASCADE' });
+Waitlist.belongsTo(Event, { foreignKey: 'eventId' });
+Student.hasMany(Waitlist, { foreignKey: 'studentId', onDelete: 'CASCADE' });
+Waitlist.belongsTo(Student, { foreignKey: 'studentId' });
+
+// New Relationships: Volunteer
+Student.hasMany(Volunteer, { foreignKey: 'studentId', onDelete: 'CASCADE' });
+Volunteer.belongsTo(Student, { foreignKey: 'studentId' });
+Event.hasMany(Volunteer, { foreignKey: 'eventId', onDelete: 'CASCADE' });
+Volunteer.belongsTo(Event, { foreignKey: 'eventId' });
+
+Volunteer.hasMany(VolunteerTask, { foreignKey: 'volunteerId', onDelete: 'CASCADE' });
+VolunteerTask.belongsTo(Volunteer, { foreignKey: 'volunteerId' });
+Event.hasMany(VolunteerTask, { foreignKey: 'eventId', onDelete: 'CASCADE' });
+VolunteerTask.belongsTo(Event, { foreignKey: 'eventId' });
+
+// New Relationships: Leaderboard
+Student.hasOne(Leaderboard, { foreignKey: 'studentId', onDelete: 'CASCADE' });
+Leaderboard.belongsTo(Student, { foreignKey: 'studentId' });
+
+// Event Gallery Relationships
+Event.hasMany(EventGallery, { foreignKey: 'eventId', onDelete: 'CASCADE' });
+EventGallery.belongsTo(Event, { foreignKey: 'eventId' });
+Admin.hasMany(EventGallery, { foreignKey: 'uploadedBy', onDelete: 'SET NULL' });
+EventGallery.belongsTo(Admin, { foreignKey: 'uploadedBy', as: 'uploader' });
+
+// Gamification relationships
+Student.belongsToMany(Badge, { through: StudentBadge, foreignKey: 'studentId', otherKey: 'badgeId', onDelete: 'CASCADE' });
+Badge.belongsToMany(Student, { through: StudentBadge, foreignKey: 'badgeId', otherKey: 'studentId', onDelete: 'CASCADE' });
+
+Student.hasMany(StudentBadge, { foreignKey: 'studentId', onDelete: 'CASCADE' });
+StudentBadge.belongsTo(Student, { foreignKey: 'studentId' });
+
+Badge.hasMany(StudentBadge, { foreignKey: 'badgeId', onDelete: 'CASCADE' });
+StudentBadge.belongsTo(Badge, { foreignKey: 'badgeId' });
+
+Student.hasMany(ActivityLog, { foreignKey: 'studentId', onDelete: 'CASCADE' });
+ActivityLog.belongsTo(Student, { foreignKey: 'studentId' });
+
 module.exports = {
   sequelize,
   Student,
@@ -49,4 +108,15 @@ module.exports = {
   Notification,
   Certificate,
   AuditLog,
+  Feedback,
+  Waitlist,
+  Volunteer,
+  VolunteerTask,
+  Leaderboard,
+  EventGallery,
+  LoginHistory,
+  TokenBlacklist,
+  Badge,
+  StudentBadge,
+  ActivityLog,
 };

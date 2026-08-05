@@ -10,6 +10,22 @@ const StudentProfile = () => {
   const [profileData, setProfileData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [resending, setResending] = useState(false);
+  const [resendStatus, setResendStatus] = useState('');
+
+  const handleResendVerification = async () => {
+    try {
+      setResending(true);
+      setResendStatus('');
+      const { data } = await api.post('/student/resend-verification', { email: profileData.student.email });
+      setResendStatus(data.message || 'Verification email sent successfully.');
+    } catch (err) {
+      console.error(err);
+      setResendStatus(err.response?.data?.message || 'Failed to resend verification email.');
+    } finally {
+      setResending(false);
+    }
+  };
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -69,10 +85,10 @@ const StudentProfile = () => {
 
               {/* Details grid */}
               <div className="p-8 space-y-8">
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 bg-gray-50 p-6 rounded-xl border border-gray-200 text-sm">
+                <div className="grid grid-cols-1 sm:grid-cols-4 gap-6 bg-gray-50 p-6 rounded-xl border border-gray-200 text-sm">
                   <div>
                     <span className="text-xs text-gray-400 font-bold uppercase tracking-wider block">Email Address</span>
-                    <span className="font-semibold text-gray-900">{profileData.student.email}</span>
+                    <span className="font-semibold text-gray-900 break-all">{profileData.student.email}</span>
                   </div>
                   <div>
                     <span className="text-xs text-gray-400 font-bold uppercase tracking-wider block">Department</span>
@@ -82,7 +98,39 @@ const StudentProfile = () => {
                     <span className="text-xs text-gray-400 font-bold uppercase tracking-wider block">Year of Study</span>
                     <span className="font-semibold text-gray-900">{profileData.student.year}</span>
                   </div>
+                  <div>
+                    <span className="text-xs text-gray-400 font-bold uppercase tracking-wider block">Verification Status</span>
+                    <span className={`inline-flex items-center gap-1 font-bold px-2.5 py-0.5 rounded-full border text-[11px] mt-1 ${
+                      profileData.student.isVerified 
+                        ? 'bg-green-50 text-green-700 border-green-200' 
+                        : 'bg-red-50 text-red-700 border-red-200'
+                    }`}>
+                      {profileData.student.isVerified ? 'Verified' : 'Not Verified'}
+                    </span>
+                  </div>
                 </div>
+
+                {!profileData.student.isVerified && (
+                  <div className="bg-gray-50 p-4 rounded-xl border border-gray-200 flex items-center justify-between">
+                    <div>
+                      <span className="text-xs font-bold text-gray-800">Email Address Unverified</span>
+                      <p className="text-[10px] text-gray-500">This student has not completed email verification. Click to resend active token.</p>
+                    </div>
+                    <button
+                      onClick={handleResendVerification}
+                      disabled={resending}
+                      className="bg-primary-600 hover:bg-primary-700 text-white font-bold px-4 py-2 rounded-xl text-xs transition duration-155"
+                    >
+                      {resending ? 'Resending...' : 'Resend Verification'}
+                    </button>
+                  </div>
+                )}
+
+                {resendStatus && (
+                  <div className="p-3 bg-blue-50 text-blue-700 border border-blue-200 text-xs font-semibold rounded-xl">
+                    {resendStatus}
+                  </div>
+                )}
 
                 {/* Metrics cards */}
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">

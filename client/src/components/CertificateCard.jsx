@@ -32,8 +32,15 @@ const CertificateCard = ({ certificate }) => {
     <div className="bg-white p-6 rounded-2xl border border-gray-250 shadow-xs flex flex-col justify-between space-y-6 transition duration-200 hover:-translate-y-0.5">
       <div className="space-y-4">
         <div className="flex justify-between items-start">
-          <div className="bg-amber-50 text-amber-600 p-3 rounded-xl border border-amber-200">
-            <Award className="h-6 w-6" />
+          <div className="flex items-center gap-3">
+            <img
+              src="/sri_vasavi_logo.png"
+              alt="Sri Vasavi Engineering College"
+              className="h-10 w-10 object-contain rounded-full shadow-xs border border-primary-100 bg-white p-0.5"
+            />
+            <div className="bg-amber-50 text-amber-600 p-2 rounded-xl border border-amber-200">
+              <Award className="h-5 w-5" />
+            </div>
           </div>
           <span className="bg-green-50 text-green-700 text-[10px] font-extrabold px-2.5 py-1 rounded-full border border-green-200 flex items-center gap-1">
             <CheckCircle className="h-3 w-3" /> VERIFIED

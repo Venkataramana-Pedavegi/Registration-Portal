@@ -59,13 +59,13 @@ const AdminLogin = ({ setToast }) => {
     <div className="flex-grow flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8 bg-white p-8 rounded-xl shadow-md border border-gray-100">
         <div className="text-center">
-          <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 text-red-600 mb-4">
-            <ShieldAlert className="h-6 w-6" />
-          </div>
-          <h2 className="text-3xl font-extrabold text-gray-900">Admin Login</h2>
-          <p className="mt-2 text-sm text-gray-600">
-            Access the administrator coordination portal.
-          </p>
+          <img
+            src="/sri_vasavi_logo.png"
+            alt="Sri Vasavi Engineering College Logo"
+            className="mx-auto h-16 w-16 object-contain rounded-full shadow-sm border border-red-100 bg-white p-0.5 mb-3"
+          />
+          <h2 className="text-2xl font-extrabold text-gray-900">Sri Vasavi Engineering College</h2>
+          <p className="text-sm font-semibold text-red-600 mt-1 mb-2">Administrator Coordination Login</p>
         </div>
 
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>

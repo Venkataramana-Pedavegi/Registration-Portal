@@ -80,6 +80,59 @@ const Student = sequelize.define(
       type: DataTypes.DATE,
       allowNull: true,
     },
+    isVerified: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: true,
+    },
+    verificationToken: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    refreshToken: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    verificationTokenExpire: {
+      type: DataTypes.DATE,
+      allowNull: true,
+    },
+    otpCode: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    otpExpire: {
+      type: DataTypes.DATE,
+      allowNull: true,
+    },
+    otpAttempts: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      defaultValue: 0,
+    },
+    passwordHistory: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+      defaultValue: '[]',
+    },
+    failedLoginAttempts: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      defaultValue: 0,
+    },
+    lockoutUntil: {
+      type: DataTypes.DATE,
+      allowNull: true,
+    },
+    referralCode: {
+      type: DataTypes.STRING,
+      allowNull: true,
+      unique: true,
+    },
+    referredBy: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+    },
   },
   {
     hooks: {

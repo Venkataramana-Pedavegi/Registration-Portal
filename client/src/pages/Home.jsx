@@ -11,11 +11,18 @@ const Home = () => {
       {/* Hero Section */}
       <section className="bg-gradient-to-r from-primary-800 to-primary-600 text-white py-20 px-4">
         <div className="max-w-5xl mx-auto text-center">
-          <h1 className="text-4xl md:text-5xl font-extrabold mb-6 tracking-tight">
-            College Event Registration Management System
+          <div className="flex justify-center mb-6">
+            <img
+              src="/sri_vasavi_logo.png"
+              alt="Sri Vasavi Engineering College Emblem"
+              className="h-24 w-24 object-contain rounded-full shadow-lg border-2 border-white/80 bg-white p-1"
+            />
+          </div>
+          <h1 className="text-4xl md:text-5xl font-extrabold mb-3 tracking-tight">
+            Sri Vasavi Engineering College
           </h1>
-          <p className="text-lg md:text-xl mb-8 text-primary-100 max-w-2xl mx-auto">
-            Discover, register, and manage college events with ease. A secure, centralized portal for students and coordinators.
+          <p className="text-xl md:text-2xl font-bold mb-6 text-primary-200">
+            Event Registration & Management Portal
           </p>
 
           {!token ? (

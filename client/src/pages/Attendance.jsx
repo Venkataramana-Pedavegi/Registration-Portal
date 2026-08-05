@@ -3,7 +3,7 @@ import api from '../services/api';
 import Loader from '../components/Loader';
 import AttendanceTable from '../components/AttendanceTable';
 import ExportButton from '../components/ExportButton';
-import { CheckSquare, Calendar, Users, Percent, CheckCircle, XCircle } from 'lucide-react';
+import { CheckSquare, Calendar, Users, Percent, CheckCircle, XCircle, QrCode, Send, AlertTriangle } from 'lucide-react';
 
 const Attendance = () => {
   const [events, setEvents] = useState([]);
@@ -12,6 +12,12 @@ const Attendance = () => {
   const [loadingEvents, setLoadingEvents] = useState(true);
   const [loadingAttendance, setLoadingAttendance] = useState(false);
   const [error, setError] = useState('');
+
+  // QR Scanner States
+  const [scanInput, setScanInput] = useState('');
+  const [scanLoading, setScanLoading] = useState(false);
+  const [scanResult, setScanResult] = useState(null);
+  const [scanError, setScanError] = useState('');
 
   // Fetch list of events for the dropdown selector
   useEffect(() => {
@@ -68,6 +74,49 @@ const Attendance = () => {
     }
   };
 
+  // QR Code Scanner Submission
+  const handleQRScanSubmit = async (e) => {
+    e.preventDefault();
+    if (!scanInput.trim()) return;
+
+    try {
+      setScanLoading(true);
+      setScanResult(null);
+      setScanError('');
+
+      let payloadData = scanInput.trim();
+      let reqBody = {};
+
+      if (!isNaN(payloadData)) {
+        reqBody.registrationId = parseInt(payloadData, 10);
+      } else {
+        reqBody.qrData = payloadData;
+      }
+
+      const { data } = await api.post('/qrcode/scan', reqBody);
+      setScanResult(data);
+      setScanInput('');
+      
+      // Refresh attendance table
+      if (selectedEventId) {
+        fetchAttendance(selectedEventId);
+      }
+    } catch (err) {
+      console.error(err);
+      const errRes = err.response?.data;
+      if (errRes?.alreadyScanned) {
+        setScanResult({
+          alreadyScanned: true,
+          message: errRes.message,
+        });
+      } else {
+        setScanError(errRes?.message || 'Failed to process QR Code scan.');
+      }
+    } finally {
+      setScanLoading(false);
+    }
+  };
+
   if (loadingEvents) {
     return (
       <div className="flex-grow flex items-center justify-center bg-gray-50">
@@ -97,6 +146,64 @@ const Attendance = () => {
             {error}
           </div>
         )}
+
+        {/* QR Scanner Card */}
+        <div className="bg-gradient-to-br from-primary-900 via-primary-800 to-indigo-900 p-6 rounded-2xl text-white shadow-md border border-primary-700 space-y-4">
+          <div className="flex items-center gap-2">
+            <QrCode className="h-6 w-6 text-primary-300" />
+            <h2 className="text-lg font-bold">Admin QR Code Scanner & Pass Validator</h2>
+          </div>
+          <p className="text-xs text-primary-200">
+            Scan a student entry QR pass barcode or enter Registration ID (#12) to automatically mark attendance Present & issue a certificate.
+          </p>
+
+          <form onSubmit={handleQRScanSubmit} className="flex gap-3">
+            <input
+              type="text"
+              value={scanInput}
+              onChange={(e) => setScanInput(e.target.value)}
+              placeholder="Scan QR code / paste payload string or enter Registration ID..."
+              className="flex-grow py-2.5 px-4 rounded-xl text-sm bg-white/10 border border-white/20 text-white placeholder-primary-300 focus:outline-none focus:ring-2 focus:ring-primary-400"
+            />
+            <button
+              type="submit"
+              disabled={scanLoading || !scanInput.trim()}
+              className="bg-primary-500 hover:bg-primary-600 disabled:opacity-50 text-white font-bold px-5 py-2.5 rounded-xl text-xs transition flex items-center gap-1.5 shadow-sm"
+            >
+              {scanLoading ? <Loader size="small" /> : <Send className="h-4 w-4" />}
+              <span>Validate QR Pass</span>
+            </button>
+          </form>
+
+          {/* Scan Results Feedback */}
+          {scanResult && !scanResult.alreadyScanned && (
+            <div className="bg-green-500/20 border border-green-400/40 text-green-200 px-4 py-3 rounded-xl text-xs flex items-center gap-2">
+              <CheckCircle className="h-5 w-5 text-green-400 shrink-0" />
+              <div>
+                <strong>{scanResult.message}</strong>
+                <p className="text-[11px] opacity-90 mt-0.5">
+                  Student: {scanResult.studentName} | Event: {scanResult.eventTitle}
+                </p>
+              </div>
+            </div>
+          )}
+
+          {scanResult && scanResult.alreadyScanned && (
+            <div className="bg-amber-500/20 border border-amber-400/40 text-amber-200 px-4 py-3 rounded-xl text-xs flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-amber-400 shrink-0" />
+              <div>
+                <strong>Duplicate Scan Rejected:</strong> {scanResult.message}
+              </div>
+            </div>
+          )}
+
+          {scanError && (
+            <div className="bg-red-500/20 border border-red-400/40 text-red-200 px-4 py-3 rounded-xl text-xs flex items-center gap-2">
+              <XCircle className="h-5 w-5 text-red-400 shrink-0" />
+              <div>{scanError}</div>
+            </div>
+          )}
+        </div>
 
         {/* Event Selector Dropdown */}
         <div className="bg-white p-6 rounded-2xl border border-gray-250 shadow-xs space-y-3">

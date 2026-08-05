@@ -30,6 +30,23 @@ const AuditLog = sequelize.define(
       allowNull: true,
       defaultValue: '127.0.0.1',
     },
+    browser: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    os: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    resource: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    status: {
+      type: DataTypes.STRING,
+      allowNull: true,
+      defaultValue: 'SUCCESS',
+    },
   },
   {
     indexes: [

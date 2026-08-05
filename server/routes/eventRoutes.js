@@ -7,6 +7,9 @@ const {
   updateEvent,
   deleteEvent,
   getEventParticipants,
+  duplicateEvent,
+  bulkEmailParticipants,
+  bulkAttendanceAndCertificates,
 } = require('../controllers/eventController');
 const { protect } = require('../middleware/authMiddleware');
 const { adminProtect } = require('../middleware/adminMiddleware');
@@ -21,5 +24,8 @@ router.get('/:id', getEventById);
 router.put('/:id', adminProtect, validateEvent, updateEvent);
 router.delete('/:id', adminProtect, deleteEvent);
 router.get('/:id/participants', adminProtect, getEventParticipants);
+router.post('/:id/duplicate', adminProtect, duplicateEvent);
+router.post('/:id/bulk-email', adminProtect, bulkEmailParticipants);
+router.post('/:id/bulk-attendance', adminProtect, bulkAttendanceAndCertificates);
 
 module.exports = router;

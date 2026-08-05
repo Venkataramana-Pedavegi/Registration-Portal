@@ -118,8 +118,73 @@ const exportAttendance = async (req, res) => {
   }
 };
 
+const exportVolunteers = async (req, res) => {
+  try {
+    const { Volunteer } = require('../models');
+    const volunteers = await Volunteer.findAll({
+      include: [
+        { model: Student, attributes: ['fullName', 'email', 'department'] },
+        { model: Event, attributes: ['title'] },
+      ],
+      order: [['createdAt', 'DESC']],
+    });
+
+    const headers = ['Volunteer ID', 'Student Name', 'Student Email', 'Student Department', 'Skills', 'Event Title', 'Status', 'Service Hours', 'Applied Date'];
+    const rows = volunteers.map((vol) => [
+      vol.id,
+      escapeCsv(vol.Student?.fullName),
+      escapeCsv(vol.Student?.email),
+      escapeCsv(vol.Student?.department),
+      escapeCsv(vol.skills),
+      escapeCsv(vol.Event?.title),
+      escapeCsv(vol.status),
+      vol.hours,
+      new Date(vol.createdAt).toLocaleDateString(),
+    ]);
+
+    const csvContent = [headers.join(','), ...rows.map((r) => r.join(','))].join('\n');
+
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', 'attachment; filename="volunteers_report.csv"');
+    res.status(200).send(csvContent);
+  } catch (error) {
+    res.status(500).json({ message: 'Server error exporting volunteers CSV', error: error.message });
+  }
+};
+
+const exportAuditLogs = async (req, res) => {
+  try {
+    const { AuditLog } = require('../models');
+    const logs = await AuditLog.findAll({
+      order: [['createdAt', 'DESC']],
+    });
+
+    const headers = ['Log ID', 'User ID', 'User Role', 'IP Address', 'User Agent', 'Action', 'Details', 'Timestamp'];
+    const rows = logs.map((log) => [
+      log.id,
+      log.userId,
+      escapeCsv(log.userRole),
+      escapeCsv(log.ipAddress),
+      escapeCsv(log.userAgent),
+      escapeCsv(log.action),
+      escapeCsv(log.details),
+      new Date(log.createdAt).toLocaleString(),
+    ]);
+
+    const csvContent = [headers.join(','), ...rows.map((r) => r.join(','))].join('\n');
+
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', 'attachment; filename="audit_logs_report.csv"');
+    res.status(200).send(csvContent);
+  } catch (error) {
+    res.status(500).json({ message: 'Server error exporting audit logs CSV', error: error.message });
+  }
+};
+
 module.exports = {
   exportEvents,
   exportParticipants,
   exportAttendance,
+  exportVolunteers,
+  exportAuditLogs,
 };
