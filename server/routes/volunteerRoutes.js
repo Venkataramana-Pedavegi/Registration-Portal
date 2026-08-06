@@ -15,6 +15,7 @@ const { protect, adminOnly, studentOnly } = require('../middleware/authMiddlewar
 
 router.post('/apply', protect, studentOnly, applyVolunteer);
 router.get('/my', protect, studentOnly, getVolunteerDashboard);
+router.get('/dashboard', protect, studentOnly, getVolunteerDashboard);
 router.put('/tasks/:id/status', protect, updateTaskStatus);
 
 router.get('/admin', protect, adminOnly, getVolunteers);

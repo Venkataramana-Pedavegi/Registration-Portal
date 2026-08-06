@@ -21,13 +21,10 @@ const getRegistrationQRCode = async (req, res) => {
     }
 
     if (!registration.qrCodeUrl) {
-      const payload = {
-        registrationId: registration.id,
-        eventId: registration.eventId,
-        studentId: registration.studentId,
-        rollNumber: registration.Student?.rollNumber,
-      };
-      registration.qrCodeUrl = await generateQRCode(payload);
+      const host = req.get('host') || 'localhost:5000';
+      const frontendHost = host.includes('5000') ? host.replace('5000', '5173') : host;
+      const verifyUrl = `${req.protocol}://${frontendHost}/verify-pass/${registration.id}`;
+      registration.qrCodeUrl = await generateQRCode(verifyUrl);
       await registration.save();
     }
 
@@ -56,7 +53,18 @@ const scanQRCode = async (req, res) => {
         const parsed = typeof qrData === 'string' ? JSON.parse(qrData) : qrData;
         targetRegistrationId = parsed.registrationId;
       } catch (err) {
-        return res.status(400).json({ message: 'Invalid QR Code payload format' });
+        if (typeof qrData === 'string') {
+          const match = qrData.match(/\/verify-pass\/(\d+)/);
+          if (match) {
+            targetRegistrationId = match[1];
+          } else if (/^\d+$/.test(qrData.trim())) {
+            targetRegistrationId = qrData.trim();
+          } else {
+            return res.status(400).json({ message: 'Invalid QR Code payload format' });
+          }
+        } else {
+          return res.status(400).json({ message: 'Invalid QR Code payload format' });
+        }
       }
     }
 
@@ -169,7 +177,58 @@ const scanQRCode = async (req, res) => {
   }
 };
 
+const getScannedRegistrationDetails = async (req, res) => {
+  try {
+    const { registrationId } = req.params;
+
+    const registration = await Registration.findByPk(registrationId, {
+      include: [
+        { model: Event, attributes: ['id', 'title', 'venue', 'eventDate', 'startTime', 'endTime'] },
+        { model: Student, attributes: ['id', 'fullName', 'rollNumber', 'email', 'department'] },
+        { model: Attendance, attributes: ['attendanceStatus', 'markedAt'] },
+      ],
+    });
+
+    if (!registration) {
+      return res.status(404).json({
+        isValid: false,
+        message: 'Pass is invalid - No registration record found'
+      });
+    }
+
+    // Determine QR validity
+    let isValid = true;
+    let message = 'Pass is valid';
+
+    if (registration.status === 'Cancelled') {
+      isValid = false;
+      message = 'Pass is invalid - Registration has been cancelled';
+    }
+
+    res.json({
+      isValid,
+      message,
+      passId: registration.id,
+      studentId: registration.studentId,
+      eventId: registration.eventId,
+      studentName: registration.Student?.fullName,
+      rollNumber: registration.Student?.rollNumber,
+      email: registration.Student?.email,
+      department: registration.Student?.department,
+      eventName: registration.Event?.title,
+      eventVenue: registration.Event?.venue,
+      eventDate: registration.Event?.eventDate,
+      registrationStatus: registration.status,
+      attendanceStatus: registration.Attendance?.attendanceStatus || 'Absent',
+      markedAt: registration.Attendance?.markedAt || null,
+    });
+  } catch (error) {
+    res.status(500).json({ message: 'Server error verifying pass', error: error.message });
+  }
+};
+
 module.exports = {
   getRegistrationQRCode,
   scanQRCode,
+  getScannedRegistrationDetails,
 };

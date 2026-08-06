@@ -1,8 +1,11 @@
 const express = require('express');
 const router = express.Router();
-const { getRegistrationQRCode, scanQRCode } = require('../controllers/qrController');
+const { getRegistrationQRCode, scanQRCode, getScannedRegistrationDetails } = require('../controllers/qrController');
 const { protect } = require('../middleware/authMiddleware');
 const { adminProtect } = require('../middleware/adminMiddleware');
+
+// Public pass verification route
+router.get('/verify/:registrationId', getScannedRegistrationDetails);
 
 router.use(protect);
 

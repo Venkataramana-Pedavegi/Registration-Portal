@@ -14,6 +14,7 @@ const { registerRateLimiter, authRateLimiter } = require('../middleware/security
 
 router.post('/register', registerRateLimiter, validateRegister, registerStudent);
 router.get('/verify/:token', verifyStudentEmail);
+router.get('/verify-email/:token', verifyStudentEmail);
 router.post('/resend-verification', authRateLimiter, resendVerification);
 router.post('/login', authRateLimiter, validateStudentLogin, loginStudent);
 router.get('/profile', protect, studentOnly, getStudentProfile);

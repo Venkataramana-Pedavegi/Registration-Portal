@@ -83,7 +83,7 @@ const Student = sequelize.define(
     isVerified: {
       type: DataTypes.BOOLEAN,
       allowNull: false,
-      defaultValue: true,
+      defaultValue: false,
     },
     isActive: {
       type: DataTypes.BOOLEAN,

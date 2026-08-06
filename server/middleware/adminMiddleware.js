@@ -12,14 +12,15 @@ const adminProtect = async (req, res, next) => {
       token = req.headers.authorization.split(' ')[1];
       const decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback_secret_for_dev_only');
 
-      if (decoded.role !== 'Admin') {
+      const adminRoles = ['Admin', 'Super Admin', 'Event Coordinator', 'Faculty Coordinator', 'Coordinator', 'Volunteer Coordinator'];
+      if (!adminRoles.includes(decoded.role)) {
         return res.status(403).json({ message: 'Access denied: Admins only' });
       }
 
       req.user = await Admin.findByPk(decoded.id, {
         attributes: { exclude: ['password'] },
       });
-      req.role = 'Admin';
+      req.role = decoded.role || 'Admin';
 
       if (!req.user) {
         return res.status(401).json({ message: 'Not authorized, admin not found' });

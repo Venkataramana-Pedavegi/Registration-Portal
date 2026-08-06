@@ -43,7 +43,7 @@ const getVolunteers = async (req, res) => {
     const volunteers = await Volunteer.findAll({
       where,
       include: [
-        { model: Student, attributes: ['id', 'name', 'email', 'rollNumber', 'department', 'phone'] },
+        { model: Student, attributes: ['id', 'fullName', 'email', 'rollNumber', 'department'] },
         { model: Event, attributes: ['id', 'title', 'eventDate'] },
         { model: VolunteerTask },
       ],
@@ -77,6 +77,34 @@ const approveVolunteer = async (req, res) => {
 
     volunteer.status = status;
     await volunteer.save();
+
+    // Create system notification
+    try {
+      const { Notification } = require('../models');
+      await Notification.create({
+        userId: volunteer.studentId,
+        userRole: 'Student',
+        title: `Volunteer Application ${status === 'approved' ? 'Approved' : 'Rejected'}`,
+        message: `Your volunteer application for "${volunteer.Event?.title || 'Event'}" has been ${status}.`,
+        type: 'System',
+      });
+    } catch (nErr) {
+      console.error('Failed to create volunteer notification:', nErr.message);
+    }
+
+    // Emit Socket.io real-time update
+    try {
+      const { getIO } = require('../utils/socket');
+      const io = getIO();
+      if (io) {
+        io.to(`user_${volunteer.studentId}`).emit('volunteer:status_updated', {
+          volunteerId: volunteer.id,
+          status: status,
+        });
+      }
+    } catch (sErr) {
+      console.error('Failed to emit volunteer socket event:', sErr.message);
+    }
 
     if (status === 'approved') {
       try {

@@ -63,16 +63,11 @@ const registerForEvent = async (req, res) => {
 
     await transaction.commit();
 
-    // Automatically generate and store unique QR Code data URL
     try {
-      const studentObj = await Student.findByPk(studentId, { attributes: ['rollNumber'] });
-      const qrPayload = {
-        registrationId: registration.id,
-        eventId,
-        studentId,
-        rollNumber: studentObj?.rollNumber,
-      };
-      const qrCodeUrl = await generateQRCode(qrPayload);
+      const host = req.get('host') || 'localhost:5000';
+      const frontendHost = host.includes('5000') ? host.replace('5000', '5173') : host;
+      const verifyUrl = `${req.protocol}://${frontendHost}/verify-pass/${registration.id}`;
+      const qrCodeUrl = await generateQRCode(verifyUrl);
       registration.qrCodeUrl = qrCodeUrl;
       await registration.save();
     } catch (qrErr) {

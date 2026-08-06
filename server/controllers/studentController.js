@@ -54,7 +54,9 @@ const registerStudent = async (req, res) => {
       return res.status(400).json({ message: 'A student with this roll number already exists' });
     }
 
-    const verificationToken = crypto.randomBytes(32).toString('hex');
+    const emailBase64 = Buffer.from(email.toLowerCase()).toString('base64');
+    const randomHex = crypto.randomBytes(16).toString('hex');
+    const verificationToken = `${emailBase64}_${randomHex}`;
     const verificationTokenExpire = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 Hours
     const isTest = process.env.NODE_ENV === 'test';
 
@@ -75,9 +77,9 @@ const registerStudent = async (req, res) => {
       department,
       year,
       password,
-      isVerified: isTest ? true : false,
-      verificationToken: isTest ? null : verificationToken,
-      verificationTokenExpire: isTest ? null : verificationTokenExpire,
+      isVerified: false,
+      verificationToken,
+      verificationTokenExpire,
       referralCode,
       referredBy,
     }, {
@@ -124,20 +126,68 @@ const registerStudent = async (req, res) => {
 
       if (!isTest) {
         const verifyUrl = `${req.protocol}://${req.get('host').replace('5000', '5173')}/verify-email?token=${verificationToken}`;
+        const logoUrl = `${req.protocol}://${req.get('host').replace('5000', '5173')}/sri_vasavi_logo.png`;
+        const expiryTimeStr = verificationTokenExpire.toLocaleString();
+
+        const emailHtml = `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    body { font-family: Arial, sans-serif; background-color: #f4f6f9; margin: 0; padding: 20px; }
+    .container { max-width: 600px; margin: 0 auto; background: #ffffff; border-radius: 12px; overflow: hidden; border: 1px solid #e5e7eb; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
+    .header { background-color: #1e3a8a; padding: 24px; text-align: center; color: #ffffff; }
+    .logo { max-height: 80px; width: auto; margin-bottom: 12px; }
+    .title { font-size: 20px; font-weight: bold; margin: 0; }
+    .subtitle { font-size: 13px; color: #bfdbfe; margin-top: 4px; }
+    .content { padding: 30px 25px; color: #1f2937; line-height: 1.6; font-size: 15px; }
+    .button-container { text-align: center; margin: 25px 0; }
+    .button { background-color: #2563eb; color: #ffffff !important; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block; font-size: 14px; }
+    .url-box { background: #f9fafb; padding: 15px; border-radius: 8px; font-size: 12px; word-break: break-all; border: 1px solid #f3f4f6; margin-bottom: 20px; }
+    .info-list { font-size: 13px; color: #6b7280; border-top: 1px solid #f3f4f6; padding-top: 15px; margin-top: 20px; }
+    .footer { background: #f9fafb; padding: 18px 25px; text-align: center; font-size: 12px; color: #6b7280; border-top: 1px solid #f3f4f6; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <img src="${logoUrl}" alt="College Logo" class="logo" />
+      <h1 class="title">Sri Vasavi Engineering College</h1>
+      <p class="subtitle">Campus Event Management Portal</p>
+    </div>
+    <div class="content">
+      <p>Dear <strong>${student.fullName}</strong>,</p>
+      <p>Thank you for registering on the Sri Vasavi Event Management Portal. We're excited to help you discover and participate in exciting college activities!</p>
+      <p>Please click the button below to verify your email address and activate your account:</p>
+      
+      <div class="button-container">
+        <a href="${verifyUrl}" class="button" target="_blank">Verify Email Address</a>
+      </div>
+
+      <div class="url-box">
+        <strong>If the button above does not work, copy and paste this URL into your browser:</strong><br/>
+        <a href="${verifyUrl}" style="color: #2563eb; text-decoration: none;">${verifyUrl}</a>
+      </div>
+
+      <div class="info-list">
+        <p style="margin: 4px 0;">⏰ <strong>Expiry Time:</strong> This link will expire in 24 hours (on ${expiryTimeStr}).</p>
+        <p style="margin: 4px 0;">🛡️ <strong>Security Notice:</strong> If you did not request this registration, please disregard this email. Your email address will not be activated without verification.</p>
+        <p style="margin: 4px 0;">📞 <strong>Support Contact:</strong> For any assistance, please contact our support team at <a href="mailto:support@college.edu" style="color: #2563eb; text-decoration: none;">support@college.edu</a>.</p>
+      </div>
+    </div>
+    <div class="footer">
+      &copy; ${new Date().getFullYear()} Sri Vasavi Engineering College. All rights reserved.<br/>
+      Pedatadepalli, Tadepalligudem, Andhra Pradesh 534101
+    </div>
+  </div>
+</body>
+</html>`;
+
         await sendEmail({
           to: student.email,
           subject: 'Verify Your Email - Sri Vasavi Event Portal',
           templateTitle: 'Email Verification Required',
-          html: `
-            <p>Dear <strong>${student.fullName}</strong>,</p>
-            <p>Thank you for registering on the Sri Vasavi Event Management Portal.</p>
-            <p>Please click the link below to verify your email address and activate your account (link expires in 24 hours):</p>
-            <div style="text-align: center; margin: 25px 0;">
-              <a href="${verifyUrl}" style="background-color: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">Verify Email Address</a>
-            </div>
-            <p>If the button doesn't work, copy and paste this URL into your browser:</p>
-            <p><a href="${verifyUrl}">${verifyUrl}</a></p>
-          `
+          html: emailHtml
         }).catch(err => console.error('Verification email failed:', err.message));
       }
 
@@ -168,17 +218,42 @@ const registerStudent = async (req, res) => {
 const verifyStudentEmail = async (req, res) => {
   try {
     const { token } = req.params;
-    const student = await Student.findOne({ where: { verificationToken: token } });
-    
-    if (!student || !student.verificationTokenExpire || new Date() > new Date(student.verificationTokenExpire)) {
-      return res.status(400).send(`
-        <div style="font-family: Arial, sans-serif; text-align: center; margin-top: 100px; padding: 20px; border: 1px solid #ef4444; border-radius: 12px; max-width: 500px; margin-left: auto; margin-right: auto; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);">
-          <h2 style="color: #ef4444; font-size: 24px; font-weight: bold; margin-bottom: 10px;">Verification Expired or Invalid</h2>
-          <p style="color: #4b5563; font-size: 14px;">Your registration verification link has expired (expires after 24 hours) or is invalid. Please request a new verification link.</p>
-        </div>
-      `);
+    if (!token || !token.includes('_')) {
+      return res.status(400).json({ message: 'Invalid verification link.' });
     }
 
+    // Extract email from token
+    const parts = token.split('_');
+    const emailBase64 = parts[0];
+    let email;
+    try {
+      email = Buffer.from(emailBase64, 'base64').toString('utf8');
+    } catch (e) {
+      return res.status(400).json({ message: 'Invalid verification link.' });
+    }
+
+    // Find student by email
+    const student = await Student.findOne({ where: { email: email.toLowerCase() } });
+    if (!student) {
+      return res.status(400).json({ message: 'Invalid verification link.' });
+    }
+
+    // Check if already verified
+    if (student.isVerified) {
+      return res.status(400).json({ message: 'Email already verified.' });
+    }
+
+    // If not verified, verify the token in the database
+    if (student.verificationToken !== token) {
+      return res.status(400).json({ message: 'Invalid verification link.' });
+    }
+
+    // Check if token has expired
+    if (!student.verificationTokenExpire || new Date() > new Date(student.verificationTokenExpire)) {
+      return res.status(400).json({ message: 'Verification link expired.' });
+    }
+
+    // Verify student
     student.isVerified = true;
     student.verificationToken = null;
     student.verificationTokenExpire = null;
@@ -186,12 +261,7 @@ const verifyStudentEmail = async (req, res) => {
 
     await logAudit({ userId: student.id, userRole: 'Student', action: 'EMAIL_VERIFICATION_SUCCESS', details: `Email verified successfully for ${student.email}` });
 
-    res.send(`
-      <div style="font-family: Arial, sans-serif; text-align: center; margin-top: 100px; padding: 20px; border: 1px solid #10b981; border-radius: 12px; max-width: 500px; margin-left: auto; margin-right: auto; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);">
-        <h2 style="color: #10b981; font-size: 24px; font-weight: bold; margin-bottom: 10px;">Verification Successful!</h2>
-        <p style="color: #4b5563; font-size: 14px;">Your account email is verified. You can now return to the portal and sign in.</p>
-      </div>
-    `);
+    return res.json({ message: 'Email verified successfully.' });
   } catch (error) {
     res.status(500).json({ message: 'Error verifying email', error: error.message });
   }
@@ -213,10 +283,12 @@ const resendVerification = async (req, res) => {
     }
 
     if (student.isVerified) {
-      return res.status(400).json({ message: 'This email is already verified' });
+      return res.status(400).json({ message: 'This email is already verified.' });
     }
 
-    const verificationToken = crypto.randomBytes(32).toString('hex');
+    const emailBase64 = Buffer.from(student.email.toLowerCase()).toString('base64');
+    const randomHex = crypto.randomBytes(16).toString('hex');
+    const verificationToken = `${emailBase64}_${randomHex}`;
     const verificationTokenExpire = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 Hours
 
     student.verificationToken = verificationToken;
@@ -224,20 +296,68 @@ const resendVerification = async (req, res) => {
     await student.save();
 
     const verifyUrl = `${req.protocol}://${req.get('host').replace('5000', '5173')}/verify-email?token=${verificationToken}`;
+    const logoUrl = `${req.protocol}://${req.get('host').replace('5000', '5173')}/sri_vasavi_logo.png`;
+    const expiryTimeStr = verificationTokenExpire.toLocaleString();
+
+    const emailHtml = `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    body { font-family: Arial, sans-serif; background-color: #f4f6f9; margin: 0; padding: 20px; }
+    .container { max-width: 600px; margin: 0 auto; background: #ffffff; border-radius: 12px; overflow: hidden; border: 1px solid #e5e7eb; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
+    .header { background-color: #1e3a8a; padding: 24px; text-align: center; color: #ffffff; }
+    .logo { max-height: 80px; width: auto; margin-bottom: 12px; }
+    .title { font-size: 20px; font-weight: bold; margin: 0; }
+    .subtitle { font-size: 13px; color: #bfdbfe; margin-top: 4px; }
+    .content { padding: 30px 25px; color: #1f2937; line-height: 1.6; font-size: 15px; }
+    .button-container { text-align: center; margin: 25px 0; }
+    .button { background-color: #2563eb; color: #ffffff !important; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block; font-size: 14px; }
+    .url-box { background: #f9fafb; padding: 15px; border-radius: 8px; font-size: 12px; word-break: break-all; border: 1px solid #f3f4f6; margin-bottom: 20px; }
+    .info-list { font-size: 13px; color: #6b7280; border-top: 1px solid #f3f4f6; padding-top: 15px; margin-top: 20px; }
+    .footer { background: #f9fafb; padding: 18px 25px; text-align: center; font-size: 12px; color: #6b7280; border-top: 1px solid #f3f4f6; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <img src="${logoUrl}" alt="College Logo" class="logo" />
+      <h1 class="title">Sri Vasavi Engineering College</h1>
+      <p class="subtitle">Campus Event Management Portal</p>
+    </div>
+    <div class="content">
+      <p>Dear <strong>${student.fullName}</strong>,</p>
+      <p>You recently requested a new verification link for your Sri Vasavi Event Management Portal account.</p>
+      <p>Please click the button below to verify your email address and activate your account:</p>
+      
+      <div class="button-container">
+        <a href="${verifyUrl}" class="button" target="_blank">Verify Email Address</a>
+      </div>
+
+      <div class="url-box">
+        <strong>If the button above does not work, copy and paste this URL into your browser:</strong><br/>
+        <a href="${verifyUrl}" style="color: #2563eb; text-decoration: none;">${verifyUrl}</a>
+      </div>
+
+      <div class="info-list">
+        <p style="margin: 4px 0;">⏰ <strong>Expiry Time:</strong> This link will expire in 24 hours (on ${expiryTimeStr}).</p>
+        <p style="margin: 4px 0;">🛡️ <strong>Security Notice:</strong> If you did not request this link, please disregard this email. Your account security remains intact.</p>
+        <p style="margin: 4px 0;">📞 <strong>Support Contact:</strong> For any assistance, please contact our support team at <a href="mailto:support@college.edu" style="color: #2563eb; text-decoration: none;">support@college.edu</a>.</p>
+      </div>
+    </div>
+    <div class="footer">
+      &copy; ${new Date().getFullYear()} Sri Vasavi Engineering College. All rights reserved.<br/>
+      Pedatadepalli, Tadepalligudem, Andhra Pradesh 534101
+    </div>
+  </div>
+</body>
+</html>`;
+
     await sendEmail({
       to: student.email,
       subject: 'Verify Your Email - Sri Vasavi Event Portal',
       templateTitle: 'Email Verification Required',
-      html: `
-        <p>Dear <strong>${student.fullName}</strong>,</p>
-        <p>You requested a new verification link for the Sri Vasavi Event Management Portal.</p>
-        <p>Please click the link below to verify your email address and activate your account (link expires in 24 hours):</p>
-        <div style="text-align: center; margin: 25px 0;">
-          <a href="${verifyUrl}" style="background-color: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">Verify Email Address</a>
-        </div>
-        <p>If the button doesn't work, copy and paste this URL into your browser:</p>
-        <p><a href="${verifyUrl}">${verifyUrl}</a></p>
-      `
+      html: emailHtml
     });
 
     await logAudit({ req, userId: student.id, userRole: 'Student', action: 'RESEND_VERIFICATION_EMAIL', details: `Resent verification email to ${student.email}` });
@@ -273,6 +393,10 @@ const loginStudent = async (req, res) => {
       return res.status(401).json({ message: 'No student account found with this email' });
     }
 
+    if (!student.isVerified && process.env.NODE_ENV !== 'test') {
+      return res.status(400).json({ message: 'Please verify your email before logging in.' });
+    }
+
     logDebug(`[loginStudent] Student found: ${email} (ID: ${student.id})`);
 
     // Lockout policy check
@@ -288,12 +412,6 @@ const loginStudent = async (req, res) => {
     logDebug(`[loginStudent] Password comparison result for ${email}: ${isPasswordMatch}`);
 
     if (isPasswordMatch) {
-      if (!student.isVerified) {
-        logDebug(`[loginStudent] Login rejected: Email not verified for ${email}`);
-        await logAudit({ req, userId: student.id, userRole: 'Student', action: 'LOGIN_UNVERIFIED', status: 'FAILED', details: 'Login rejected: email not verified' });
-        return res.status(401).json({ message: 'Please verify your email address before logging in.' });
-      }
-
       // Reset lockout/failures on successful login
       student.failedLoginAttempts = 0;
       student.lockoutUntil = null;

@@ -254,7 +254,7 @@ const VolunteerManagement = () => {
                 <tbody>
                   {volunteersList.map((vol) => (
                     <tr key={vol.id} className="border-b hover:bg-gray-50">
-                      <td className="p-3 font-semibold text-gray-900">{vol.Student?.name}</td>
+                      <td className="p-3 font-semibold text-gray-900">{vol.Student?.fullName}</td>
                       <td className="p-3">{vol.Event?.title}</td>
                       <td className="p-3">{vol.department}</td>
                       <td className="p-3 text-xs text-gray-500">{vol.skills}</td>

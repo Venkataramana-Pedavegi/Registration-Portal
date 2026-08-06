@@ -61,6 +61,8 @@ const EventTemplates = lazy(() => import('./pages/EventTemplates'));
 const VerifyEmail = lazy(() => import('./pages/VerifyEmail'));
 const Achievements = lazy(() => import('./pages/Achievements'));
 const Badges = lazy(() => import('./pages/Badges'));
+const VerifyPass = lazy(() => import('./pages/VerifyPass'));
+const AdminQRScanner = lazy(() => import('./pages/AdminQRScanner'));
 
 // Sprint 8 AI Pages
 const AIRecommendations = lazy(() => import('./pages/AIRecommendations'));
@@ -104,6 +106,7 @@ function App() {
                   <Route path="/gallery" element={<Gallery />} />
                   <Route path="/verify-certificate" element={<PublicCertificateVerify />} />
                   <Route path="/verify-certificate/:certificateId" element={<PublicCertificateVerify />} />
+                  <Route path="/verify-pass/:registrationId" element={<VerifyPass />} />
                   <Route path="/leaderboard" element={<LeaderboardPage />} />
 
                   {/* Shared Protected Routes */}
@@ -294,6 +297,14 @@ function App() {
                     element={
                       <ProtectedRoute allowedRoles={['Admin']}>
                         <EventTemplates />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/admin/qr-scanner"
+                    element={
+                      <ProtectedRoute allowedRoles={['Admin']}>
+                        <AdminQRScanner />
                       </ProtectedRoute>
                     }
                   />

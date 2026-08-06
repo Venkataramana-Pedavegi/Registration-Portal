@@ -176,7 +176,8 @@ const StudentDashboard = () => {
     socket.on('event:updated', handleEventUpdated);
     socket.on('eventDeleted', handleEventDeleted);
     socket.on('event:deleted', handleEventDeleted);
-
+    socket.on('volunteer:status_updated', fetchExtraStats);
+ 
     return () => {
       socket.off('live_counter_update', handleLiveUpdate);
       socket.off('seatCountUpdated', handleLiveUpdate);
@@ -188,6 +189,7 @@ const StudentDashboard = () => {
       socket.off('event:updated', handleEventUpdated);
       socket.off('eventDeleted', handleEventDeleted);
       socket.off('event:deleted', handleEventDeleted);
+      socket.off('volunteer:status_updated', fetchExtraStats);
     };
   }, [socket]);
 
