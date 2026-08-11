@@ -80,22 +80,28 @@ const EntryVerification = () => {
     try {
       let registrationId = null;
 
-      // Check if input is a structured JSON payload
-      try {
-        const parsed = JSON.parse(inputValue);
-        registrationId = parsed.registrationId;
-      } catch (e) {
-        // Fallback: If not JSON, check if it's a numeric string (Registration ID) or contains the /verify-pass/ URL
-        const urlMatch = inputValue.match(/\/verify-pass\/(\d+)/);
-        if (urlMatch) {
-          registrationId = parseInt(urlMatch[1], 10);
-        } else if (/^\d+$/.test(inputValue.trim())) {
-          registrationId = parseInt(inputValue.trim(), 10);
+      if (typeof inputValue === 'object' && inputValue !== null) {
+        registrationId = inputValue.registrationId || inputValue.id;
+      } else if (inputValue) {
+        const trimmed = String(inputValue).trim();
+        // 1. Try parsing JSON payload encoded in student QR
+        try {
+          const parsed = JSON.parse(trimmed);
+          registrationId = parsed.registrationId || parsed.id;
+        } catch (e) {
+          // 2. Try URL regex match /verify-pass/12 or /qrcode/12
+          const urlMatch = trimmed.match(/\/(?:verify-pass|qrcode)\/(\d+)/);
+          if (urlMatch) {
+            registrationId = parseInt(urlMatch[1], 10);
+          } else if (/^\d+$/.test(trimmed)) {
+            // 3. Direct numeric ID
+            registrationId = parseInt(trimmed, 10);
+          }
         }
       }
 
       if (!registrationId) {
-        throw new Error('QR code is not recognized');
+        throw new Error('Invalid or unreadable QR pass format');
       }
 
       // Hit entry verification endpoint
@@ -131,19 +137,25 @@ const EntryVerification = () => {
               Event Entry Verification
             </h1>
             <p className="text-xs text-gray-500 mt-0.5">
-              Verify student registration codes securely at the venue entrance.
+              Scan student Event Entry QR Code or enter registration ID to verify gate pass eligibility.
             </p>
           </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           
-          {/* Left Side: Scanner Controls */}
+          {/* Left Side: Scanner Controls (Primary Verification) */}
           <div className="bg-white p-6 rounded-3xl border border-gray-250 shadow-xs space-y-6 flex flex-col justify-between">
             <div className="space-y-4">
-              <h2 className="text-sm font-bold text-gray-800 uppercase tracking-wider">
-                QR Code Scanner
-              </h2>
+              <div className="flex items-center justify-between">
+                <h2 className="text-sm font-bold text-gray-800 uppercase tracking-wider flex items-center gap-1.5">
+                  <Camera className="h-4 w-4 text-primary-600" />
+                  <span>QR Pass Scanner</span>
+                </h2>
+                <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-primary-50 text-primary-700 border border-primary-200">
+                  Primary
+                </span>
+              </div>
 
               {/* QR Reader Window */}
               <div className="relative bg-gray-900 rounded-2xl overflow-hidden aspect-square border border-gray-250 flex items-center justify-center">
@@ -153,6 +165,7 @@ const EntryVerification = () => {
                   <div className="absolute inset-0 bg-slate-950 flex flex-col items-center justify-center p-6 text-center space-y-3 z-10">
                     <VideoOff className="h-10 w-10 text-gray-500" />
                     <p className="text-xs text-gray-400 font-semibold">Camera scanner is currently stopped</p>
+                    <p className="text-[11px] text-gray-500">Click "Start Scanner" below to scan student entry QR</p>
                   </div>
                 )}
               </div>
@@ -161,7 +174,7 @@ const EntryVerification = () => {
                 <div className="bg-red-50 border border-red-200 text-red-700 p-4 rounded-xl text-xs flex items-start gap-2">
                   <XCircle className="h-5 w-5 text-red-500 shrink-0 mt-0.5" />
                   <div>
-                    <strong>Camera access is required for QR scanning.</strong> You can also enter the Registration ID manually.
+                    <strong>Camera access is required for QR scanning.</strong> Please grant camera permission or use the manual fallback option.
                   </div>
                 </div>
               )}
@@ -173,7 +186,7 @@ const EntryVerification = () => {
                 type="button"
                 onClick={startScanner}
                 disabled={cameraActive}
-                className="flex-grow py-3 bg-primary-600 hover:bg-primary-700 disabled:bg-gray-100 disabled:text-gray-400 disabled:border-gray-200 text-white rounded-2xl font-bold text-xs transition border border-primary-650 hover:shadow-md flex items-center justify-center gap-1.5"
+                className="flex-grow py-3 bg-primary-600 hover:bg-primary-700 disabled:bg-gray-100 disabled:text-gray-400 disabled:border-gray-200 text-white rounded-2xl font-bold text-xs transition border border-primary-650 hover:shadow-md flex items-center justify-center gap-1.5 cursor-pointer"
               >
                 <Camera className="h-4.5 w-4.5" />
                 <span>Start Scanner</span>
@@ -182,37 +195,45 @@ const EntryVerification = () => {
                 type="button"
                 onClick={stopScanner}
                 disabled={!cameraActive}
-                className="flex-grow py-3 bg-white text-gray-700 hover:bg-gray-50 border border-gray-300 disabled:bg-gray-50 disabled:text-gray-400 disabled:border-gray-200 rounded-2xl font-bold text-xs transition flex items-center justify-center gap-1.5"
+                className="flex-grow py-3 bg-white text-gray-700 hover:bg-gray-50 border border-gray-300 disabled:bg-gray-50 disabled:text-gray-400 disabled:border-gray-200 rounded-2xl font-bold text-xs transition flex items-center justify-center gap-1.5 cursor-pointer"
               >
                 <span>Stop Scanner</span>
               </button>
             </div>
           </div>
 
-          {/* Right Side: Manual Verification & Feedback */}
+          {/* Right Side: Manual Verification Fallback & Verification Status */}
           <div className="space-y-6">
             
-            {/* Manual ID Input Card */}
+            {/* Manual ID Input Card (Fallback) */}
             <div className="bg-white p-6 rounded-3xl border border-gray-250 shadow-xs space-y-4">
-              <h2 className="text-sm font-bold text-gray-800 uppercase tracking-wider">
-                Enter Registration ID
-              </h2>
+              <div className="flex items-center justify-between">
+                <h2 className="text-sm font-bold text-gray-800 uppercase tracking-wider">
+                  Manual Verification
+                </h2>
+                <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-gray-100 text-gray-600 border border-gray-200">
+                  Fallback
+                </span>
+              </div>
+              <p className="text-[11px] text-gray-500">
+                If camera is unavailable, enter student registration ID directly.
+              </p>
               
               <form onSubmit={handleManualSubmit} className="flex gap-3">
                 <input
                   type="text"
                   value={manualInput}
                   onChange={(e) => setManualInput(e.target.value)}
-                  placeholder="e.g. 12"
+                  placeholder="Enter Registration ID e.g. 12"
                   className="flex-grow py-2.5 px-4 rounded-xl text-xs bg-gray-50 border border-gray-300 focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary-500 font-semibold"
                 />
                 <button
                   type="submit"
                   disabled={loading || !manualInput.trim()}
-                  className="bg-primary-600 hover:bg-primary-700 disabled:opacity-50 text-white font-bold px-4 py-2.5 rounded-xl text-xs transition flex items-center gap-1.5 shadow-xs"
+                  className="bg-primary-600 hover:bg-primary-700 disabled:opacity-50 text-white font-bold px-4 py-2.5 rounded-xl text-xs transition flex items-center gap-1.5 shadow-xs cursor-pointer"
                 >
                   {loading ? <Loader size="small" /> : <Send className="h-4 w-4" />}
-                  <span>Verify Entry</span>
+                  <span>Verify</span>
                 </button>
               </form>
             </div>
@@ -222,7 +243,7 @@ const EntryVerification = () => {
               {loading && (
                 <div className="bg-white p-12 rounded-3xl border border-gray-250 shadow-xs flex flex-col items-center justify-center space-y-3">
                   <Loader size="medium" />
-                  <p className="text-xs text-gray-500 font-medium">Verifying registration details...</p>
+                  <p className="text-xs text-gray-500 font-medium">Verifying registration pass details...</p>
                 </div>
               )}
 
@@ -268,7 +289,7 @@ const EntryVerification = () => {
                     </div>
                     <div className="border-t border-gray-150 pt-4 text-center">
                       <p className="text-green-700 font-black text-sm tracking-wide">
-                        "Student is eligible to enter this event."
+                        ✅ ENTRY VERIFIED: Student is eligible to enter this event.
                       </p>
                     </div>
                   </div>
@@ -280,14 +301,14 @@ const EntryVerification = () => {
                 <div className="bg-white rounded-3xl border-2 border-red-500 shadow-md overflow-hidden animate-in fade-in slide-in-from-bottom duration-250">
                   <div className="bg-red-500 text-white py-4 px-6 flex items-center gap-2 font-extrabold text-sm uppercase tracking-wider">
                     <XCircle className="h-5 w-5" />
-                    <span>Invalid Entry</span>
+                    <span>Entry Rejected</span>
                   </div>
                   <div className="p-6 text-center space-y-4">
                     <p className="text-sm font-extrabold text-red-700">
                       Reason: {scanError}
                     </p>
                     <p className="text-xs text-gray-500">
-                      Please verify registration ID manually or request the student to check their registration status.
+                      ❌ ENTRY REJECTED: Student pass is invalid, cancelled, or unrecorded.
                     </p>
                   </div>
                 </div>

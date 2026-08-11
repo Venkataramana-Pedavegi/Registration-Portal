@@ -110,4 +110,25 @@ const checkPermission = (permission) => {
   };
 };
 
-module.exports = { protect, adminOnly, studentOnly, authorizeRoles, checkPermission };
+const adminOrVolunteer = async (req, res, next) => {
+  const allowedAdminRoles = ['Admin', 'Super Admin', 'Event Coordinator', 'Faculty Coordinator', 'Coordinator', 'Volunteer Coordinator'];
+  if (req.user && allowedAdminRoles.includes(req.role)) {
+    return next();
+  }
+
+  if (req.user && (req.role === 'Student' || !req.role)) {
+    const { Volunteer } = require('../models');
+    const { Op } = require('sequelize');
+    const approvedVolunteer = await Volunteer.findOne({
+      where: { studentId: req.user.id, status: { [Op.in]: ['approved', 'Approved'] } }
+    });
+
+    if (approvedVolunteer) {
+      return next();
+    }
+  }
+
+  return res.status(403).json({ message: 'Access denied: Entry Verification requires Admin or Approved Volunteer privileges' });
+};
+
+module.exports = { protect, adminOnly, studentOnly, authorizeRoles, checkPermission, adminOrVolunteer };

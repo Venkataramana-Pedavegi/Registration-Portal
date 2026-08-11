@@ -24,7 +24,10 @@ export const AuthProvider = ({ children }) => {
         try {
           const endpoint = role === 'Admin' ? '/admin/profile' : '/student/profile';
           const { data } = await api.get(endpoint);
-          setUser(data);
+          setUser({
+            ...data,
+            isApprovedVolunteer: data.isApprovedVolunteer || false,
+          });
           resetInactivityTimer();
         } catch (error) {
           console.error('Session restore failed:', error.response?.data?.message || error.message);
@@ -132,6 +135,7 @@ export const AuthProvider = ({ children }) => {
         department: data.department,
         year: data.year,
         role: 'Student',
+        isApprovedVolunteer: data.isApprovedVolunteer || false,
       });
       resetInactivityTimer();
       return { success: true };

@@ -51,12 +51,15 @@ const {
   bulkUpdateEvents,
 } = require('../controllers/bulkController');
 
-const { protect, adminOnly, checkPermission } = require('../middleware/authMiddleware');
+const { protect, adminOnly, adminOrVolunteer, checkPermission } = require('../middleware/authMiddleware');
 const { validateAdminLogin } = require('../middleware/validation');
 const { authRateLimiter } = require('../middleware/security');
 const { getAdminRegistrationStats } = require('../controllers/registrationController');
 
 router.post('/login', authRateLimiter, validateAdminLogin, loginAdmin);
+
+// Entry Verification route (accessible by Admin or Approved Volunteer)
+router.post('/entry/verify', protect, adminOrVolunteer, verifyEventEntry);
 
 // Protected Admin Routes
 router.use(protect);
@@ -73,7 +76,6 @@ router.get('/analytics', getAdminAnalytics);
 router.get('/reports', getAdminReports);
 router.get('/backup', getDatabaseBackup);
 router.get('/student/:id/profile', getStudentProfile);
-router.post('/entry/verify', verifyEventEntry);
 
 // -------------------------------------------------------------
 // SPRINT 6 ENTERPRISE ADMIN ROUTES

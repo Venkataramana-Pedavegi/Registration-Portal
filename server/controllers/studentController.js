@@ -484,6 +484,12 @@ const loginStudent = async (req, res) => {
 
       await logAudit({ req, userId: student.id, userRole: 'Student', action: 'LOGIN', status: 'SUCCESS', details: 'Student logged in successfully' });
 
+      const { Volunteer } = require('../models');
+      const { Op } = require('sequelize');
+      const approvedVol = await Volunteer.findOne({
+        where: { studentId: student.id, status: { [Op.in]: ['approved', 'Approved'] } }
+      });
+
       res.json({
         id: student.id,
         _id: student.id,
@@ -494,6 +500,7 @@ const loginStudent = async (req, res) => {
         year: student.year,
         profileImage: student.profileImage,
         role: 'Student',
+        isApprovedVolunteer: !!approvedVol,
         token,
         refreshToken: newRefreshToken,
       });
@@ -538,6 +545,12 @@ const getStudentProfile = async (req, res) => {
     const student = await Student.findByPk(req.user.id);
 
     if (student) {
+      const { Volunteer } = require('../models');
+      const { Op } = require('sequelize');
+      const approvedVol = await Volunteer.findOne({
+        where: { studentId: student.id, status: { [Op.in]: ['approved', 'Approved'] } }
+      });
+
       res.json({
         id: student.id,
         _id: student.id,
@@ -548,6 +561,7 @@ const getStudentProfile = async (req, res) => {
         year: student.year,
         profileImage: student.profileImage,
         role: 'Student',
+        isApprovedVolunteer: !!approvedVol,
         createdAt: student.createdAt,
         updatedAt: student.updatedAt,
       });

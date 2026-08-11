@@ -188,6 +188,14 @@ function App() {
                     }
                   />
                   <Route
+                    path="/coordinator-dashboard"
+                    element={
+                      <ProtectedRoute allowedRoles={['Coordinator']}>
+                        <AnalyticsDashboard />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
                     path="/attendance"
                     element={
                       <ProtectedRoute allowedRoles={['Admin']}>
@@ -304,7 +312,7 @@ function App() {
                   <Route
                     path="/admin/entry-verification"
                     element={
-                      <ProtectedRoute allowedRoles={['Admin']}>
+                      <ProtectedRoute allowedRoles={['Admin', 'ApprovedVolunteer']}>
                         <EntryVerification />
                       </ProtectedRoute>
                     }

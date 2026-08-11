@@ -4,7 +4,7 @@ import { AuthContext } from '../context/AuthContext';
 import Loader from './Loader';
 
 const ProtectedRoute = ({ children, allowedRoles }) => {
-  const { token, role, loading } = useContext(AuthContext);
+  const { user, token, role, loading } = useContext(AuthContext);
 
   if (loading) {
     return (
@@ -27,7 +27,9 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
 
     const userHasAccess = allowedRoles.some((allowed) => {
       if (allowed === 'Admin' && adminGroup.includes(role)) return true;
+      if (allowed === 'Coordinator' && adminGroup.includes(role)) return true;
       if (allowed === 'Student' && (studentGroup.includes(role) || !role)) return true;
+      if (allowed === 'ApprovedVolunteer' && (adminGroup.includes(role) || (role === 'Student' && user?.isApprovedVolunteer === true))) return true;
       return allowed === role;
     });
 
