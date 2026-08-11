@@ -153,21 +153,22 @@ const Navbar = () => {
 
                 <Link
                   to="/profile"
-                  className="flex items-center space-x-2 bg-gray-100 hover:bg-gray-200 text-gray-800 pr-3 pl-1.5 py-1 rounded-full text-[10px] lg:text-[11px] xl:text-xs font-semibold transition flex-shrink-0"
+                  className="flex items-center space-x-2 bg-gray-100 hover:bg-gray-200 text-gray-800 pr-3 pl-1 py-1 rounded-full text-xs font-semibold transition flex-shrink-0"
                 >
                   <img
                     src={user?.profileImage || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=400'}
                     alt="Avatar"
-                    className="w-[50px] h-[50px] rounded-full object-cover flex-shrink-0 border border-gray-200"
+                    className="w-7 h-7 xl:w-8 xl:h-8 rounded-full object-cover flex-shrink-0 border border-gray-300"
                   />
-                  <span>{user?.fullName || user?.name || user?.username}</span>
+                  <span className="truncate max-w-[120px]">{user?.fullName || user?.name || user?.username}</span>
                 </Link>
 
                 <button
                   onClick={handleLogout}
-                  className="flex items-center space-x-1 bg-red-50 text-red-600 hover:bg-red-100 px-2 py-1.5 rounded-md text-[10px] lg:text-[11px] xl:text-xs font-semibold transition flex-shrink-0"
+                  className="flex items-center space-x-1.5 bg-red-600 hover:bg-red-700 text-white px-3 py-1.5 rounded-xl text-xs font-bold transition flex-shrink-0 shadow-xs cursor-pointer"
+                  title="Logout"
                 >
-                  <LogOut className="h-3 w-3 xl:h-3.5 xl:w-3.5" />
+                  <LogOut className="h-3.5 w-3.5" />
                   <span>Logout</span>
                 </button>
               </>
@@ -233,8 +234,9 @@ const Navbar = () => {
                 </>
               )}
               <Link to="/profile" onClick={() => setIsOpen(false)} className="block py-2 hover:text-primary-600">Profile</Link>
-              <button onClick={() => { setIsOpen(false); handleLogout(); }} className="w-full text-left text-red-600 py-2 hover:text-red-700">
-                Logout
+              <button onClick={() => { setIsOpen(false); handleLogout(); }} className="w-full text-left text-red-600 font-bold py-2 hover:text-red-700 flex items-center gap-2">
+                <LogOut className="h-4 w-4" />
+                <span>Logout</span>
               </button>
             </>
           )}
