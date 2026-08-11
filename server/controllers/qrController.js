@@ -20,13 +20,14 @@ const getRegistrationQRCode = async (req, res) => {
       return res.status(404).json({ message: 'Registration record not found' });
     }
 
-    if (!registration.qrCodeUrl) {
-      const host = req.get('host') || 'localhost:5000';
-      const frontendHost = host.includes('5000') ? host.replace('5000', '5173') : host;
-      const verifyUrl = `${req.protocol}://${frontendHost}/verify-pass/${registration.id}`;
-      registration.qrCodeUrl = await generateQRCode(verifyUrl);
-      await registration.save();
-    }
+    // Force regeneration to use the new JSON format containing registrationId, eventId, and studentId
+    const qrPayload = {
+      registrationId: registration.id,
+      eventId: registration.eventId,
+      studentId: registration.studentId,
+    };
+    registration.qrCodeUrl = await generateQRCode(qrPayload);
+    await registration.save();
 
     res.json({
       registrationId: registration.id,
@@ -34,6 +35,9 @@ const getRegistrationQRCode = async (req, res) => {
       eventTitle: registration.Event?.title,
       studentName: registration.Student?.fullName,
       rollNumber: registration.Student?.rollNumber,
+      eventDate: registration.Event?.eventDate,
+      venue: registration.Event?.venue,
+      status: registration.status,
     });
   } catch (error) {
     res.status(500).json({ message: 'Server error retrieving QR code', error: error.message });
@@ -45,132 +49,8 @@ const getRegistrationQRCode = async (req, res) => {
 // @access  Private/Admin
 const scanQRCode = async (req, res) => {
   try {
-    const { qrData, registrationId: reqRegId } = req.body;
-    let targetRegistrationId = reqRegId;
-
-    if (!targetRegistrationId && qrData) {
-      try {
-        const parsed = typeof qrData === 'string' ? JSON.parse(qrData) : qrData;
-        targetRegistrationId = parsed.registrationId;
-      } catch (err) {
-        if (typeof qrData === 'string') {
-          const match = qrData.match(/\/verify-pass\/(\d+)/);
-          if (match) {
-            targetRegistrationId = match[1];
-          } else if (/^\d+$/.test(qrData.trim())) {
-            targetRegistrationId = qrData.trim();
-          } else {
-            return res.status(400).json({ message: 'Invalid QR Code payload format' });
-          }
-        } else {
-          return res.status(400).json({ message: 'Invalid QR Code payload format' });
-        }
-      }
-    }
-
-    if (!targetRegistrationId) {
-      return res.status(400).json({ message: 'Registration ID could not be resolved from scan' });
-    }
-
-    const registration = await Registration.findByPk(targetRegistrationId, {
-      include: [
-        { model: Student, attributes: ['id', 'fullName', 'rollNumber'] },
-        { model: Event, attributes: ['id', 'title', 'organizer'] },
-      ],
-    });
-
-    if (!registration) {
-      return res.status(404).json({ message: 'Registration record not found for scanned QR code' });
-    }
-
-    if (registration.status === 'Cancelled') {
-      return res.status(400).json({ message: 'Cannot mark attendance for a cancelled registration' });
-    }
-
-    // Check existing attendance record to prevent duplicate scans
-    let attendance = await Attendance.findOne({ where: { registrationId: registration.id } });
-    if (attendance && attendance.attendanceStatus === 'Present') {
-      return res.status(400).json({
-        message: 'Attendance already marked Present for this registration scan.',
-        alreadyScanned: true,
-        markedAt: attendance.markedAt,
-      });
-    }
-
-    // Mark attendance Present
-    if (!attendance) {
-      attendance = await Attendance.create({
-        registrationId: registration.id,
-        eventId: registration.eventId,
-        studentId: registration.studentId,
-        attendanceStatus: 'Present',
-        markedAt: new Date(),
-      });
-    } else {
-      attendance.attendanceStatus = 'Present';
-      attendance.markedAt = new Date();
-      await attendance.save();
-    }
-
-    // Automatically issue participation certificate
-    const certCode = `CERT-2026-${registration.id.toString().padStart(4, '0')}`;
-    await Certificate.findOrCreate({
-      where: { registrationId: registration.id },
-      defaults: {
-        registrationId: registration.id,
-        studentId: registration.studentId,
-        eventId: registration.eventId,
-        certificateId: certCode,
-        issueDate: new Date(),
-        qrVerificationCode: certCode,
-      },
-    });
-
-    // Award Attendance (+25 XP) and Certificate (+20 XP) points
-    try {
-      const { awardPoints } = require('../services/GamificationService');
-      await awardPoints(
-        registration.studentId,
-        25,
-        'ATTEND_EVENT',
-        `Attended event: ${registration.Event?.title || 'Event'}`,
-        registration.eventId,
-        req
-      );
-      await awardPoints(
-        registration.studentId,
-        20,
-        'CERTIFICATE_EARNED',
-        `Earned Certificate for event: ${registration.Event?.title || 'Event'}`,
-        registration.eventId,
-        req
-      );
-    } catch (gErr) {
-      console.error('Non-blocking QR attendance points error:', gErr.message);
-    }
-
-    // Notify student
-    await Notification.create({
-      userId: registration.studentId,
-      userRole: 'Student',
-      title: 'Attendance Confirmed & Certificate Issued!',
-      message: `Your attendance for "${registration.Event?.title}" was marked Present via QR Scan. Your participation certificate is ready for download.`,
-      type: 'Certificate',
-    });
-
-    await logAudit({
-      req,
-      userId: req.user.id,
-      userRole: 'Admin',
-      action: 'QR_SCAN_ATTENDANCE',
-      details: `Scanned registration #${registration.id} for ${registration.Student?.fullName}`,
-    });
-
-    res.json({
-      message: 'Attendance marked Present successfully via QR scan!',
-      attendance,
-      studentName: registration.Student?.fullName,
-      eventTitle: registration.Event?.title,
+    return res.status(400).json({
+      message: 'QR scanning for attendance is disabled. Please mark attendance via the Attendance Management page.'
     });
   } catch (error) {
     res.status(500).json({ message: 'Server error processing QR scan', error: error.message });

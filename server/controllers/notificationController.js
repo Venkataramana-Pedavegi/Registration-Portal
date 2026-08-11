@@ -1,12 +1,21 @@
 const { Notification } = require('../models');
 
+// Helper to normalize userRole for database queries ('Admin' vs 'Student')
+const getUserRoleForNotification = (req) => {
+  const adminRoles = ['Admin', 'Super Admin', 'Event Coordinator', 'Faculty Coordinator', 'Coordinator', 'Volunteer Coordinator'];
+  if (req.user?.username || (req.role && adminRoles.includes(req.role)) || (req.user?.role && adminRoles.includes(req.user.role))) {
+    return 'Admin';
+  }
+  return 'Student';
+};
+
 // @desc    Get user notifications with pagination & unread count
 // @route   GET /api/notifications
 // @access  Private
 const getNotifications = async (req, res) => {
   try {
     const userId = req.user.id;
-    const userRole = req.user.role || (req.user.username ? 'Admin' : 'Student');
+    const userRole = getUserRoleForNotification(req);
     const page = parseInt(req.query.page, 10) || 1;
     const limit = parseInt(req.query.limit, 10) || 10;
     const offset = (page - 1) * limit;
@@ -47,7 +56,7 @@ const getNotifications = async (req, res) => {
 const getUnreadCount = async (req, res) => {
   try {
     const userId = req.user.id;
-    const userRole = req.user.role || (req.user.username ? 'Admin' : 'Student');
+    const userRole = getUserRoleForNotification(req);
     const count = await Notification.count({
       where: { userId, userRole, isRead: false },
     });
@@ -64,7 +73,7 @@ const markReadById = async (req, res) => {
   try {
     const { id } = req.params;
     const userId = req.user.id;
-    const userRole = req.user.role || (req.user.username ? 'Admin' : 'Student');
+    const userRole = getUserRoleForNotification(req);
 
     const notification = await Notification.findOne({
       where: { id, userId, userRole },
@@ -96,7 +105,7 @@ const markReadById = async (req, res) => {
 const markAllRead = async (req, res) => {
   try {
     const userId = req.user.id;
-    const userRole = req.user.role || (req.user.username ? 'Admin' : 'Student');
+    const userRole = getUserRoleForNotification(req);
 
     await Notification.update(
       { isRead: true },
@@ -123,7 +132,7 @@ const deleteNotification = async (req, res) => {
   try {
     const { id } = req.params;
     const userId = req.user.id;
-    const userRole = req.user.role || (req.user.username ? 'Admin' : 'Student');
+    const userRole = getUserRoleForNotification(req);
 
     const notification = await Notification.findOne({
       where: { id, userId, userRole },
@@ -146,7 +155,7 @@ const deleteNotification = async (req, res) => {
 const clearAllNotifications = async (req, res) => {
   try {
     const userId = req.user.id;
-    const userRole = req.user.role || (req.user.username ? 'Admin' : 'Student');
+    const userRole = getUserRoleForNotification(req);
 
     await Notification.destroy({
       where: { userId, userRole },
@@ -163,7 +172,7 @@ const markNotificationRead = async (req, res) => {
   try {
     const { notificationId } = req.body;
     const userId = req.user.id;
-    const userRole = req.user.role || (req.user.username ? 'Admin' : 'Student');
+    const userRole = getUserRoleForNotification(req);
 
     if (notificationId) {
       const notification = await Notification.findOne({

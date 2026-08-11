@@ -10,6 +10,7 @@ const {
   changeAdminPassword,
   getDatabaseBackup,
   getStudentsList,
+  verifyEventEntry,
 } = require('../controllers/adminController');
 const {
   getAdminDashboard,
@@ -72,6 +73,7 @@ router.get('/analytics', getAdminAnalytics);
 router.get('/reports', getAdminReports);
 router.get('/backup', getDatabaseBackup);
 router.get('/student/:id/profile', getStudentProfile);
+router.post('/entry/verify', verifyEventEntry);
 
 // -------------------------------------------------------------
 // SPRINT 6 ENTERPRISE ADMIN ROUTES

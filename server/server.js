@@ -222,6 +222,14 @@ const updateDatabaseSchema = async () => {
       console.log('Adding gamification columns to Registrations table...');
       await sequelize.query("ALTER TABLE `Registrations` ADD COLUMN `isWinner` BOOLEAN NOT NULL DEFAULT false");
     }
+
+    // Check Registrations entry verification columns
+    const [regEntryCheck] = await sequelize.query("SHOW COLUMNS FROM `Registrations` LIKE 'entryVerifiedAt'");
+    if (regEntryCheck.length === 0) {
+      console.log('Adding entry verification columns to Registrations table...');
+      await sequelize.query("ALTER TABLE `Registrations` ADD COLUMN `entryVerifiedAt` DATETIME NULL");
+      await sequelize.query("ALTER TABLE `Registrations` ADD COLUMN `entryVerifiedBy` INT NULL");
+    }
   } catch (err) {
     console.error('Error during database schema update:', err.message);
   }

@@ -35,21 +35,7 @@ const VerifyPass = () => {
     fetchPassDetails();
   }, [registrationId]);
 
-  const handleMarkAttendance = async () => {
-    setActionSuccess('');
-    setError('');
-    setActionLoading(true);
-    try {
-      const { data } = await api.post('/qrcode/scan', { registrationId });
-      setActionSuccess(data.message || 'Attendance marked Present successfully.');
-      fetchPassDetails();
-    } catch (err) {
-      console.error(err);
-      setError(err.response?.data?.message || 'Failed to mark attendance.');
-    } finally {
-      setActionLoading(false);
-    }
-  };
+
 
   if (loading) {
     return (
@@ -219,16 +205,7 @@ const VerifyPass = () => {
                 </span>
               </div>
 
-              {/* Admin Actions */}
-              {isAdmin && isValidPass && passData.attendanceStatus !== 'Present' && (
-                <button
-                  onClick={handleMarkAttendance}
-                  disabled={actionLoading}
-                  className="w-full py-3 bg-purple-650 hover:bg-purple-750 text-white rounded-2xl font-bold text-sm transition shadow-md hover:shadow-lg flex items-center justify-center gap-2"
-                >
-                  {actionLoading ? <Loader size="small" /> : 'Confirm & Mark Attendance'}
-                </button>
-              )}
+
 
             </div>
           )}

@@ -258,6 +258,16 @@ const EventDetails = () => {
   const isCompleted = event.status === 'Completed';
   const isDeadlinePassed = new Date() > new Date(event.registrationDeadline);
 
+  const getEventDateString = (dateInput) => {
+    const d = new Date(dateInput);
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const date = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${date}`;
+  };
+
+  const eventCompleted = event ? (new Date() >= new Date(`${getEventDateString(event.eventDate)}T${event.endTime}`)) : false;
+
   return (
     <div className="flex-grow bg-gray-50 py-10 px-4 sm:px-6 lg:px-8">
       <div className="max-w-4xl mx-auto space-y-6">
@@ -330,13 +340,19 @@ const EventDetails = () => {
                 <div className="pt-6 border-t border-gray-100 space-y-4">
                   <div className="flex items-center justify-between">
                     <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wider">Student Reviews</h3>
-                    {role === 'Student' && (
-                      <button
-                        onClick={() => setShowFeedbackModal(true)}
-                        className="text-xs text-amber-600 font-bold hover:underline flex items-center gap-1"
-                      >
-                        <Star className="w-3.5 h-3.5 fill-amber-500" /> Give Feedback
-                      </button>
+                    {role === 'Student' && isRegistered && (
+                      eventCompleted ? (
+                        <button
+                          onClick={() => setShowFeedbackModal(true)}
+                          className="text-xs text-amber-600 font-bold hover:underline flex items-center gap-1"
+                        >
+                          <Star className="w-3.5 h-3.5 fill-amber-500" /> Give Feedback
+                        </button>
+                      ) : (
+                        <span className="text-xs text-gray-400 font-semibold flex items-center gap-1 cursor-not-allowed">
+                          <Star className="w-3 h-3 text-gray-400" /> Feedback available after event
+                        </span>
+                      )
                     )}
                   </div>
                   <div className="space-y-3 max-h-60 overflow-y-auto">
@@ -438,12 +454,21 @@ const EventDetails = () => {
                         <QrCode className="w-4 h-4" /> View Entry QR Code
                       </button>
 
-                      <button
-                        onClick={() => setShowFeedbackModal(true)}
-                        className="w-full bg-amber-500 hover:bg-amber-600 text-white font-bold py-2 rounded-lg text-xs transition flex items-center justify-center gap-1"
-                      >
-                        <Star className="w-3.5 h-3.5 fill-white" /> Give Feedback
-                      </button>
+                      {eventCompleted ? (
+                        <button
+                          onClick={() => setShowFeedbackModal(true)}
+                          className="w-full bg-amber-500 hover:bg-amber-600 text-white font-bold py-2 rounded-lg text-xs transition flex items-center justify-center gap-1"
+                        >
+                          <Star className="w-3.5 h-3.5 fill-white" /> Give Feedback
+                        </button>
+                      ) : (
+                        <button
+                          disabled
+                          className="w-full bg-gray-150 text-gray-400 border border-gray-200 font-bold py-2 rounded-lg text-xs cursor-not-allowed flex items-center justify-center gap-1"
+                        >
+                          <Star className="w-3.5 h-3.5 text-gray-400" /> Feedback available after event
+                        </button>
+                      )}
 
                       <button
                         onClick={handleCancelClick}

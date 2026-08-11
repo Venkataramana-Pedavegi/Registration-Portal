@@ -10,7 +10,9 @@ export const useNotifications = () => useContext(NotificationContext);
 export const NotificationProvider = ({ children }) => {
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [pagination, setPagination] = useState({ page: 1, totalPages: 1, total: 0, limit: 10 });
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
   const socket = useSocket();
   const { user } = useContext(AuthContext);
 
@@ -18,11 +20,16 @@ export const NotificationProvider = ({ children }) => {
     if (!user) return;
     try {
       setLoading(true);
+      setError('');
       const { data } = await api.get(`/notifications?page=${page}&limit=${limit}`);
       setNotifications(data.notifications || []);
       setUnreadCount(data.unreadCount || 0);
+      if (data.pagination) {
+        setPagination(data.pagination);
+      }
     } catch (err) {
       console.error('Error fetching notifications:', err);
+      setError('Unable to load notifications. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -31,7 +38,6 @@ export const NotificationProvider = ({ children }) => {
   const markAsRead = async (id) => {
     try {
       await api.patch(`/notifications/${id}/read`);
-      // Update local state immediately
       setNotifications((prev) =>
         prev.map((n) => (n._id === id || n.id === id ? { ...n, isRead: true } : n))
       );
@@ -55,8 +61,7 @@ export const NotificationProvider = ({ children }) => {
     try {
       await api.delete(`/notifications/${id}`);
       setNotifications((prev) => prev.filter((n) => n._id !== id && n.id !== id));
-      // Re-fetch to balance count & page limit
-      fetchNotifications();
+      fetchNotifications(pagination.page || 1, pagination.limit || 10);
     } catch (err) {
       console.error('Error deleting notification:', err);
     }
@@ -67,6 +72,7 @@ export const NotificationProvider = ({ children }) => {
       await api.delete('/notifications');
       setNotifications([]);
       setUnreadCount(0);
+      setPagination({ page: 1, totalPages: 1, total: 0, limit: 10 });
     } catch (err) {
       console.error('Error clearing all notifications:', err);
     }
@@ -76,10 +82,11 @@ export const NotificationProvider = ({ children }) => {
     if (!user) {
       setNotifications([]);
       setUnreadCount(0);
+      setError('');
       return;
     }
 
-    fetchNotifications();
+    fetchNotifications(1, 10);
   }, [user]);
 
   // Listen to live socket events for real-time notifications
@@ -87,9 +94,11 @@ export const NotificationProvider = ({ children }) => {
     if (!socket) return;
 
     const handleNewNotification = (notif) => {
-      // Avoid duplicate notifications in state
+      if (user?.id && notif.userId && parseInt(notif.userId, 10) !== parseInt(user.id, 10)) {
+        return;
+      }
       setNotifications((prev) => {
-        const exists = prev.some((n) => n.id === notif.id || n._id === notif._id);
+        const exists = prev.some((n) => (n.id && n.id === notif.id) || (n._id && n._id === notif._id));
         if (exists) return prev;
         return [notif, ...prev];
       });
@@ -110,14 +119,16 @@ export const NotificationProvider = ({ children }) => {
 
     socket.on('notificationCreated', handleNewNotification);
     socket.on('notification:new', handleNewNotification);
+    socket.on('notification', handleNewNotification);
     socket.on('notification:read', handleReadNotification);
 
     return () => {
       socket.off('notificationCreated', handleNewNotification);
       socket.off('notification:new', handleNewNotification);
+      socket.off('notification', handleNewNotification);
       socket.off('notification:read', handleReadNotification);
     };
-  }, [socket]);
+  }, [socket, user]);
 
   return (
     <NotificationContext.Provider
@@ -125,6 +136,8 @@ export const NotificationProvider = ({ children }) => {
         notifications,
         unreadCount,
         loading,
+        error,
+        pagination,
         fetchNotifications,
         markAsRead,
         markAllAsRead,

@@ -133,24 +133,34 @@ describe('College Event Registration Phase 5 Enterprise APIs', () => {
     expect(res.body.qrCodeUrl).toMatch(/^data:image/);
   });
 
-  test('POST /api/qrcode/scan - Admin scan QR code to mark attendance Present', async () => {
+  test('POST /api/attendance - Admin mark attendance Present', async () => {
     const res = await request(app)
-      .post('/api/qrcode/scan')
+      .post('/api/attendance')
       .set('Authorization', `Bearer ${adminToken}`)
-      .send({ registrationId });
+      .send({ registrationId, attendanceStatus: 'Present' });
 
-    expect(res.status).toBe(200);
-    expect(res.body.message).toMatch(/attendance marked Present/i);
+    expect(res.status).toBe(201);
+    expect(res.body.attendanceStatus).toBe('Present');
   });
 
-  test('POST /api/qrcode/scan - Prevent duplicate QR scan', async () => {
+  test('POST /api/attendance - Prevent duplicate attendance Present marking', async () => {
+    const res = await request(app)
+      .post('/api/attendance')
+      .set('Authorization', `Bearer ${adminToken}`)
+      .send({ registrationId, attendanceStatus: 'Present' });
+
+    expect(res.status).toBe(400);
+    expect(res.body.alreadyScanned).toBe(true);
+  });
+
+  test('POST /api/qrcode/scan - Verify scan endpoint is disabled', async () => {
     const res = await request(app)
       .post('/api/qrcode/scan')
       .set('Authorization', `Bearer ${adminToken}`)
       .send({ registrationId });
 
     expect(res.status).toBe(400);
-    expect(res.body.alreadyScanned).toBe(true);
+    expect(res.body.message).toMatch(/QR scanning for attendance is disabled/i);
   });
 
   // 4. Certificate Generation & PDF Download

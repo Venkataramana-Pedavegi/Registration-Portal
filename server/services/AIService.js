@@ -8,10 +8,12 @@ if (process.env.GEMINI_API_KEY) {
 // Basic rate limiting helper (throttle consecutive calls)
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-const generateText = async (prompt, systemInstruction = '', retryCount = 0) => {
+const generateText = async (prompt, systemInstruction = '', fallbackText = null, retryCount = 0) => {
   try {
     if (!process.env.GEMINI_API_KEY || !genAI) {
-      console.warn('⚠️ [AI Service] GEMINI_API_KEY is not defined. Falling back to local template response.');
+      if (fallbackText) {
+        return fallbackText;
+      }
       return getFallbackText(prompt);
     }
 
@@ -33,9 +35,12 @@ const generateText = async (prompt, systemInstruction = '', retryCount = 0) => {
     if (retryCount < 2) {
       const waitTime = Math.pow(2, retryCount) * 1000;
       await delay(waitTime);
-      return generateText(prompt, systemInstruction, retryCount + 1);
+      return generateText(prompt, systemInstruction, fallbackText, retryCount + 1);
     }
 
+    if (fallbackText) {
+      return fallbackText;
+    }
     return getFallbackText(prompt);
   }
 };
@@ -87,7 +92,7 @@ const getFallbackText = (prompt) => {
     return `Subject: College Event Portal - Verification Notice\n\nDear Student,\n\nThis is a notification update regarding your event enrollment status. Verify your details inside the student dashboard.\n\nRegards,\nSri Vasavi Events Team`;
   }
   
-  return 'Thank you for your question. I am ready to assist you with registration guidelines, calendar schedules, certificates, and volunteering tasks.';
+  return 'I can help with events, registrations, certificates, achievements, badges, attendance, volunteering, and other Sri Vasavi Events features. Try asking about one of these.';
 };
 
 module.exports = {

@@ -27,6 +27,27 @@ const applyVolunteer = async (req, res) => {
       status: 'pending',
     });
 
+    // Notify Admins of the new volunteer application
+    try {
+      const { Notification, Admin: AdminModel } = require('../models');
+      const adminsList = await AdminModel.findAll({ where: { isActive: true } });
+      const studentName = req.user.fullName || 'Student';
+      const eventTitle = event.title || 'Event';
+      const adminPromises = adminsList.map(adm => {
+        return Notification.create({
+          userId: adm.id,
+          userRole: 'Admin',
+          title: 'New Volunteer Application',
+          message: `${studentName} applied to volunteer for ${eventTitle}.`,
+          type: 'System',
+          referenceId: eventId,
+        }).catch(err => console.error('Error creating admin volunteer notification:', err.message));
+      });
+      await Promise.all(adminPromises);
+    } catch (notifErr) {
+      console.error('Failed to notify admins of new volunteer application:', notifErr.message);
+    }
+
     res.status(201).json({ message: 'Volunteer application submitted successfully', volunteer });
   } catch (error) {
     res.status(500).json({ message: error.message });

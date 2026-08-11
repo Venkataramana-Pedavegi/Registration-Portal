@@ -314,6 +314,98 @@ const getStudentsList = async (req, res) => {
   }
 };
 
+// @desc    Verify event entry QR code / registration ID
+// @route   POST /api/admin/entry/verify
+// @access  Private/Admin
+const verifyEventEntry = async (req, res) => {
+  try {
+    const { registrationId } = req.body;
+
+    if (!registrationId) {
+      return res.status(400).json({ message: 'Registration ID is required' });
+    }
+
+    const { Registration, Event, Student } = require('../models');
+
+    const registration = await Registration.findByPk(registrationId, {
+      include: [
+        { model: Student, attributes: ['id', 'fullName', 'rollNumber'] },
+        { model: Event, attributes: ['id', 'title'] },
+      ],
+    });
+
+    if (!registration) {
+      return res.status(404).json({ message: 'Registration not found' });
+    }
+
+    if (!registration.Student) {
+      return res.status(404).json({ message: 'Student not found for this registration' });
+    }
+
+    if (!registration.Event) {
+      return res.status(404).json({ message: 'Event not found for this registration' });
+    }
+
+    if (registration.status === 'Cancelled') {
+      return res.status(400).json({ message: 'Registration has been cancelled' });
+    }
+
+    // Save entry verification details
+    registration.entryVerifiedAt = new Date();
+    registration.entryVerifiedBy = req.user.id;
+    await registration.save();
+
+    // Notify Admins of entry verification
+    try {
+      const { Notification, Admin: AdminModel } = require('../models');
+      const adminsList = await AdminModel.findAll({ where: { isActive: true } });
+      const studentName = registration.Student.fullName;
+      const eventTitle = registration.Event.title;
+      const adminPromises = adminsList.map(adm => {
+        return Notification.create({
+          userId: adm.id,
+          userRole: 'Admin',
+          title: 'Event Entry Verified',
+          message: `${studentName}'s entry for ${eventTitle} was verified.`,
+          type: 'System',
+          referenceId: registration.Event.id,
+        }).catch(err => console.error('Error creating admin entry verification notification:', err.message));
+      });
+      await Promise.all(adminPromises);
+    } catch (notifErr) {
+      console.error('Failed to notify admins of entry verification:', notifErr.message);
+    }
+
+    await logAudit({
+      req,
+      userId: req.user.id,
+      userRole: req.user.role || 'Admin',
+      action: 'ENTRY_VERIFICATION',
+      details: `Verified entry for registration #${registrationId} (Student: ${registration.Student.fullName}, Event: ${registration.Event.title})`,
+    });
+
+    res.json({
+      valid: true,
+      message: 'Valid event entry',
+      student: {
+        id: registration.Student.id,
+        name: registration.Student.fullName,
+        rollNumber: registration.Student.rollNumber,
+      },
+      event: {
+        id: registration.Event.id,
+        name: registration.Event.title,
+      },
+      registration: {
+        id: registration.id,
+        status: registration.status,
+      },
+    });
+  } catch (error) {
+    res.status(500).json({ message: 'Server error verifying entry', error: error.message });
+  }
+};
+
 module.exports = {
   loginAdmin,
   getAdminProfile,
@@ -321,4 +413,5 @@ module.exports = {
   changeAdminPassword,
   getDatabaseBackup,
   getStudentsList,
+  verifyEventEntry,
 };

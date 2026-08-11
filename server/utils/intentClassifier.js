@@ -19,6 +19,11 @@ const INTENTS = {
   WAITLIST: 'waitlist',
   CONTACT: 'contact',
   GENERAL_HELP: 'general_help',
+  CREATE_WORKSHOP: 'create_workshop',
+  INACTIVE_STUDENTS: 'inactive_students',
+  ATTENDANCE_SUMMARY: 'attendance_summary',
+  SEND_REMINDERS: 'send_reminders',
+  RECOMMENDATION: 'recommendation',
   UNKNOWN: 'unknown',
 };
 
@@ -28,6 +33,23 @@ const INTENTS = {
 const detectIntent = (text) => {
   if (!text) return INTENTS.UNKNOWN;
   const q = text.toLowerCase().trim();
+
+  // 0. Admin Shortcuts & Specific Action Intents
+  if (q.includes('create a workshop') || (q.includes('create') && q.includes('workshop'))) {
+    return INTENTS.CREATE_WORKSHOP || 'create_workshop';
+  }
+  if (q.includes('inactive student') || q.includes('inactive students')) {
+    return INTENTS.INACTIVE_STUDENTS || 'inactive_students';
+  }
+  if (q.includes('attendance summary') || (q.includes('attendance') && q.includes('rate'))) {
+    return INTENTS.ATTENDANCE_SUMMARY || 'attendance_summary';
+  }
+  if (q.includes('send reminder') || q.includes('draft reminder') || q.includes('reminder email')) {
+    return INTENTS.SEND_REMINDERS || 'send_reminders';
+  }
+  if (q.includes('what should i attend') || q.includes('recommendation') || q.includes('recommend')) {
+    return INTENTS.RECOMMENDATION || 'recommendation';
+  }
 
   // 1. Feedback
   if (
@@ -75,12 +97,14 @@ const detectIntent = (text) => {
   }
 
 
-  // 6. Leaderboard
+  // 6. Leaderboard / Badges / XP
   if (
     q.includes('leaderboard') ||
     q.includes('rank') ||
     q.includes('points') ||
     q.includes('badge') ||
+    q.includes('xp') ||
+    q.includes('achievement') ||
     q.includes('top participant') ||
     q.includes('score') ||
     q.includes('hall of fame')
@@ -88,11 +112,12 @@ const detectIntent = (text) => {
     return INTENTS.LEADERBOARD;
   }
 
-  // 7. Volunteers
+  // 7. Volunteers / Volunteer Tasks
   if (
     q.includes('volunteer') ||
     q.includes('volunteering') ||
     q.includes('task assignment') ||
+    q.includes('volunteer task') ||
     q.includes('volunteer hours')
   ) {
     return INTENTS.VOLUNTEERS;
@@ -116,7 +141,10 @@ const detectIntent = (text) => {
     q.includes('present') ||
     q.includes('check-in') ||
     q.includes('mark attendance') ||
-    q.includes('absent')
+    q.includes('absent') ||
+    q.includes('how many events did i attend') ||
+    q.includes('events did i attend') ||
+    q.includes('attended')
   ) {
     return INTENTS.ATTENDANCE;
   }
@@ -195,7 +223,8 @@ const detectIntent = (text) => {
     q.includes('workshop') ||
     q.includes('fest') ||
     q.includes('seminar') ||
-    q.includes('upcoming')
+    q.includes('upcoming') ||
+    q.includes('tomorrow')
   ) {
     return INTENTS.EVENTS;
   }
@@ -277,6 +306,21 @@ const getKnowledgeBaseResponse = (intent, currentPage = '', userContext = {}) =>
 
     case INTENTS.CONTACT:
       return "For queries, contact the Sri Vasavi Campus Event Committee at support@srivasaviengg.ac.in or visit the Student Affairs Office.";
+
+    case INTENTS.CREATE_WORKSHOP:
+      return "Instruct the assistant to draft a new workshop blueprint template or manage events on the Admin Dashboard.";
+
+    case INTENTS.INACTIVE_STUDENTS:
+      return "Query students with zero event registrations to compile an inactive student list.";
+
+    case INTENTS.ATTENDANCE_SUMMARY:
+      return "View check-in percentage rates, attendance totals, and completed event reports.";
+
+    case INTENTS.SEND_REMINDERS:
+      return "Draft and send event reminder emails to registered attendees for tomorrow's events.";
+
+    case INTENTS.RECOMMENDATION:
+      return "Get personalized event recommendations based on your department focus and academic background.";
 
     case INTENTS.GENERAL_HELP:
       return "Hello! I am your Campus Event AI Assistant. I can help with:\n1. 📅 Events & Calendar\n2. 🎟️ Registrations & QR Passes\n3. 🎓 Certificates & Verification\n4. ⭐ Event Feedback & Ratings\n5. ⏳ Waitlist\n6. 🏆 Leaderboards & Volunteers\n\nHow can I help you today?";

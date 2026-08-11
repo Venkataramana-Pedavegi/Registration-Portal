@@ -67,6 +67,9 @@ const QRCodeModal = ({ isOpen, onClose, registrationId }) => {
                 eventTitle={qrData.eventTitle}
                 studentName={qrData.studentName}
                 rollNumber={qrData.rollNumber}
+                eventDate={qrData.eventDate}
+                venue={qrData.venue}
+                status={qrData.status}
               />
             )
           )}

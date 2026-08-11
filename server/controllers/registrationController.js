@@ -119,6 +119,27 @@ const registerForEvent = async (req, res) => {
     const { broadcastRegistrationCreated } = require('../utils/socket');
     broadcastRegistrationCreated(fullRegistration);
 
+    // Notify Admins of the new registration
+    try {
+      const { Notification, Admin: AdminModel } = require('../models');
+      const adminsList = await AdminModel.findAll({ where: { isActive: true } });
+      const studentName = fullRegistration.Student?.fullName || 'Student';
+      const eventTitle = fullRegistration.Event?.title || 'Event';
+      const adminPromises = adminsList.map(adm => {
+        return Notification.create({
+          userId: adm.id,
+          userRole: 'Admin',
+          title: 'New Event Registration',
+          message: `${studentName} registered for ${eventTitle}.`,
+          type: 'Registration',
+          referenceId: eventId,
+        }).catch(err => console.error('Error creating admin registration notification:', err.message));
+      });
+      await Promise.all(adminPromises);
+    } catch (notifErr) {
+      console.error('Failed to notify admins of new registration:', notifErr.message);
+    }
+
     // Award event registration points (+10 XP)
     try {
       const { awardPoints } = require('../services/GamificationService');

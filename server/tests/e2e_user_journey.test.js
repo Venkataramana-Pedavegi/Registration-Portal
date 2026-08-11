@@ -133,14 +133,14 @@ describe('E2E User Journey Simulation & Production Release Audit', () => {
     expect(qrRes.status).toBe(200);
     expect(qrRes.body.qrCodeUrl).toMatch(/^data:image/);
 
-    // Admin scans QR code to mark attendance Present
+    // Admin marks attendance Present via API
     const scanRes = await request(app)
-      .post('/api/qrcode/scan')
+      .post('/api/attendance')
       .set('Authorization', `Bearer ${adminToken}`)
-      .send({ registrationId });
+      .send({ registrationId, attendanceStatus: 'Present' });
 
-    expect(scanRes.status).toBe(200);
-    expect(scanRes.body.attendance.attendanceStatus).toBe('Present');
+    expect(scanRes.status).toBe(201);
+    expect(scanRes.body.attendanceStatus).toBe('Present');
 
     // Verify PDF Certificate issued automatically
     const cert = await Certificate.findOne({ where: { registrationId } });

@@ -1,5 +1,7 @@
-const { Event, Registration, Certificate, Attendance, Student, Volunteer, VolunteerTask, Feedback, Leaderboard, AIConversation, AIRecommendation, AIInsight } = require('../models');
+const { Event, Registration, Certificate, Attendance, Student, Volunteer, VolunteerTask, Feedback, Leaderboard, AIConversation, AIRecommendation, AIInsight, Badge, StudentBadge } = require('../models');
 const { generateText } = require('../services/AIService');
+const { getLevelForPoints, LEVEL_THRESHOLDS } = require('../services/GamificationService');
+const { detectIntent, getKnowledgeBaseResponse, INTENTS } = require('../utils/intentClassifier');
 const { logAudit } = require('../middleware/auditLogger');
 const { Op } = require('sequelize');
 
@@ -10,76 +12,292 @@ const chatWithAI = async (req, res) => {
     const userId = req.user.id;
     const userRole = req.role || 'Student';
 
-    if (!message) {
+    if (!message || !String(message).trim()) {
       return res.status(400).json({ message: 'Prompt message is required' });
     }
 
     const currentSessionId = sessionId || `session_${userId}_${Date.now()}`;
+    const rawQuery = String(message).trim();
+    const query = rawQuery.toLowerCase();
+    const intent = detectIntent(rawQuery);
 
-    // Gather Live Database Context depending on queries keywords
-    let dbContext = '';
-    const query = message.toLowerCase();
+    let directAnswer = '';
+    const isAdmin = ['Admin', 'Super Admin', 'Event Coordinator', 'Faculty Coordinator', 'Coordinator', 'Volunteer Coordinator'].includes(userRole);
 
-    if (userRole === 'Student') {
-      if (query.includes('my registration') || query.includes('what am i registered for') || query.includes('what should i attend')) {
-        const regs = await Registration.findAll({
-          where: { studentId: userId, status: 'Registered' },
+    // 1. Check for Admin Action Shortcuts
+    if (intent === 'create_workshop' || query.includes('create a workshop') || (query.includes('create') && query.includes('workshop'))) {
+      if (!isAdmin) {
+        directAnswer = "This action requires Admin privileges.";
+      } else {
+        directAnswer = `Drafted Workshop Blueprint:\nTitle: Technical Workshop\nCategory: Technical\nScheduled: Next Friday at 10:00 AM\nVenue: Main Hall\nStatus: Template ready. You can finalize and publish this from the Admin Event Management page.`;
+      }
+    } else if (intent === 'inactive_students' || query.includes('inactive student') || query.includes('inactive students')) {
+      if (!isAdmin) {
+        directAnswer = "This action requires Admin privileges.";
+      } else {
+        const registeredStudentIds = (await Registration.findAll({ attributes: ['studentId'], raw: true })).map(r => r.studentId).filter(Boolean);
+        const inactiveStudents = await Student.findAll({
+          where: {
+            id: { [Op.notIn]: registeredStudentIds.length > 0 ? registeredStudentIds : [0] },
+            isActive: true
+          },
+          attributes: ['id', 'fullName', 'rollNumber', 'email', 'department'],
+          limit: 10
+        });
+
+        if (inactiveStudents.length > 0) {
+          const studentList = inactiveStudents.map((s, i) => `${i + 1}. Student Name: ${s.fullName}\n   Roll Number: ${s.rollNumber}\n   Department: ${s.department}`).join('\n\n');
+          directAnswer = `Inactive Students:\n\n${studentList}`;
+        } else {
+          directAnswer = `All active students have registered for at least one event! Zero inactive students found.`;
+        }
+      }
+    } else if (intent === 'attendance_summary' || query.includes('attendance summary')) {
+      if (!isAdmin) {
+        directAnswer = "This action requires Admin privileges.";
+      } else {
+        const totalAttendance = await Attendance.count();
+        const presentCount = await Attendance.count({ where: { attendanceStatus: 'Present' } });
+        const absentCount = await Attendance.count({ where: { attendanceStatus: 'Absent' } });
+        const rate = totalAttendance > 0 ? Math.round((presentCount / totalAttendance) * 100) : 0;
+        
+        const completedEvents = await Event.findAll({
+          where: { isTemplate: false, status: 'Completed' },
+          limit: 5
+        });
+
+        let eventBreakdown = '';
+        if (completedEvents.length > 0) {
+          const lines = [];
+          for (const ev of completedEvents) {
+            const evPresent = await Attendance.count({ where: { eventId: ev.id, attendanceStatus: 'Present' } });
+            const evRegs = await Registration.count({ where: { eventId: ev.id, status: 'Registered' } });
+            lines.push(`- ${ev.title}: ${evPresent} Present / ${evRegs} Registered`);
+          }
+          eventBreakdown = `\n\nRecent Completed Events:\n${lines.join('\n')}`;
+        }
+
+        directAnswer = `Attendance Summary Report:\nTotal Attendance Records Marked: ${totalAttendance}\nPresent Count: ${presentCount} (${rate}% check-in rate)\nAbsent/No-shows: ${absentCount}${eventBreakdown}`;
+      }
+    } else if (intent === 'send_reminders' || query.includes('send reminder') || query.includes('draft reminder')) {
+      if (!isAdmin) {
+        directAnswer = "This action requires Admin privileges.";
+      } else {
+        const tomorrow = new Date();
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        const tomorrowStart = new Date(new Date(tomorrow).setHours(0,0,0,0));
+        const tomorrowEnd = new Date(new Date(tomorrow).setHours(23,59,59,999));
+
+        const upcomingTomorrow = await Event.findAll({
+          where: { isTemplate: false, eventDate: { [Op.between]: [tomorrowStart, tomorrowEnd] } }
+        });
+
+        const eventTitles = upcomingTomorrow.map(e => e.title).join(', ') || "Tomorrow's Campus Event";
+        directAnswer = `Draft Reminder Email for Tomorrow's Events:\n\nSubject: Reminder: Tomorrow's Campus Event - ${eventTitles}\n\nDear Student,\n\nThis is a friendly reminder that '${eventTitles}' is scheduled for tomorrow. Please ensure you arrive on time and present your QR Code entry pass at the venue entrance.\n\nRegards,\nSri Vasavi Events Team`;
+      }
+    }
+    // 2. Student & General Data-Driven Queries
+    else if (intent === INTENTS.LEADERBOARD || query.includes('badge') || query.includes('achievement') || query.includes('xp') || query.includes('point')) {
+      const lb = await Leaderboard.findOne({ where: { studentId: userId } });
+      const currentXP = lb?.points || 0;
+      const currentLevel = getLevelForPoints(currentXP);
+
+      const currentLvlIndex = LEVEL_THRESHOLDS.findIndex(l => l.name === currentLevel.name);
+      const nextLevelObj = LEVEL_THRESHOLDS[currentLvlIndex + 1] || null;
+
+      let levelText = '';
+      if (nextLevelObj) {
+        const remainingXP = nextLevelObj.minPoints - currentXP;
+        levelText = `Your next available achievement level is ${nextLevelObj.name}.\nYou need ${remainingXP} more XP to reach the ${nextLevelObj.name} threshold.`;
+      } else {
+        levelText = `You have reached the maximum achievement level (${currentLevel.name})!`;
+      }
+
+      // Check badge progress
+      const eventsAttendedCount = await Attendance.count({ where: { studentId: userId, attendanceStatus: 'Present' } });
+      const certCount = await Certificate.count({ where: { studentId: userId } });
+      const volunteerTasksCount = await VolunteerTask.count({
+        where: { status: 'completed' },
+        include: [{ model: Volunteer, where: { studentId: userId } }]
+      });
+
+      const earnedBadges = await StudentBadge.findAll({
+        where: { studentId: userId },
+        include: [{ model: Badge }]
+      });
+      const earnedBadgeNames = earnedBadges.map(b => b.Badge?.name).filter(Boolean);
+
+      // Check next unlockable badge target
+      const allBadges = await Badge.findAll();
+      const earnedBadgeIds = new Set(earnedBadges.map(eb => eb.badgeId));
+      const unearned = allBadges.filter(b => !earnedBadgeIds.has(b.id));
+
+      let badgeTargets = [];
+      for (const badge of unearned.slice(0, 3)) {
+        if (badge.ruleType === 'certificates') {
+          badgeTargets.push(`- ${badge.name}: Earn ${badge.ruleValue} certificates (Current: ${certCount}/${badge.ruleValue})`);
+        } else if (badge.ruleType === 'events_attended') {
+          badgeTargets.push(`- ${badge.name}: Attend ${badge.ruleValue} events (Current: ${eventsAttendedCount}/${badge.ruleValue})`);
+        } else if (badge.ruleType === 'volunteer_tasks') {
+          badgeTargets.push(`- ${badge.name}: Complete ${badge.ruleValue} volunteer tasks (Current: ${volunteerTasksCount}/${badge.ruleValue})`);
+        } else if (badge.ruleType === 'points') {
+          badgeTargets.push(`- ${badge.name}: Accumulate ${badge.ruleValue} XP (Current: ${currentXP}/${badge.ruleValue})`);
+        } else {
+          badgeTargets.push(`- ${badge.name}: ${badge.description}`);
+        }
+      }
+
+      let targetsText = badgeTargets.length > 0 ? `\n\nNext available badges you can unlock:\n${badgeTargets.join('\n')}` : '';
+      let earnedText = earnedBadgeNames.length > 0 ? `\nUnlocked Badges: ${earnedBadgeNames.join(', ')}` : '';
+
+      directAnswer = `You currently have ${currentXP} XP and the ${currentLevel.name} badge.\n${levelText}${earnedText}${targetsText}`;
+    } else if (intent === INTENTS.CERTIFICATES || query.includes('certificate') || query.includes('cert')) {
+      const certs = await Certificate.findAll({
+        where: { studentId: userId },
+        include: [{ model: Event, attributes: ['title', 'eventDate'] }]
+      });
+
+      if (certs.length === 0) {
+        directAnswer = `I couldn't find any matching records in your account. You haven't earned any certificates yet. Participate in campus events to earn certificates.`;
+      } else {
+        const certList = certs.map((c, i) => `${i + 1}. ${c.Event?.title || 'Campus Event'} (Issued: ${c.issueDate ? new Date(c.issueDate).toLocaleDateString() : 'N/A'}, ID: ${c.certificateId})`).join('\n');
+        directAnswer = `You currently have ${certs.length} certificate(s) registered in your name:\n\n${certList}\n\nYou can download your PDF certificates on the Certificates page.`;
+      }
+    } else if (query.includes('events tomorrow') || query.includes('tomorrow')) {
+      const tomorrow = new Date();
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      const tomorrowStart = new Date(new Date(tomorrow).setHours(0,0,0,0));
+      const tomorrowEnd = new Date(new Date(tomorrow).setHours(23,59,59,999));
+
+      const eventsTomorrow = await Event.findAll({
+        where: { isTemplate: false, eventDate: { [Op.between]: [tomorrowStart, tomorrowEnd] } },
+        order: [['startTime', 'ASC']]
+      });
+
+      if (eventsTomorrow.length > 0) {
+        const list = eventsTomorrow.map((e, i) => `${i + 1}. ${e.title} - Venue: ${e.venue}, Time: ${e.startTime} (${e.category})`).join('\n');
+        directAnswer = `Here are the campus events scheduled for tomorrow:\n\n${list}`;
+      } else {
+        const upcoming = await Event.findAll({
+          where: { isTemplate: false, status: 'Upcoming', eventDate: { [Op.gte]: new Date() } },
+          order: [['eventDate', 'ASC']],
+          limit: 3
+        });
+        if (upcoming.length > 0) {
+          const list = upcoming.map((e, i) => `${i + 1}. ${e.title} on ${new Date(e.eventDate).toLocaleDateString()} at ${e.venue}`).join('\n');
+          directAnswer = `There are no campus events scheduled for tomorrow.\n\nHere are the next upcoming events:\n${list}`;
+        } else {
+          directAnswer = `There are no events scheduled for tomorrow or in the upcoming days.`;
+        }
+      }
+    } else if (intent === INTENTS.ATTENDANCE || query.includes('attended') || query.includes('attendance')) {
+      if (isAdmin && (query.includes('summary') || query.includes('all') || query.includes('rate'))) {
+        const totalAttendance = await Attendance.count();
+        const presentCount = await Attendance.count({ where: { attendanceStatus: 'Present' } });
+        const rate = totalAttendance > 0 ? Math.round((presentCount / totalAttendance) * 100) : 0;
+        directAnswer = `Total attendance records marked: ${totalAttendance}, Present count: ${presentCount}, Attendance rate: ${rate}%.`;
+      } else {
+        const attendances = await Attendance.findAll({
+          where: { studentId: userId, attendanceStatus: 'Present' },
           include: [{ model: Event, attributes: ['title', 'eventDate', 'venue'] }]
         });
-        dbContext = `User's active registrations: ${JSON.stringify(regs.map(r => ({ title: r.Event?.title, date: r.Event?.eventDate, venue: r.Event?.venue }))) || 'None'}`;
-      } else if (query.includes('certificate')) {
-        const certs = await Certificate.findAll({
-          where: { studentId: userId },
-          include: [{ model: Event, attributes: ['title'] }]
-        });
-        dbContext = `User's earned certificates: ${JSON.stringify(certs.map(c => ({ code: c.certificateId, event: c.Event?.title, date: c.issueDate }))) || 'None'}`;
-      } else if (query.includes('volunteer')) {
-        const volRecord = await Volunteer.findAll({
-          where: { studentId: userId },
-          include: [{ model: Event, attributes: ['title'] }]
-        });
-        dbContext = `User's volunteering positions: ${JSON.stringify(volRecord.map(v => ({ event: v.Event?.title, status: v.status, hours: v.hours }))) || 'None'}`;
-      } else if (query.includes('events tomorrow') || query.includes('upcoming events') || query.includes('available events')) {
-        const upcoming = await Event.findAll({
-          where: { status: 'Upcoming', isTemplate: false },
-          attributes: ['id', 'title', 'category', 'eventDate', 'venue'],
-          limit: 5
-        });
-        dbContext = `Upcoming events: ${JSON.stringify(upcoming)}`;
-      } else if (query.includes('badges') || query.includes('achievements') || query.includes('points')) {
-        const lb = await Leaderboard.findOne({ where: { studentId: userId } });
-        dbContext = `User's scores: Points: ${lb?.points || 0}, Attended: ${lb?.eventsAttended || 0}, Volunteer Hours: ${lb?.volunteerHours || 0}`;
+
+        if (attendances.length === 0) {
+          directAnswer = `I couldn't find any matching records in your account. You have not attended any events yet.`;
+        } else {
+          const list = attendances.map((a, i) => `${i + 1}. ${a.Event?.title || 'Event'} (Date: ${a.Event?.eventDate ? new Date(a.Event.eventDate).toLocaleDateString() : 'N/A'}, Venue: ${a.Event?.venue || 'Campus'})`).join('\n');
+          directAnswer = `You have attended ${attendances.length} event(s):\n\n${list}\n\nYour attendance is verified manually by event coordinators scanning your QR Code pass.`;
+        }
       }
-    } else {
-      // Admin context queries
-      if (query.includes('registration') || query.includes('today')) {
-        const totalReg = await Registration.count();
-        dbContext = `Total registrations count in system: ${totalReg}`;
-      } else if (query.includes('attendance') || query.includes('no-show')) {
-        const marked = await Attendance.count();
-        const present = await Attendance.count({ where: { attendanceStatus: 'Present' } });
-        dbContext = `Total attendance marked: ${marked}, Present count: ${present}, Attendance rate: ${marked > 0 ? Math.round((present / marked) * 100) : 0}%`;
-      } else if (query.includes('popular')) {
-        const events = await Event.findAll({
-          attributes: ['title', 'capacity', 'availableSeats'],
-          where: { isTemplate: false },
-          limit: 5
-        });
-        dbContext = `Active events list: ${JSON.stringify(events)}`;
-      } else if (query.includes('volunteer')) {
-        const count = await Volunteer.count({ where: { status: 'approved' } });
-        dbContext = `Total approved volunteers: ${count}`;
+    } else if (intent === INTENTS.VOLUNTEERS || query.includes('volunteer')) {
+      const volRecords = await Volunteer.findAll({
+        where: { studentId: userId },
+        include: [{ model: Event, attributes: ['title', 'eventDate'] }]
+      });
+
+      const tasks = await VolunteerTask.findAll({
+        include: [
+          { model: Volunteer, where: { studentId: userId } },
+          { model: Event, attributes: ['title'] }
+        ]
+      });
+
+      if (volRecords.length === 0 && tasks.length === 0) {
+        directAnswer = `I couldn't find any matching records in your account. You have not applied as a volunteer or have no assigned tasks yet. You can apply for volunteering on the Volunteer Portal page.`;
+      } else {
+        let text = `Your Volunteer Summary:\n`;
+        if (volRecords.length > 0) {
+          text += `Volunteering Registrations:\n` + volRecords.map(v => `- Event: ${v.Event?.title || 'Campus Event'} | Status: ${v.status} | Hours: ${v.hours || 0}`).join('\n');
+        }
+        if (tasks.length > 0) {
+          text += `\n\nAssigned Tasks:\n` + tasks.map(t => `- Task: ${t.title} | Status: ${t.status} | Event: ${t.Event?.title || 'N/A'}`).join('\n');
+        }
+        directAnswer = text;
       }
+    } else if (intent === 'recommendation' || query.includes('what should i attend') || query.includes('recommend')) {
+      const student = await Student.findByPk(userId);
+      const userDept = student?.department || 'General';
+
+      const upcoming = await Event.findAll({
+        where: { status: 'Upcoming', isTemplate: false },
+        order: [['eventDate', 'ASC']],
+        limit: 5
+      });
+
+      if (upcoming.length === 0) {
+        directAnswer = `There are currently no new upcoming events available for registration.`;
+      } else {
+        const list = upcoming.map((e, i) => `${i + 1}. ${e.title} (${e.category}) - ${new Date(e.eventDate).toLocaleDateString()} at ${e.venue}\n   Reason: Recommended for ${userDept} students (${e.availableSeats} seats remaining)`).join('\n');
+        directAnswer = `Based on your ${userDept} background, here are recommended events for you:\n\n${list}`;
+      }
+    } else if (intent === INTENTS.EVENTS || query.includes('event')) {
+      const upcoming = await Event.findAll({
+        where: { status: 'Upcoming', isTemplate: false },
+        order: [['eventDate', 'ASC']],
+        limit: 5
+      });
+
+      if (upcoming.length === 0) {
+        directAnswer = `There are currently no upcoming events listed in the portal.`;
+      } else {
+        const list = upcoming.map((e, i) => `${i + 1}. ${e.title} (${e.category}) - ${new Date(e.eventDate).toLocaleDateString()} at ${e.venue}`).join('\n');
+        directAnswer = `Here are upcoming campus events:\n\n${list}`;
+      }
+    } else if (intent === INTENTS.REGISTRATION || query.includes('my registration') || query.includes('registered')) {
+      const regs = await Registration.findAll({
+        where: { studentId: userId, status: 'Registered' },
+        include: [{ model: Event, attributes: ['title', 'eventDate', 'venue'] }]
+      });
+
+      if (regs.length === 0) {
+        directAnswer = `I couldn't find any matching records in your account. You are not currently registered for any upcoming events.`;
+      } else {
+        const list = regs.map((r, i) => `${i + 1}. ${r.Event?.title} - ${new Date(r.Event?.eventDate).toLocaleDateString()} at ${r.Event?.venue}`).join('\n');
+        directAnswer = `You have ${regs.length} active registration(s):\n\n${list}`;
+      }
+    }
+
+    // 3. Knowledge base fallback
+    if (!directAnswer) {
+      const kbAnswer = getKnowledgeBaseResponse(intent, currentPage);
+      if (kbAnswer) {
+        directAnswer = kbAnswer;
+      }
+    }
+
+    // 4. Default unsupported fallback
+    if (!directAnswer) {
+      directAnswer = "I can help with events, registrations, certificates, achievements, badges, attendance, volunteering, and other Sri Vasavi Events features. Try asking about one of these.";
     }
 
     const systemInstruction = `
       You are the Sri Vasavi College Events Assistant. User Role: ${userRole}.
       Current page: ${currentPage || 'General'}.
-      Live database context to use: ${dbContext || 'None available'}.
+      Answer context: ${directAnswer}.
       Provide a highly relevant, concise, and helpful answer.
     `;
 
-    const reply = await generateText(message, systemInstruction);
+    const reply = await generateText(message, systemInstruction, directAnswer);
 
     // Save history
     await AIConversation.create({
@@ -92,6 +310,7 @@ const chatWithAI = async (req, res) => {
 
     res.json({ reply, sessionId: currentSessionId });
   } catch (error) {
+    console.error('❌ [AI COPILOT CONTROLLER ERROR]:', error);
     res.status(500).json({ message: 'Error in AI Chatbot assistant', error: error.message });
   }
 };
@@ -397,79 +616,235 @@ const predictEventAttendance = async (req, res) => {
 };
 
 // 8. AI Smart Search (Module 8)
+// 8. AI Smart Search (Module 8)
 const executeSmartSearch = async (req, res) => {
   try {
     const { query } = req.query;
-    if (!query) {
+    if (!query || !String(query).trim()) {
       return res.status(400).json({ message: 'Search query is required' });
     }
 
-    const prompt = `
-      Translate the natural language query: "${query}" into structured database parameters.
-      Identify the target type ('events', 'students', 'volunteers') and match values.
-      
-      Return ONLY a JSON formatted structure:
-      {
-        "type": "events" | "students" | "volunteers",
-        "searchVal": "matched_text_value",
-        "category": "category_filter_if_any"
-      }
-    `;
+    const rawQuery = String(query).trim();
+    const lowerQuery = rawQuery.toLowerCase();
 
-    const responseText = await generateText(prompt, 'Translate intent and output strict JSON objects.');
-    let parsedQuery = {};
-    try {
-      const cleanJson = responseText.replace(/```json|```/g, '').trim();
-      parsedQuery = JSON.parse(cleanJson);
-    } catch (e) {
-      parsedQuery = { type: 'events', searchVal: query };
+    // 1. Determine Target Entity Type ('students', 'volunteers', or 'events')
+    let targetType = 'events';
+    if (/\b(student|students|roll|rollnumber)\b/i.test(lowerQuery)) {
+      targetType = 'students';
+    } else if (/\b(volunteer|volunteers|helper|helpers)\b/i.test(lowerQuery)) {
+      targetType = 'volunteers';
     }
+
+    // 2. Extract Status Filter if present
+    let statusFilter = null;
+    let volStatusFilter = null;
+    if (/\bupcoming\b/i.test(lowerQuery)) statusFilter = 'Upcoming';
+    else if (/\bongoing\b/i.test(lowerQuery)) statusFilter = 'Ongoing';
+    else if (/\bcompleted\b/i.test(lowerQuery)) statusFilter = 'Completed';
+    else if (/\bcancelled\b/i.test(lowerQuery)) statusFilter = 'Cancelled';
+
+    if (/\bapproved\b/i.test(lowerQuery)) volStatusFilter = 'approved';
+    else if (/\bpending\b/i.test(lowerQuery)) volStatusFilter = 'pending';
+    else if (/\brejected\b/i.test(lowerQuery)) volStatusFilter = 'rejected';
+
+    // 3. Extract Keywords by cleaning stop words and generic intent words
+    const stopWords = new Set([
+      'show', 'list', 'find', 'get', 'search', 'view', 'display', 'me',
+      'the', 'a', 'an', 'for', 'in', 'at', 'of', 'on', 'to', 'with', 'all',
+      'event', 'events', 'student', 'students', 'volunteer', 'volunteers',
+      'upcoming', 'ongoing', 'completed', 'cancelled', 'approved', 'pending', 'rejected'
+    ]);
+
+    // Tokenize query words
+    const tokens = lowerQuery
+      .replace(/[^a-z0-9\s]/gi, ' ')
+      .split(/\s+/)
+      .filter(w => w.length > 0 && !stopWords.has(w));
+
+    // Map common words / plurals (e.g., workshops -> workshop)
+    const keywords = tokens.map(t => {
+      if (t.endsWith('s') && t.length > 3 && !t.endsWith('ss')) {
+        return t.slice(0, -1);
+      }
+      return t;
+    });
 
     let results = [];
 
-    if (parsedQuery.type === 'students') {
-      results = await Student.findAll({
-        where: {
-          [Op.or]: [
-            { fullName: { [Op.like]: `%${parsedQuery.searchVal}%` } },
-            { rollNumber: { [Op.like]: `%${parsedQuery.searchVal}%` } }
-          ]
-        },
-        limit: 10
-      });
-    } else if (parsedQuery.type === 'volunteers') {
-      results = await Volunteer.findAll({
-        include: [
-          {
-            model: Student,
-            where: {
-              fullName: { [Op.like]: `%${parsedQuery.searchVal}%` }
-            }
-          },
-          { model: Event }
-        ],
-        limit: 10
-      });
-    } else {
-      // Default match events
-      const whereClause = {
+    if (targetType === 'students') {
+      const searchTerms = keywords.length > 0 ? keywords : [rawQuery.toLowerCase()];
+      const studentWhere = searchTerms.map(term => ({
         [Op.or]: [
-          { title: { [Op.like]: `%${parsedQuery.searchVal}%` } },
-          { venue: { [Op.like]: `%${parsedQuery.searchVal}%` } }
-        ],
-        isTemplate: false
-      };
-      if (parsedQuery.category) {
-        whereClause.category = parsedQuery.category;
-      }
-      results = await Event.findAll({
-        where: whereClause,
-        limit: 10
+          { fullName: { [Op.like]: `%${term}%` } },
+          { rollNumber: { [Op.like]: `%${term}%` } },
+          { email: { [Op.like]: `%${term}%` } },
+          { department: { [Op.like]: `%${term}%` } },
+          { year: { [Op.like]: `%${term}%` } },
+          { section: { [Op.like]: `%${term}%` } },
+        ]
+      }));
+
+      results = await Student.findAll({
+        where: studentWhere.length > 0 ? { [Op.and]: studentWhere } : {},
+        limit: 20,
       });
+
+      if (results.length === 0 && searchTerms.length > 0) {
+        const fallbackWhere = searchTerms.map(term => ({
+          [Op.or]: [
+            { fullName: { [Op.like]: `%${term}%` } },
+            { rollNumber: { [Op.like]: `%${term}%` } },
+            { department: { [Op.like]: `%${term}%` } },
+          ]
+        }));
+        results = await Student.findAll({
+          where: { [Op.or]: fallbackWhere },
+          limit: 20,
+        });
+      }
+    } else if (targetType === 'volunteers') {
+      const volWhere = {};
+      if (volStatusFilter) {
+        volWhere.status = volStatusFilter;
+      }
+
+      if (keywords.length === 0) {
+        // Broad query like "list volunteers", "show volunteers", "volunteers", "approved volunteers"
+        results = await Volunteer.findAll({
+          where: volWhere,
+          include: [
+            { model: Student, attributes: ['id', 'fullName', 'email', 'rollNumber', 'department'] },
+            { model: Event, attributes: ['id', 'title', 'eventDate', 'venue'] },
+          ],
+          order: [['createdAt', 'DESC']],
+          limit: 30,
+        });
+      } else {
+        const searchTerms = keywords;
+        const orConditions = searchTerms.map(term => ({
+          [Op.or]: [
+            { department: { [Op.like]: `%${term}%` } },
+            { skills: { [Op.like]: `%${term}%` } },
+            { '$Student.fullName$': { [Op.like]: `%${term}%` } },
+            { '$Student.rollNumber$': { [Op.like]: `%${term}%` } },
+            { '$Student.department$': { [Op.like]: `%${term}%` } },
+            { '$Event.title$': { [Op.like]: `%${term}%` } },
+          ]
+        }));
+
+        volWhere[Op.and] = orConditions;
+
+        results = await Volunteer.findAll({
+          where: volWhere,
+          include: [
+            { model: Student, attributes: ['id', 'fullName', 'email', 'rollNumber', 'department'] },
+            { model: Event, attributes: ['id', 'title', 'eventDate', 'venue'] },
+          ],
+          order: [['createdAt', 'DESC']],
+          limit: 30,
+        });
+
+        // Fallback to OR if AND matching returns 0 results
+        if (results.length === 0 && searchTerms.length > 1) {
+          const fallbackWhere = { ...volWhere };
+          fallbackWhere[Op.and] = undefined;
+          fallbackWhere[Op.or] = searchTerms.map(term => ({
+            [Op.or]: [
+              { department: { [Op.like]: `%${term}%` } },
+              { skills: { [Op.like]: `%${term}%` } },
+              { '$Student.fullName$': { [Op.like]: `%${term}%` } },
+              { '$Student.rollNumber$': { [Op.like]: `%${term}%` } },
+              { '$Student.department$': { [Op.like]: `%${term}%` } },
+              { '$Event.title$': { [Op.like]: `%${term}%` } },
+            ]
+          }));
+
+          results = await Volunteer.findAll({
+            where: fallbackWhere,
+            include: [
+              { model: Student, attributes: ['id', 'fullName', 'email', 'rollNumber', 'department'] },
+              { model: Event, attributes: ['id', 'title', 'eventDate', 'venue'] },
+            ],
+            order: [['createdAt', 'DESC']],
+            limit: 30,
+          });
+        }
+      }
+    } else {
+      // Target Events
+      const searchTerms = keywords.length > 0 ? keywords : [rawQuery.toLowerCase()];
+
+      const andConditions = searchTerms.map(term => ({
+        [Op.or]: [
+          { title: { [Op.like]: `%${term}%` } },
+          { category: { [Op.like]: `%${term}%` } },
+          { description: { [Op.like]: `%${term}%` } },
+          { venue: { [Op.like]: `%${term}%` } },
+          { organizer: { [Op.like]: `%${term}%` } },
+          { department: { [Op.like]: `%${term}%` } },
+        ]
+      }));
+
+      const baseWhere = {
+        isTemplate: false,
+      };
+      if (statusFilter) {
+        baseWhere.status = statusFilter;
+      }
+
+      if (andConditions.length > 0) {
+        results = await Event.findAll({
+          where: {
+            ...baseWhere,
+            [Op.and]: andConditions,
+          },
+          order: [['eventDate', 'ASC']],
+          limit: 20,
+        });
+      }
+
+      // Fallback: If AND matching returned 0 results, try OR matching across keywords
+      if (results.length === 0 && searchTerms.length > 0) {
+        const orConditions = searchTerms.map(term => ({
+          [Op.or]: [
+            { title: { [Op.like]: `%${term}%` } },
+            { category: { [Op.like]: `%${term}%` } },
+            { description: { [Op.like]: `%${term}%` } },
+            { venue: { [Op.like]: `%${term}%` } },
+            { organizer: { [Op.like]: `%${term}%` } },
+            { department: { [Op.like]: `%${term}%` } },
+          ]
+        }));
+
+        results = await Event.findAll({
+          where: {
+            ...baseWhere,
+            [Op.or]: orConditions,
+          },
+          order: [['eventDate', 'ASC']],
+          limit: 20,
+        });
+      }
+
+      // Final fallback: Raw query match
+      if (results.length === 0) {
+        results = await Event.findAll({
+          where: {
+            ...baseWhere,
+            [Op.or]: [
+              { title: { [Op.like]: `%${rawQuery}%` } },
+              { category: { [Op.like]: `%${rawQuery}%` } },
+              { description: { [Op.like]: `%${rawQuery}%` } },
+            ]
+          },
+          order: [['eventDate', 'ASC']],
+          limit: 20,
+        });
+      }
     }
 
     res.json({
-      type: parsedQuery.type || 'events',
+      type: targetType,
       results
     });
   } catch (error) {

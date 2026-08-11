@@ -81,6 +81,48 @@ const createEvent = async (req, res) => {
     const { logAudit } = require('../middleware/auditLogger');
     await logAudit({ req, userId: createdBy, userRole: req.role || 'Admin', action: 'EVENT_CREATION', details: `Event "${newEvent.title}" created (ID: ${newEvent.id})` });
 
+    // Create notifications for all active students (non-blocking, handled safely)
+    try {
+      const { Student, Notification } = require('../models');
+      const activeStudents = await Student.findAll({
+        where: { isActive: true },
+        attributes: ['id']
+      });
+
+      const notificationPromises = activeStudents.map(student => {
+        return Notification.create({
+          userId: student.id,
+          userRole: 'Student',
+          title: 'New Event Added',
+          message: `A new event "${newEvent.title}" has been added. Check the Events page for details.`,
+          type: 'Event',
+          referenceId: newEvent.id
+        }).catch(err => console.error(`Failed to notify student ID ${student.id}:`, err.message));
+      });
+      await Promise.all(notificationPromises);
+    } catch (notifError) {
+      console.error('Error broadcasting event creation notifications:', notifError.message);
+    }
+
+    // Create notifications for all active admins
+    try {
+      const { Notification, Admin: AdminModel } = require('../models');
+      const adminsList = await AdminModel.findAll({ where: { isActive: true } });
+      const adminPromises = adminsList.map(adm => {
+        return Notification.create({
+          userId: adm.id,
+          userRole: 'Admin',
+          title: 'Event Created',
+          message: `Event "${newEvent.title}" was created successfully.`,
+          type: 'Event',
+          referenceId: newEvent.id,
+        }).catch(err => console.error('Error creating admin event confirmation notification:', err.message));
+      });
+      await Promise.all(adminPromises);
+    } catch (notifErr) {
+      console.error('Failed to notify admins of event creation:', notifErr.message);
+    }
+
     res.status(201).json(formatEvent(fullEvent));
   } catch (error) {
     res.status(500).json({ message: 'Server error creating event', error: error.message });
@@ -303,6 +345,28 @@ const updateEvent = async (req, res) => {
     const { broadcastEventUpdated } = require('../utils/socket');
     broadcastEventUpdated(fullEvent);
 
+    // Notify Admins of the update/cancellation
+    try {
+      const { Notification, Admin: AdminModel } = require('../models');
+      const adminsList = await AdminModel.findAll({ where: { isActive: true } });
+      const isCancelled = req.body.status === 'Cancelled' || event.status === 'Cancelled';
+      const adminPromises = adminsList.map(adm => {
+        return Notification.create({
+          userId: adm.id,
+          userRole: 'Admin',
+          title: isCancelled ? 'Event Cancelled' : 'Event Updated',
+          message: isCancelled
+            ? `Event "${event.title}" has been cancelled.`
+            : `Event "${event.title}" details were updated.`,
+          type: 'Event',
+          referenceId: event.id,
+        }).catch(err => console.error('Error creating admin event change notification:', err.message));
+      });
+      await Promise.all(adminPromises);
+    } catch (notifErr) {
+      console.error('Failed to notify admins of event change:', notifErr.message);
+    }
+
     res.json(formatEvent(fullEvent));
   } catch (error) {
     res.status(500).json({ message: 'Server error updating event', error: error.message });
@@ -354,6 +418,25 @@ const deleteEvent = async (req, res) => {
 
     const { logAudit } = require('../middleware/auditLogger');
     await logAudit({ req, userId: req.user.id, userRole: req.role || 'Admin', action: 'EVENT_DELETION', details: `Event "${event.title}" deleted (ID: ${id})` });
+
+    // Notify Admins of event cancellation
+    try {
+      const { Notification, Admin: AdminModel } = require('../models');
+      const adminsList = await AdminModel.findAll({ where: { isActive: true } });
+      const adminPromises = adminsList.map(adm => {
+        return Notification.create({
+          userId: adm.id,
+          userRole: 'Admin',
+          title: 'Event Cancelled',
+          message: `Event "${event.title}" has been cancelled.`,
+          type: 'Event',
+          referenceId: event.id,
+        }).catch(err => console.error('Error creating admin event deletion notification:', err.message));
+      });
+      await Promise.all(adminPromises);
+    } catch (notifErr) {
+      console.error('Failed to notify admins of event deletion:', notifErr.message);
+    }
 
     await event.destroy();
 

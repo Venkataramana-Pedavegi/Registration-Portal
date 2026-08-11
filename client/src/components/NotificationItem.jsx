@@ -1,8 +1,41 @@
-import React from 'react';
+import React, { useContext } from 'react';
+import { Link } from 'react-router-dom';
 import { Trash2, CheckCircle2, Clock, Calendar, ShieldCheck, Award, MessageSquare } from 'lucide-react';
+import { AuthContext } from '../context/AuthContext';
 
 const NotificationItem = ({ item, onRead, onDelete }) => {
   const isRead = item.isRead;
+  const { role } = useContext(AuthContext);
+
+  const getDestinationPath = () => {
+    const isAdmin = ['Admin', 'Super Admin', 'Event Coordinator', 'Faculty Coordinator'].includes(role);
+    if (isAdmin) {
+      switch (item.title) {
+        case 'New Event Registration':
+          return item.referenceId ? `/events/${item.referenceId}/participants` : '/admin-dashboard';
+        case 'New Volunteer Application':
+          return '/volunteers';
+        case 'New Event Feedback':
+          return '/analytics-dashboard';
+        case 'Event Created':
+        case 'Event Updated':
+          return item.referenceId ? `/events/${item.referenceId}` : '/admin-dashboard';
+        case 'Event Cancelled':
+          return '/admin-dashboard';
+        case 'Certificates Generated':
+          return '/attendance';
+        case 'Event Entry Verified':
+          return '/admin/entry-verification';
+        default:
+          return item.referenceId ? `/events/${item.referenceId}` : '/admin-dashboard';
+      }
+    } else {
+      // Student routing
+      return item.referenceId ? `/events/${item.referenceId}` : '/student-dashboard';
+    }
+  };
+
+  const destination = getDestinationPath();
 
   const getTypeIcon = () => {
     switch (item.type) {
@@ -49,7 +82,11 @@ const NotificationItem = ({ item, onRead, onDelete }) => {
       </div>
 
       {/* Main Text Content */}
-      <div className="flex-grow space-y-1">
+      <Link
+        to={destination}
+        onClick={() => !isRead && onRead(item.id || item._id)}
+        className="flex-grow space-y-1 block hover:opacity-80 cursor-pointer"
+      >
         <div className="flex items-center justify-between gap-2">
           <span className="text-xs font-bold text-gray-900 leading-snug">{item.title}</span>
           <span className="text-[10px] text-gray-400 font-medium flex items-center gap-1 shrink-0">
@@ -58,7 +95,7 @@ const NotificationItem = ({ item, onRead, onDelete }) => {
           </span>
         </div>
         <p className="text-[11px] text-gray-550 leading-relaxed font-medium">{item.message}</p>
-      </div>
+      </Link>
 
       {/* Actions Layer */}
       <div className="flex items-center gap-1.5 opacity-80 group-hover:opacity-100 transition-opacity pl-2">

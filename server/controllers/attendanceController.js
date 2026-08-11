@@ -22,6 +22,17 @@ const markAttendance = async (req, res) => {
 
     const status = attendanceStatus || 'Present';
 
+    // Prevent duplicate attendance Present records
+    if (status === 'Present') {
+      const existingAttendance = await Attendance.findOne({ where: { registrationId } });
+      if (existingAttendance && existingAttendance.attendanceStatus === 'Present') {
+        return res.status(400).json({
+          message: 'Attendance already marked Present for this student and event.',
+          alreadyScanned: true
+        });
+      }
+    }
+
     // Upsert attendance record
     let [attendance, created] = await Attendance.findOrCreate({
       where: { registrationId },
@@ -167,6 +178,12 @@ const updateAttendance = async (req, res) => {
     }
 
     if (attendanceStatus) {
+      if (attendanceStatus === 'Present' && attendance.attendanceStatus === 'Present') {
+        return res.status(400).json({
+          message: 'Attendance already marked Present for this student and event.',
+          alreadyScanned: true
+        });
+      }
       attendance.attendanceStatus = attendanceStatus;
       attendance.markedAt = new Date();
       await attendance.save();

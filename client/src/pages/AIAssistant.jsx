@@ -25,7 +25,7 @@ const AIAssistant = () => {
       setReply(data.reply);
     } catch (err) {
       console.error(err);
-      setError('Copilot Assistant failed to execute the command.');
+      setError("Sorry, I couldn't process that request right now. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -106,7 +106,7 @@ const AIAssistant = () => {
             <span className="text-xs font-bold text-gray-900 uppercase tracking-wider">A.I. Interactive Console</span>
           </div>
 
-          <div className="flex items-center gap-3">
+          <form onSubmit={(e) => { e.preventDefault(); executeCommand(); }} className="flex items-center gap-3">
             <input
               type="text"
               placeholder="Instruct the assistant..."
@@ -115,14 +115,14 @@ const AIAssistant = () => {
               className="flex-grow px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-primary-500 font-semibold"
             />
             <button
-              onClick={() => executeCommand()}
+              type="submit"
               disabled={loading || !prompt.trim()}
               className="bg-primary-600 hover:bg-primary-750 text-white font-bold py-3 px-5 rounded-xl text-xs shadow-xs transition select-none flex items-center gap-1.5 shrink-0"
             >
               <Send className="h-4 w-4" />
               <span>Execute</span>
             </button>
-          </div>
+          </form>
 
           {error && (
             <div className="text-xs p-3 bg-red-50 text-red-800 rounded-xl border border-red-100">

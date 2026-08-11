@@ -48,6 +48,14 @@ const Registration = sequelize.define(
       allowNull: false,
       defaultValue: false,
     },
+    entryVerifiedAt: {
+      type: DataTypes.DATE,
+      allowNull: true,
+    },
+    entryVerifiedBy: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+    },
   },
   {
     indexes: [

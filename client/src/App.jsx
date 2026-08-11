@@ -62,7 +62,7 @@ const VerifyEmail = lazy(() => import('./pages/VerifyEmail'));
 const Achievements = lazy(() => import('./pages/Achievements'));
 const Badges = lazy(() => import('./pages/Badges'));
 const VerifyPass = lazy(() => import('./pages/VerifyPass'));
-const AdminQRScanner = lazy(() => import('./pages/AdminQRScanner'));
+const EntryVerification = lazy(() => import('./pages/EntryVerification'));
 
 // Sprint 8 AI Pages
 const AIRecommendations = lazy(() => import('./pages/AIRecommendations'));
@@ -300,14 +300,16 @@ function App() {
                       </ProtectedRoute>
                     }
                   />
+
                   <Route
-                    path="/admin/qr-scanner"
+                    path="/admin/entry-verification"
                     element={
                       <ProtectedRoute allowedRoles={['Admin']}>
-                        <AdminQRScanner />
+                        <EntryVerification />
                       </ProtectedRoute>
                     }
                   />
+
                   <Route
                     path="/audit-logs"
                     element={

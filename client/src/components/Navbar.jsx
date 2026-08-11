@@ -17,6 +17,23 @@ const Navbar = () => {
   const isAdminRole = ['Admin', 'Super Admin', 'Event Coordinator', 'Faculty Coordinator'].includes(role);
 
   const [adminMenuOpen, setAdminMenuOpen] = useState(false);
+  const adminDropdownRef = React.useRef(null);
+
+  React.useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (adminDropdownRef.current && !adminDropdownRef.current.contains(event.target)) {
+        setAdminMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const closeAdminMenu = () => {
+    setTimeout(() => {
+      setAdminMenuOpen(false);
+    }, 100);
+  };
 
   return (
     <nav className="bg-white shadow-xs border-b border-gray-200 sticky top-0 z-40">
@@ -93,32 +110,33 @@ const Navbar = () => {
                     </Link>
                     
                     {/* Admin Hub dropdown */}
-                    <div className="relative">
+                    <div className="relative" ref={adminDropdownRef}>
                       <button
                         onClick={() => setAdminMenuOpen(!adminMenuOpen)}
-                        className="hover:text-primary-600 px-1.5 lg:px-2.5 py-1.5 rounded-md flex items-center gap-1 flex-shrink-0 focus:outline-none"
+                        className="hover:text-primary-600 px-1.5 lg:px-2.5 py-1.5 rounded-md flex items-center gap-1 flex-shrink-0 focus:outline-none cursor-pointer"
                       >
                         <Shield className="h-3.5 w-3.5 text-primary-600" />
                         <span>Admin Hub</span>
                       </button>
                       
                       {adminMenuOpen && (
-                        <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-xl shadow-lg py-1.5 z-50 text-[11px] font-bold text-gray-700">
-                          <Link to="/admin/admins" onClick={() => setAdminMenuOpen(false)} className="block px-4 py-2 hover:bg-gray-50 hover:text-primary-650">Admins List</Link>
-                          <Link to="/admin/roles" onClick={() => setAdminMenuOpen(false)} className="block px-4 py-2 hover:bg-gray-50 hover:text-primary-650">Roles Info</Link>
-                          <Link to="/admin/permissions" onClick={() => setAdminMenuOpen(false)} className="block px-4 py-2 hover:bg-gray-50 hover:text-primary-650">Permissions Matrix</Link>
-                          <Link to="/admin/students" onClick={() => setAdminMenuOpen(false)} className="block px-4 py-2 hover:bg-gray-50 hover:text-primary-650">Students Directory</Link>
-                          <Link to="/admin/volunteer-network" onClick={() => setAdminMenuOpen(false)} className="block px-4 py-2 hover:bg-gray-50 hover:text-primary-650">Volunteer Center</Link>
-                          <Link to="/admin/templates" onClick={() => setAdminMenuOpen(false)} className="block px-4 py-2 hover:bg-gray-50 hover:text-primary-650">Templates & Cloning</Link>
-                          <Link to="/admin/bulk" onClick={() => setAdminMenuOpen(false)} className="block px-4 py-2 hover:bg-gray-50 hover:text-primary-650">Bulk Operations</Link>
-                          <Link to="/admin/announcements" onClick={() => setAdminMenuOpen(false)} className="block px-4 py-2 hover:bg-gray-50 hover:text-primary-650">Broadcasting Center</Link>
-                          <Link to="/admin/system-settings" onClick={() => setAdminMenuOpen(false)} className="block px-4 py-2 hover:bg-gray-50 hover:text-primary-650">System Settings</Link>
-                          <Link to="/admin/backups" onClick={() => setAdminMenuOpen(false)} className="block px-4 py-2 hover:bg-gray-50 hover:text-primary-650">Backups & Recovery</Link>
-                          <Link to="/audit-logs" onClick={() => setAdminMenuOpen(false)} className="block px-4 py-2 hover:bg-gray-50 hover:text-primary-650">Security Audit Logs</Link>
+                        <div className="absolute right-0 mt-2 w-52 bg-white border border-gray-200 rounded-xl shadow-xl py-1.5 z-50 text-[11px] font-bold text-gray-700 max-h-[75vh] overflow-y-auto">
+                          <Link to="/admin/admins" onClick={closeAdminMenu} className="block px-4 py-2 hover:bg-gray-50 hover:text-primary-650">Admins List</Link>
+                          <Link to="/admin/roles" onClick={closeAdminMenu} className="block px-4 py-2 hover:bg-gray-50 hover:text-primary-650">Roles Info</Link>
+                          <Link to="/admin/permissions" onClick={closeAdminMenu} className="block px-4 py-2 hover:bg-gray-50 hover:text-primary-650">Permissions Matrix</Link>
+                          <Link to="/admin/students" onClick={closeAdminMenu} className="block px-4 py-2 hover:bg-gray-50 hover:text-primary-650">Students Directory</Link>
+                          <Link to="/admin/entry-verification" onClick={closeAdminMenu} className="block px-4 py-2 hover:bg-gray-50 hover:text-primary-650">Entry Verification</Link>
+                          <Link to="/admin/volunteer-network" onClick={closeAdminMenu} className="block px-4 py-2 hover:bg-gray-50 hover:text-primary-650">Volunteer Center</Link>
+                          <Link to="/admin/templates" onClick={closeAdminMenu} className="block px-4 py-2 hover:bg-gray-50 hover:text-primary-650">Templates & Cloning</Link>
+                          <Link to="/admin/bulk" onClick={closeAdminMenu} className="block px-4 py-2 hover:bg-gray-50 hover:text-primary-650">Bulk Operations</Link>
+                          <Link to="/admin/announcements" onClick={closeAdminMenu} className="block px-4 py-2 hover:bg-gray-50 hover:text-primary-650">Broadcasting Center</Link>
+                          <Link to="/admin/system-settings" onClick={closeAdminMenu} className="block px-4 py-2 hover:bg-gray-50 hover:text-primary-650">System Settings</Link>
+                          <Link to="/admin/backups" onClick={closeAdminMenu} className="block px-4 py-2 hover:bg-gray-50 hover:text-primary-650">Backups & Recovery</Link>
+                          <Link to="/audit-logs" onClick={closeAdminMenu} className="block px-4 py-2 hover:bg-gray-50 hover:text-primary-650">Security Audit Logs</Link>
                           <hr className="my-1 border-gray-100" />
-                          <Link to="/ai-search" onClick={() => setAdminMenuOpen(false)} className="block px-4 py-2 hover:bg-gray-50 hover:text-indigo-600 text-indigo-650 font-bold">Smart Search (AI)</Link>
-                          <Link to="/ai-assistant" onClick={() => setAdminMenuOpen(false)} className="block px-4 py-2 hover:bg-gray-50 hover:text-indigo-600 text-indigo-650 font-bold">Copilot Assistant (AI)</Link>
-                          <Link to="/ai-feedback-analysis" onClick={() => setAdminMenuOpen(false)} className="block px-4 py-2 hover:bg-gray-50 hover:text-indigo-600 text-indigo-650 font-bold">Feedback Analysis (AI)</Link>
+                          <Link to="/ai-search" onClick={closeAdminMenu} className="block px-4 py-2 hover:bg-indigo-50 text-indigo-650 font-bold">Smart Search (AI)</Link>
+                          <Link to="/ai-assistant" onClick={closeAdminMenu} className="block px-4 py-2 hover:bg-indigo-50 text-indigo-650 font-bold">Copilot Assistant (AI)</Link>
+                          <Link to="/ai-feedback-analysis" onClick={closeAdminMenu} className="block px-4 py-2 hover:bg-indigo-50 text-indigo-650 font-bold">Feedback Analysis (AI)</Link>
                         </div>
                       )}
                     </div>
@@ -199,6 +217,9 @@ const Navbar = () => {
                   <Link to="/volunteers" onClick={() => setIsOpen(false)} className="block py-2 hover:text-primary-600">Volunteers</Link>
                   <Link to="/reports" onClick={() => setIsOpen(false)} className="block py-2 hover:text-primary-600">Reports</Link>
                   <Link to="/audit-logs" onClick={() => setIsOpen(false)} className="block py-2 hover:text-primary-600">Audit</Link>
+                  <Link to="/ai-search" onClick={() => setIsOpen(false)} className="block py-2 text-indigo-650 font-bold">Smart Search (AI)</Link>
+                  <Link to="/ai-assistant" onClick={() => setIsOpen(false)} className="block py-2 text-indigo-650 font-bold">Copilot Assistant (AI)</Link>
+                  <Link to="/ai-feedback-analysis" onClick={() => setIsOpen(false)} className="block py-2 text-indigo-650 font-bold">Feedback Analysis (AI)</Link>
                 </>
               )}
               <Link to="/profile" onClick={() => setIsOpen(false)} className="block py-2 hover:text-primary-600">Profile</Link>

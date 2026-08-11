@@ -256,4 +256,98 @@ describe('College Event Registration Event CRUD APIs', () => {
       .set('Authorization', `Bearer ${adminToken}`);
     expect(checkRes.status).toBe(404);
   });
+
+  test('POST /api/events - Admin event creation generates notifications for active students exactly once', async () => {
+    const { Student, Notification } = require('../models');
+    
+    const [testStudent] = await Student.findOrCreate({
+      where: { email: 'notif_test@college.edu' },
+      defaults: {
+        fullName: 'Notif Tester Student',
+        rollNumber: 'NT2026001',
+        email: 'notif_test@college.edu',
+        password: 'password123',
+        department: 'CSE',
+        year: '4th Year',
+        section: 'A',
+        isActive: true,
+      },
+    });
+
+    const initialCount = await Notification.count({
+      where: { userId: testStudent.id, userRole: 'Student' },
+    });
+
+    const newEventData = {
+      title: 'Notified Tech Seminar',
+      description: 'Seminar with notification broadcast',
+      category: 'Technical',
+      eventDate: '2026-12-05',
+      startTime: '10:00',
+      endTime: '12:00',
+      venue: 'Room 101',
+      organizer: 'Notif Dept',
+      capacity: 40,
+      registrationDeadline: '2026-12-04',
+    };
+
+    const res = await request(app)
+      .post('/api/events')
+      .set('Authorization', `Bearer ${adminToken}`)
+      .send(newEventData);
+
+    expect(res.status).toBe(201);
+    const createdEventId = res.body.id;
+
+    const finalCount = await Notification.count({
+      where: { userId: testStudent.id, userRole: 'Student' },
+    });
+    expect(finalCount).toBe(initialCount + 1);
+
+    const latestNotif = await Notification.findOne({
+      where: { userId: testStudent.id, userRole: 'Student' },
+      order: [['createdAt', 'DESC']],
+    });
+
+    expect(latestNotif.title).toBe('New Event Added');
+    expect(latestNotif.message).toContain('A new event "Notified Tech Seminar" has been added. Check the Events page for details.');
+    expect(latestNotif.type).toBe('Event');
+    expect(latestNotif.referenceId).toBe(createdEventId);
+    expect(latestNotif.isRead).toBe(false);
+  });
+
+  test('POST /api/events - Failed event creation does NOT generate notifications', async () => {
+    const { Student, Notification } = require('../models');
+    
+    const student = await Student.findOne({ where: { email: 'notif_test@college.edu' } });
+
+    const initialCount = await Notification.count({
+      where: { userId: student.id, userRole: 'Student' },
+    });
+
+    const invalidEventData = {
+      title: 'Failed Notification Event',
+      description: 'Capacity is invalid',
+      category: 'Technical',
+      eventDate: '2026-12-05',
+      startTime: '10:00',
+      endTime: '12:00',
+      venue: 'Room 101',
+      organizer: 'Notif Dept',
+      capacity: 0,
+      registrationDeadline: '2026-12-04',
+    };
+
+    const res = await request(app)
+      .post('/api/events')
+      .set('Authorization', `Bearer ${adminToken}`)
+      .send(invalidEventData);
+
+    expect(res.status).toBe(400);
+
+    const finalCount = await Notification.count({
+      where: { userId: student.id, userRole: 'Student' },
+    });
+    expect(finalCount).toBe(initialCount);
+  });
 });
