@@ -310,8 +310,209 @@ const getEventAttendance = async (req, res) => {
   }
 };
 
+// @desc    Import attendance via CSV/Excel records (Admin Only)
+// @route   POST /api/attendance/import
+// @access  Private/Admin
+const importAttendance = async (req, res) => {
+  try {
+    const userRole = req.role || req.user?.role;
+    const isStrictAdmin = ['Admin', 'Super Admin'].includes(userRole);
+
+    if (!isStrictAdmin) {
+      return res.status(403).json({ message: 'Access denied: Admins only' });
+    }
+
+    const { eventId, records, dryRun } = req.body;
+
+    if (!eventId) {
+      return res.status(400).json({ message: 'Event ID is required' });
+    }
+
+    const event = await Event.findByPk(eventId);
+    if (!event) {
+      return res.status(404).json({ message: 'Selected event not found' });
+    }
+
+    if (!Array.isArray(records) || records.length === 0) {
+      return res.status(400).json({ message: 'No attendance records provided for import' });
+    }
+
+    const validRecords = [];
+    const errorRecords = [];
+    let importedCount = 0;
+    let skippedCount = 0;
+
+    for (let index = 0; index < records.length; index++) {
+      const row = records[index];
+      const regId = row.registrationId || row.RegistrationId || row.id;
+      const rollNum = row.rollNumber || row.RollNumber || row.rollNum;
+      const statusInput = row.attendanceStatus || row.status || row.Status || 'Present';
+      const status = String(statusInput).trim().toLowerCase() === 'absent' ? 'Absent' : 'Present';
+
+      let registration = null;
+
+      if (regId && !isNaN(Number(regId))) {
+        registration = await Registration.findOne({
+          where: { id: Number(regId), eventId },
+          include: [{ model: Student, attributes: ['id', 'fullName', 'rollNumber', 'email'] }]
+        });
+      }
+
+      if (!registration && rollNum) {
+        const student = await Student.findOne({ where: { rollNumber: String(rollNum).trim() } });
+        if (student) {
+          registration = await Registration.findOne({
+            where: { studentId: student.id, eventId },
+            include: [{ model: Student, attributes: ['id', 'fullName', 'rollNumber', 'email'] }]
+          });
+        }
+      }
+
+      if (!registration) {
+        errorRecords.push({
+          row: index + 1,
+          registrationId: regId || null,
+          rollNumber: rollNum || null,
+          reason: 'Registration record not found or does not belong to the selected event'
+        });
+        skippedCount++;
+        continue;
+      }
+
+      if (registration.status === 'Cancelled') {
+        errorRecords.push({
+          row: index + 1,
+          registrationId: registration.id,
+          rollNumber: registration.Student?.rollNumber,
+          studentName: registration.Student?.fullName,
+          reason: 'Registration is cancelled'
+        });
+        skippedCount++;
+        continue;
+      }
+
+      // Check duplicate Present
+      const existingAttendance = await Attendance.findOne({
+        where: { registrationId: registration.id }
+      });
+
+      if (existingAttendance && existingAttendance.attendanceStatus === 'Present' && status === 'Present') {
+        errorRecords.push({
+          row: index + 1,
+          registrationId: registration.id,
+          rollNumber: registration.Student?.rollNumber,
+          studentName: registration.Student?.fullName,
+          reason: 'Duplicate: Attendance already marked Present for this student and event'
+        });
+        skippedCount++;
+        continue;
+      }
+
+      validRecords.push({
+        registrationId: registration.id,
+        eventId: registration.eventId,
+        studentId: registration.studentId,
+        studentName: registration.Student?.fullName,
+        rollNumber: registration.Student?.rollNumber,
+        email: registration.Student?.email,
+        status,
+        existingAttendance
+      });
+    }
+
+    if (dryRun) {
+      return res.json({
+        message: 'Import validation preview generated successfully',
+        summary: {
+          totalProcessed: records.length,
+          validCount: validRecords.length,
+          invalidCount: errorRecords.length
+        },
+        validRecords,
+        errorRecords
+      });
+    }
+
+    // Save valid records
+    for (const record of validRecords) {
+      let [att, created] = await Attendance.findOrCreate({
+        where: { registrationId: record.registrationId },
+        defaults: {
+          registrationId: record.registrationId,
+          eventId: record.eventId,
+          studentId: record.studentId,
+          attendanceStatus: record.status,
+          markedAt: new Date(),
+        }
+      });
+
+      if (!created) {
+        att.attendanceStatus = record.status;
+        att.markedAt = new Date();
+        await att.save();
+      }
+
+      importedCount++;
+
+      if (record.status === 'Present') {
+        const certCode = `CERT-2026-${record.registrationId.toString().padStart(4, '0')}`;
+        await Certificate.findOrCreate({
+          where: { registrationId: record.registrationId },
+          defaults: {
+            registrationId: record.registrationId,
+            studentId: record.studentId,
+            eventId: record.eventId,
+            certificateId: certCode,
+            issueDate: new Date(),
+            qrVerificationCode: certCode,
+          }
+        });
+
+        await Notification.create({
+          userId: record.studentId,
+          userRole: 'Student',
+          title: 'Certificate Issued!',
+          message: `Your participation certificate for event #${record.eventId} is ready to download.`,
+          type: 'Certificate',
+        });
+
+        try {
+          const { awardPoints } = require('../services/GamificationService');
+          await awardPoints(record.studentId, 25, 'ATTEND_EVENT', `Attended event: ${event.title}`, record.eventId, req);
+          await awardPoints(record.studentId, 20, 'CERTIFICATE_EARNED', `Earned Certificate for event: ${event.title}`, record.eventId, req);
+        } catch (gErr) {
+          console.error('Non-blocking import points allocation error:', gErr.message);
+        }
+      }
+    }
+
+    const { logAudit } = require('../middleware/auditLogger');
+    await logAudit({
+      req,
+      userId: req.user.id,
+      userRole: req.role || 'Admin',
+      action: 'ATTENDANCE_IMPORT',
+      details: `Imported ${importedCount} attendance records for event ID ${eventId}`,
+    });
+
+    res.json({
+      message: `Successfully imported ${importedCount} attendance records`,
+      summary: {
+        totalProcessed: records.length,
+        imported: importedCount,
+        skipped: skippedCount,
+        errorRecords
+      }
+    });
+  } catch (error) {
+    console.error('Import Attendance Error:', error);
+    res.status(500).json({ message: 'Server error importing attendance', error: error.message });
+  }
+};
+
 module.exports = {
   markAttendance,
   updateAttendance,
   getEventAttendance,
+  importAttendance,
 };

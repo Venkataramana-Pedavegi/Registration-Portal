@@ -1,19 +1,23 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useContext } from 'react';
 import api from '../services/api';
 import Loader from '../components/Loader';
 import AttendanceTable from '../components/AttendanceTable';
 import ExportButton from '../components/ExportButton';
-import { CheckSquare, Calendar, Users, Percent, CheckCircle, XCircle } from 'lucide-react';
+import ImportAttendanceModal from '../components/ImportAttendanceModal';
+import { AuthContext } from '../context/AuthContext';
+import { CheckSquare, Calendar, Users, Percent, CheckCircle, XCircle, Upload } from 'lucide-react';
 
 const Attendance = () => {
+  const { user, role } = useContext(AuthContext);
+  const isStrictAdmin = role === 'Admin' || role === 'Super Admin' || user?.role === 'Admin';
+
   const [events, setEvents] = useState([]);
   const [selectedEventId, setSelectedEventId] = useState('');
   const [attendanceData, setAttendanceData] = useState(null);
   const [loadingEvents, setLoadingEvents] = useState(true);
   const [loadingAttendance, setLoadingAttendance] = useState(false);
   const [error, setError] = useState('');
-
-
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
 
   // Fetch list of events for the dropdown selector
   useEffect(() => {
@@ -70,8 +74,6 @@ const Attendance = () => {
     }
   };
 
-
-
   if (loadingEvents) {
     return (
       <div className="flex-grow flex items-center justify-center bg-gray-50">
@@ -93,8 +95,33 @@ const Attendance = () => {
             </h1>
             <p className="text-sm text-gray-500 mt-1">Select an event to mark and monitor student attendance records.</p>
           </div>
-          <ExportButton endpoint="/export/attendance" filename="attendance_report.csv" label="Export Attendance CSV" />
+          <div className="flex items-center gap-3 flex-wrap">
+            {isStrictAdmin && (
+              <button
+                onClick={() => setIsImportModalOpen(true)}
+                className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow-xs transition flex items-center gap-1.5 cursor-pointer"
+              >
+                <Upload className="h-4 w-4" />
+                <span>Import Attendance</span>
+              </button>
+            )}
+            <ExportButton endpoint="/export/attendance" filename="attendance_report.csv" label="Export Attendance CSV" />
+          </div>
         </div>
+
+        {/* Admin Attendance Import Modal */}
+        {isStrictAdmin && (
+          <ImportAttendanceModal
+            isOpen={isImportModalOpen}
+            onClose={() => setIsImportModalOpen(false)}
+            events={events}
+            selectedEventId={selectedEventId}
+            onImportSuccess={(eId) => {
+              setSelectedEventId(eId);
+              fetchAttendance(eId);
+            }}
+          />
+        )}
 
         {error && (
           <div className="bg-red-50 border border-red-200 text-red-700 px-6 py-4 rounded-xl text-center">

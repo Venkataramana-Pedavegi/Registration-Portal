@@ -38,7 +38,7 @@ const Navbar = () => {
 
   return (
     <nav className="bg-white shadow-xs border-b border-gray-200 sticky top-0 z-40">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-4 xl:px-8">
+      <div className="w-full px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16">
           {/* Logo & Brand */}
           <div className="flex items-center flex-shrink-0">
@@ -55,26 +55,26 @@ const Navbar = () => {
           </div>
 
           {/* Desktop Navigation Links */}
-          <div className="hidden xl:flex items-center space-x-1.5 xl:space-x-2 text-xs font-semibold text-gray-600 flex-nowrap flex-shrink-0">
-            <Link to="/" className="hover:text-primary-600 px-1.5 xl:px-2 py-1.5 rounded-md flex-shrink-0">
+          <div className="hidden xl:flex items-center space-x-0.5 xl:space-x-1 2xl:space-x-1.5 text-[11px] 2xl:text-xs font-semibold text-gray-600 flex-nowrap flex-shrink-0">
+            <Link to="/" className="hover:text-primary-600 px-1 2xl:px-1.5 py-1.5 rounded-md flex-shrink-0">
               Home
             </Link>
-            <Link to="/calendar" className="hover:text-primary-600 px-1 lg:px-1.5 xl:px-2 py-1.5 rounded-md flex items-center gap-0.5 xl:gap-1 flex-shrink-0">
-              <CalendarIcon className="w-3 h-3 xl:w-3.5 xl:h-3.5" /> Calendar
+            <Link to="/calendar" className="hover:text-primary-600 px-1 2xl:px-1.5 py-1.5 rounded-md flex items-center gap-0.5 flex-shrink-0">
+              <CalendarIcon className="w-3 h-3 2xl:w-3.5 2xl:h-3.5" /> Calendar
             </Link>
-            <Link to="/leaderboard" className="hover:text-primary-600 px-1 lg:px-1.5 xl:px-2 py-1.5 rounded-md flex items-center gap-0.5 xl:gap-1 flex-shrink-0">
-              <Trophy className="w-3 h-3 xl:w-3.5 xl:h-3.5" /> Leaderboard
+            <Link to="/leaderboard" className="hover:text-primary-600 px-1 2xl:px-1.5 py-1.5 rounded-md flex items-center gap-0.5 flex-shrink-0">
+              <Trophy className="w-3 h-3 2xl:w-3.5 2xl:h-3.5" /> Leaderboard
             </Link>
-            <Link to="/gallery" className="hover:text-primary-600 px-1 lg:px-1.5 xl:px-2 py-1.5 rounded-md flex items-center gap-0.5 xl:gap-1 flex-shrink-0">
-              <ImageIcon className="w-3 h-3 xl:w-3.5 xl:h-3.5" /> Gallery
+            <Link to="/gallery" className="hover:text-primary-600 px-1 2xl:px-1.5 py-1.5 rounded-md flex items-center gap-0.5 flex-shrink-0">
+              <ImageIcon className="w-3 h-3 2xl:w-3.5 2xl:h-3.5" /> Gallery
             </Link>
             {isApprovedVolunteer ? (
-              <Link to="/admin/entry-verification" className="hover:text-primary-600 px-1 lg:px-1.5 xl:px-2 py-1.5 rounded-md flex items-center gap-0.5 xl:gap-1 flex-shrink-0 text-emerald-700 font-bold bg-emerald-50 border border-emerald-200">
-                <CheckCircle className="w-3 h-3 xl:w-3.5 xl:h-3.5 text-emerald-600" /> Entry Verification
+              <Link to="/admin/entry-verification" className="hover:text-primary-600 px-1 2xl:px-1.5 py-1.5 rounded-md flex items-center gap-0.5 flex-shrink-0 text-emerald-700 font-bold bg-emerald-50 border border-emerald-200">
+                <CheckCircle className="w-3 h-3 2xl:w-3.5 2xl:h-3.5 text-emerald-600" /> Entry Verification
               </Link>
             ) : (
-              <Link to="/verify-certificate" className="hover:text-primary-600 px-1 lg:px-1.5 xl:px-2 py-1.5 rounded-md flex items-center gap-0.5 xl:gap-1 flex-shrink-0">
-                <CheckCircle className="w-3 h-3 xl:w-3.5 xl:h-3.5" /> Verify
+              <Link to="/verify-certificate" className="hover:text-primary-600 px-1 2xl:px-1.5 py-1.5 rounded-md flex items-center gap-0.5 flex-shrink-0">
+                <CheckCircle className="w-3 h-3 2xl:w-3.5 2xl:h-3.5" /> Verify
               </Link>
             )}
 
@@ -82,37 +82,37 @@ const Navbar = () => {
               <>
                 {!isAdminRole ? (
                   <>
-                    <Link to="/student-dashboard" className="hover:text-primary-600 px-1 lg:px-1.5 xl:px-2 py-1.5 rounded-md flex-shrink-0">
+                    <Link to="/student-dashboard" className="hover:text-primary-600 px-1 2xl:px-1.5 py-1.5 rounded-md flex-shrink-0">
                       Events
                     </Link>
-                    <Link to="/my-registrations" className="hover:text-primary-600 px-1 lg:px-1.5 xl:px-2 py-1.5 rounded-md flex-shrink-0">
+                    <Link to="/my-registrations" className="hover:text-primary-600 px-1 2xl:px-1.5 py-1.5 rounded-md flex-shrink-0">
                       Registrations
                     </Link>
-                    <Link to="/certificates" className="hover:text-primary-600 px-1 lg:px-1.5 xl:px-2 py-1.5 rounded-md flex-shrink-0">
+                    <Link to="/certificates" className="hover:text-primary-600 px-1 2xl:px-1.5 py-1.5 rounded-md flex-shrink-0">
                       Certificates
                     </Link>
-                    <Link to="/volunteers" className="hover:text-primary-600 px-1 lg:px-1.5 xl:px-2 py-1.5 rounded-md flex-shrink-0">
+                    <Link to="/volunteers" className="hover:text-primary-600 px-1 2xl:px-1.5 py-1.5 rounded-md flex-shrink-0">
                       Volunteers
                     </Link>
-                    <Link to="/achievements" className="hover:text-primary-600 px-1 lg:px-1.5 xl:px-2 py-1.5 rounded-md flex items-center gap-0.5 flex-shrink-0">
+                    <Link to="/achievements" className="hover:text-primary-600 px-1 2xl:px-1.5 py-1.5 rounded-md flex items-center gap-0.5 flex-shrink-0">
                       <Award className="w-3 h-3" /> Achievements
                     </Link>
-                    <Link to="/ai-recommendations" className="hover:text-indigo-600 text-indigo-650 px-1 lg:px-1.5 xl:px-2 py-1.5 rounded-md flex items-center gap-0.5 flex-shrink-0 font-bold">
+                    <Link to="/ai-recommendations" className="hover:text-indigo-600 text-indigo-650 px-1 2xl:px-1.5 py-1.5 rounded-md flex items-center gap-0.5 flex-shrink-0 font-bold">
                       ⭐ Recommendations
                     </Link>
                   </>
                 ) : (
                   <>
-                    <Link to="/admin-dashboard" className="hover:text-primary-600 px-1 lg:px-1.5 xl:px-2 py-1.5 rounded-md flex-shrink-0">
+                    <Link to="/admin-dashboard" className="hover:text-primary-600 px-1 2xl:px-1.5 py-1.5 rounded-md flex-shrink-0">
                       Events
                     </Link>
-                    <Link to="/analytics-dashboard" className="hover:text-primary-600 px-1 lg:px-1.5 xl:px-2 py-1.5 rounded-md flex-shrink-0">
+                    <Link to="/analytics-dashboard" className="hover:text-primary-600 px-1 2xl:px-1.5 py-1.5 rounded-md flex-shrink-0">
                       Analytics
                     </Link>
-                    <Link to="/attendance" className="hover:text-primary-600 px-1 lg:px-1.5 xl:px-2 py-1.5 rounded-md flex-shrink-0">
+                    <Link to="/attendance" className="hover:text-primary-600 px-1 2xl:px-1.5 py-1.5 rounded-md flex-shrink-0">
                       Attendance
                     </Link>
-                    <Link to="/volunteers" className="hover:text-primary-600 px-1 lg:px-1.5 xl:px-2 py-1.5 rounded-md flex-shrink-0">
+                    <Link to="/volunteers" className="hover:text-primary-600 px-1 2xl:px-1.5 py-1.5 rounded-md flex-shrink-0">
                       Volunteers
                     </Link>
                     
@@ -120,7 +120,7 @@ const Navbar = () => {
                     <div className="relative" ref={adminDropdownRef}>
                       <button
                         onClick={() => setAdminMenuOpen(!adminMenuOpen)}
-                        className="hover:text-primary-600 px-1.5 lg:px-2.5 py-1.5 rounded-md flex items-center gap-1 flex-shrink-0 focus:outline-none cursor-pointer"
+                        className="hover:text-primary-600 px-1 2xl:px-1.5 py-1.5 rounded-md flex items-center gap-1 flex-shrink-0 focus:outline-none cursor-pointer"
                       >
                         <Shield className="h-3.5 w-3.5 text-primary-600" />
                         <span>Admin Hub</span>
@@ -153,22 +153,22 @@ const Navbar = () => {
 
                 <Link
                   to="/profile"
-                  className="flex items-center space-x-2 bg-gray-100 hover:bg-gray-200 text-gray-800 pr-3 pl-1 py-1 rounded-full text-xs font-semibold transition flex-shrink-0"
+                  className="flex items-center space-x-1.5 bg-gray-100 hover:bg-gray-200 text-gray-800 pr-2.5 pl-1 py-1 rounded-full text-[11px] 2xl:text-xs font-semibold transition flex-shrink-0 max-w-[150px]"
                 >
                   <img
                     src={user?.profileImage || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=400'}
                     alt="Avatar"
-                    className="w-7 h-7 xl:w-8 xl:h-8 rounded-full object-cover flex-shrink-0 border border-gray-300"
+                    className="w-6 h-6 2xl:w-7 2xl:h-7 rounded-full object-cover flex-shrink-0 border border-gray-300"
                   />
-                  <span className="truncate max-w-[120px]">{user?.fullName || user?.name || user?.username}</span>
+                  <span className="truncate max-w-[80px] 2xl:max-w-[100px]">{user?.fullName || user?.name || user?.username}</span>
                 </Link>
 
                 <button
                   onClick={handleLogout}
-                  className="flex items-center space-x-1.5 bg-red-600 hover:bg-red-700 text-white px-3 py-1.5 rounded-xl text-xs font-bold transition flex-shrink-0 shadow-xs cursor-pointer"
+                  className="flex items-center space-x-1 bg-red-600 hover:bg-red-700 text-white px-2.5 2xl:px-3 py-1.5 rounded-xl text-[11px] 2xl:text-xs font-bold transition flex-shrink-0 shadow-xs cursor-pointer"
                   title="Logout"
                 >
-                  <LogOut className="h-3.5 w-3.5" />
+                  <LogOut className="h-3 w-3 2xl:h-3.5 2xl:w-3.5" />
                   <span>Logout</span>
                 </button>
               </>
