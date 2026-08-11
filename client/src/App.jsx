@@ -188,14 +188,6 @@ function App() {
                     }
                   />
                   <Route
-                    path="/coordinator-dashboard"
-                    element={
-                      <ProtectedRoute allowedRoles={['Coordinator']}>
-                        <AnalyticsDashboard />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
                     path="/attendance"
                     element={
                       <ProtectedRoute allowedRoles={['Admin']}>

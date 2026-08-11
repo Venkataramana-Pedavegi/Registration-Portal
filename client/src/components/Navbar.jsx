@@ -102,9 +102,6 @@ const Navbar = () => {
                     <Link to="/achievements" className="hover:text-primary-600 px-1 lg:px-1.5 xl:px-2 py-1.5 rounded-md flex items-center gap-0.5 flex-shrink-0">
                       <Award className="w-3 h-3" /> Achievements
                     </Link>
-                    <Link to="/coordinator-dashboard" className="hover:text-primary-600 px-1 lg:px-1.5 xl:px-2 py-1.5 rounded-md flex-shrink-0">
-                      Coordinator Dashboard
-                    </Link>
                     <Link to="/ai-assistant" className="hover:text-indigo-600 text-indigo-650 px-1 lg:px-1.5 xl:px-2 py-1.5 rounded-md flex items-center gap-0.5 flex-shrink-0 font-bold">
                       🤖 AI Assistant
                     </Link>
@@ -116,9 +113,6 @@ const Navbar = () => {
                   <>
                     <Link to="/admin-dashboard" className="hover:text-primary-600 px-1 lg:px-1.5 xl:px-2 py-1.5 rounded-md flex-shrink-0">
                       Events
-                    </Link>
-                    <Link to="/coordinator-dashboard" className="hover:text-primary-600 px-1 lg:px-1.5 xl:px-2 py-1.5 rounded-md flex-shrink-0">
-                      Coordinator Dashboard
                     </Link>
                     <Link to="/analytics-dashboard" className="hover:text-primary-600 px-1 lg:px-1.5 xl:px-2 py-1.5 rounded-md flex-shrink-0">
                       Analytics
@@ -142,7 +136,6 @@ const Navbar = () => {
                       
                       {adminMenuOpen && (
                         <div className="absolute right-0 mt-2 w-52 bg-white border border-gray-200 rounded-xl shadow-xl py-1.5 z-50 text-[11px] font-bold text-gray-700 max-h-[75vh] overflow-y-auto">
-                          <Link to="/coordinator-dashboard" onClick={closeAdminMenu} className="block px-4 py-2 hover:bg-gray-50 hover:text-primary-650">Coordinator Dashboard</Link>
                           <Link to="/admin/admins" onClick={closeAdminMenu} className="block px-4 py-2 hover:bg-gray-50 hover:text-primary-650">Admins List</Link>
                           <Link to="/admin/roles" onClick={closeAdminMenu} className="block px-4 py-2 hover:bg-gray-50 hover:text-primary-650">Roles Info</Link>
                           <Link to="/admin/permissions" onClick={closeAdminMenu} className="block px-4 py-2 hover:bg-gray-50 hover:text-primary-650">Permissions Matrix</Link>
@@ -233,7 +226,6 @@ const Navbar = () => {
                   <Link to="/my-registrations" onClick={() => setIsOpen(false)} className="block py-2 hover:text-primary-600">Registrations</Link>
                   <Link to="/certificates" onClick={() => setIsOpen(false)} className="block py-2 hover:text-primary-600">Certificates</Link>
                   <Link to="/volunteers" onClick={() => setIsOpen(false)} className="block py-2 hover:text-primary-600">Volunteers</Link>
-                  <Link to="/coordinator-dashboard" onClick={() => setIsOpen(false)} className="block py-2 hover:text-primary-600">Coordinator Dashboard</Link>
                   {isApprovedVolunteer && (
                     <Link to="/admin/entry-verification" onClick={() => setIsOpen(false)} className="block py-2 hover:text-primary-600">Entry Verification</Link>
                   )}
@@ -241,7 +233,6 @@ const Navbar = () => {
               ) : (
                 <>
                   <Link to="/admin-dashboard" onClick={() => setIsOpen(false)} className="block py-2 hover:text-primary-600">Events</Link>
-                  <Link to="/coordinator-dashboard" onClick={() => setIsOpen(false)} className="block py-2 hover:text-primary-600">Coordinator Dashboard</Link>
                   <Link to="/analytics-dashboard" onClick={() => setIsOpen(false)} className="block py-2 hover:text-primary-600">Analytics</Link>
                   <Link to="/attendance" onClick={() => setIsOpen(false)} className="block py-2 hover:text-primary-600">Attendance</Link>
                   <Link to="/volunteers" onClick={() => setIsOpen(false)} className="block py-2 hover:text-primary-600">Volunteers</Link>
