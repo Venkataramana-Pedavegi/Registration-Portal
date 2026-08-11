@@ -1,10 +1,19 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useContext } from 'react';
 import { useLocation } from 'react-router-dom';
+import { AuthContext } from '../context/AuthContext';
 import api from '../services/api';
 import { Bot, X, Send, Sparkles, RefreshCw } from 'lucide-react';
 
 const AIChatWidget = () => {
+  const { user, role } = useContext(AuthContext);
   const location = useLocation();
+
+  const isAdminRole = ['Admin', 'Super Admin', 'Event Coordinator', 'Faculty Coordinator'].includes(role) || user?.role === 'Admin';
+
+  if (!isAdminRole) {
+    return null;
+  }
+
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState(() => {
     const saved = sessionStorage.getItem('svec_chat_history');

@@ -380,7 +380,7 @@ function App() {
                   <Route
                     path="/ai-search"
                     element={
-                      <ProtectedRoute allowedRoles={['Student', 'Admin']}>
+                      <ProtectedRoute allowedRoles={['Admin']}>
                         <AIAssistant />
                       </ProtectedRoute>
                     }
@@ -388,7 +388,7 @@ function App() {
                   <Route
                     path="/ai-assistant"
                     element={
-                      <ProtectedRoute allowedRoles={['Student', 'Admin']}>
+                      <ProtectedRoute allowedRoles={['Admin']}>
                         <AIAssistant />
                       </ProtectedRoute>
                     }
