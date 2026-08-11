@@ -83,9 +83,9 @@ function App() {
         <SocketProvider>
           <NotificationProvider>
             <Router>
-              <div className="flex flex-col min-h-screen bg-gray-50">
+              <div className="flex flex-col min-h-screen bg-gray-50 w-full max-w-full overflow-x-hidden">
             <Navbar />
-            <main className="flex-grow flex flex-col">
+            <main className="flex-grow flex flex-col w-full max-w-full overflow-x-hidden">
               <Suspense fallback={
                 <div className="flex-grow flex items-center justify-center bg-gray-50 py-20">
                   <Loader size="large" />

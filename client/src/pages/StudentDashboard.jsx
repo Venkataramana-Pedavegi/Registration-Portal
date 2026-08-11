@@ -264,8 +264,8 @@ const StudentDashboard = () => {
   });
 
   return (
-    <div className="flex-grow bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-7xl mx-auto space-y-8">
+    <div className="flex-grow bg-gray-50 py-8 px-4 sm:px-6 lg:px-8 w-full max-w-full overflow-x-hidden">
+      <div className="max-w-7xl mx-auto space-y-8 w-full min-w-0">
         
         {/* Student Profile Card */}
         {loadingProfile ? (

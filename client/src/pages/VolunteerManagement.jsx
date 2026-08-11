@@ -106,17 +106,17 @@ const VolunteerManagement = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-7xl mx-auto space-y-8">
+    <div className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8 w-full max-w-full overflow-x-hidden">
+      <div className="max-w-7xl mx-auto space-y-8 w-full min-w-0">
         {/* Header */}
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="p-3 bg-purple-50 text-purple-600 rounded-xl">
+        <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between w-full min-w-0">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="p-3 bg-purple-50 text-purple-600 rounded-xl shrink-0">
               <Users className="w-7 h-7" />
             </div>
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">Volunteer Portal</h1>
-              <p className="text-sm text-gray-500">
+            <div className="min-w-0">
+              <h1 className="text-2xl font-bold text-gray-900 truncate">Volunteer Portal</h1>
+              <p className="text-sm text-gray-500 truncate">
                 {isAdmin ? 'Manage event volunteers and task assignments' : 'Apply for volunteer positions and track assigned tasks'}
               </p>
             </div>
@@ -125,9 +125,9 @@ const VolunteerManagement = () => {
 
         {/* Student View */}
         {!isAdmin && (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 w-full min-w-0">
             {/* Application Form */}
-            <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 space-y-4">
+            <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 space-y-4 min-w-0">
               <h2 className="text-lg font-bold text-gray-900">Apply as Event Volunteer</h2>
               {applyMessage && (
                 <div className="text-xs p-3 bg-purple-50 text-purple-700 rounded-xl font-medium">

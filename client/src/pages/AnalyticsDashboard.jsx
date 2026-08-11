@@ -163,8 +163,8 @@ const AnalyticsDashboard = () => {
   }
 
   return (
-    <div className="flex-grow bg-gray-50 py-10 px-4 sm:px-6 lg:px-8 print:bg-white print:p-0">
-      <div className="max-w-7xl mx-auto space-y-6 print:space-y-4">
+    <div className="flex-grow bg-gray-50 py-10 px-4 sm:px-6 lg:px-8 print:bg-white print:p-0 w-full max-w-full overflow-x-hidden">
+      <div className="max-w-7xl mx-auto space-y-6 print:space-y-4 w-full min-w-0">
         
         {/* Header */}
         <div className="flex justify-between items-center print:hidden">

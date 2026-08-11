@@ -55,8 +55,8 @@ const Navbar = () => {
           </div>
 
           {/* Desktop Navigation Links */}
-          <div className="hidden lg:flex items-center space-x-1 lg:space-x-1.5 xl:space-x-3 text-[10px] lg:text-[11px] xl:text-xs font-semibold text-gray-600 flex-nowrap flex-shrink-0">
-            <Link to="/" className="hover:text-primary-600 px-1 lg:px-1.5 xl:px-2 py-1.5 rounded-md flex-shrink-0">
+          <div className="hidden xl:flex items-center space-x-1.5 xl:space-x-2 text-xs font-semibold text-gray-600 flex-nowrap flex-shrink-0">
+            <Link to="/" className="hover:text-primary-600 px-1.5 xl:px-2 py-1.5 rounded-md flex-shrink-0">
               Home
             </Link>
             <Link to="/calendar" className="hover:text-primary-600 px-1 lg:px-1.5 xl:px-2 py-1.5 rounded-md flex items-center gap-0.5 xl:gap-1 flex-shrink-0">
@@ -202,7 +202,7 @@ const Navbar = () => {
           </div>
 
           {/* Mobile menu button */}
-          <div className="flex items-center lg:hidden">
+          <div className="flex items-center xl:hidden">
             <button
               onClick={() => setIsOpen(!isOpen)}
               className="text-gray-600 hover:text-gray-900 focus:outline-none p-2"
@@ -215,7 +215,7 @@ const Navbar = () => {
 
       {/* Mobile Menu */}
       {isOpen && (
-        <div className="lg:hidden bg-white border-b border-gray-200 px-4 pt-2 pb-4 space-y-2 text-sm font-medium">
+        <div className="xl:hidden bg-white border-b border-gray-200 px-4 pt-2 pb-4 space-y-2 text-sm font-medium max-w-full overflow-x-hidden">
           <Link to="/" onClick={() => setIsOpen(false)} className="block py-2 hover:text-primary-600">Home</Link>
           <Link to="/calendar" onClick={() => setIsOpen(false)} className="block py-2 hover:text-primary-600">Event Calendar</Link>
           <Link to="/leaderboard" onClick={() => setIsOpen(false)} className="block py-2 hover:text-primary-600">Leaderboard</Link>
