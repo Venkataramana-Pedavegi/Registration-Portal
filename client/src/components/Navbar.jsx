@@ -90,6 +90,9 @@ const Navbar = () => {
                     <Link to="/achievements" className="hover:text-primary-600 px-1 lg:px-1.5 xl:px-2 py-1.5 rounded-md flex items-center gap-0.5 flex-shrink-0">
                       <Award className="w-3 h-3" /> Achievements
                     </Link>
+                    <Link to="/ai-assistant" className="hover:text-indigo-600 text-indigo-650 px-1 lg:px-1.5 xl:px-2 py-1.5 rounded-md flex items-center gap-0.5 flex-shrink-0 font-bold">
+                      🤖 AI Assistant
+                    </Link>
                     <Link to="/ai-recommendations" className="hover:text-indigo-600 text-indigo-650 px-1 lg:px-1.5 xl:px-2 py-1.5 rounded-md flex items-center gap-0.5 flex-shrink-0 font-bold">
                       ⭐ Recommendations
                     </Link>
@@ -134,8 +137,7 @@ const Navbar = () => {
                           <Link to="/admin/backups" onClick={closeAdminMenu} className="block px-4 py-2 hover:bg-gray-50 hover:text-primary-650">Backups & Recovery</Link>
                           <Link to="/audit-logs" onClick={closeAdminMenu} className="block px-4 py-2 hover:bg-gray-50 hover:text-primary-650">Security Audit Logs</Link>
                           <hr className="my-1 border-gray-100" />
-                          <Link to="/ai-search" onClick={closeAdminMenu} className="block px-4 py-2 hover:bg-indigo-50 text-indigo-650 font-bold">Smart Search (AI)</Link>
-                          <Link to="/ai-assistant" onClick={closeAdminMenu} className="block px-4 py-2 hover:bg-indigo-50 text-indigo-650 font-bold">Copilot Assistant (AI)</Link>
+                          <Link to="/ai-assistant" onClick={closeAdminMenu} className="block px-4 py-2 hover:bg-indigo-50 text-indigo-650 font-bold">🤖 AI Assistant</Link>
                           <Link to="/ai-feedback-analysis" onClick={closeAdminMenu} className="block px-4 py-2 hover:bg-indigo-50 text-indigo-650 font-bold">Feedback Analysis (AI)</Link>
                         </div>
                       )}
@@ -217,8 +219,7 @@ const Navbar = () => {
                   <Link to="/volunteers" onClick={() => setIsOpen(false)} className="block py-2 hover:text-primary-600">Volunteers</Link>
                   <Link to="/reports" onClick={() => setIsOpen(false)} className="block py-2 hover:text-primary-600">Reports</Link>
                   <Link to="/audit-logs" onClick={() => setIsOpen(false)} className="block py-2 hover:text-primary-600">Audit</Link>
-                  <Link to="/ai-search" onClick={() => setIsOpen(false)} className="block py-2 text-indigo-650 font-bold">Smart Search (AI)</Link>
-                  <Link to="/ai-assistant" onClick={() => setIsOpen(false)} className="block py-2 text-indigo-650 font-bold">Copilot Assistant (AI)</Link>
+                  <Link to="/ai-assistant" onClick={() => setIsOpen(false)} className="block py-2 text-indigo-650 font-bold">🤖 AI Assistant</Link>
                   <Link to="/ai-feedback-analysis" onClick={() => setIsOpen(false)} className="block py-2 text-indigo-650 font-bold">Feedback Analysis (AI)</Link>
                 </>
               )}

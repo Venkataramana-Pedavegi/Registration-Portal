@@ -13,6 +13,7 @@ const {
 const { protect } = require('../middleware/authMiddleware');
 
 router.post('/chat', protect, chatWithAI);
+router.post('/assistant', protect, chatWithAI);
 router.get('/recommendations', protect, getEventRecommendations);
 router.post('/generate-description', protect, generateEventDescription);
 router.get('/feedback-analysis/:eventId', protect, analyzeEventFeedback);
