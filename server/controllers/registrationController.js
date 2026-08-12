@@ -66,7 +66,9 @@ const registerForEvent = async (req, res) => {
     try {
       const host = req.get('host') || 'localhost:5000';
       const frontendHost = host.includes('5000') ? host.replace('5000', '5173') : host;
-      const verifyUrl = `${req.protocol}://${frontendHost}/verify-pass/${registration.id}`;
+      const verifyUrl = process.env.FRONTEND_URL
+        ? `${process.env.FRONTEND_URL.replace(/\/$/, '')}/verify-pass/${registration.id}`
+        : `${req.protocol}://${frontendHost}/verify-pass/${registration.id}`;
       const qrCodeUrl = await generateQRCode(verifyUrl);
       registration.qrCodeUrl = qrCodeUrl;
       await registration.save();

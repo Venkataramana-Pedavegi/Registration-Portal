@@ -68,7 +68,8 @@ const AuditLogs = () => {
   // CSV Export Action
   const handleExportCSV = () => {
     const token = localStorage.getItem('token');
-    window.open(`http://localhost:5000/api/export/audit-logs?token=${token}`, '_blank');
+    const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+    window.open(`${API_URL}/export/audit-logs?token=${token}`, '_blank');
   };
 
   // PDF Export Action (Print mode)
