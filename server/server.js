@@ -266,7 +266,7 @@ const startDb = async () => {
     const [[dbResult]] = await sequelize.query('SELECT DATABASE() as db');
     const dbName = dbResult.db;
     logDebug(`Database connected: ${dbName}`);
-    logDebug(`Environment: ${process.env.NODE_ENV}`);
+    logDebug(`Environment: ${process.env.NODE_ENV || 'development'}`);
     await updateDatabaseSchema();
     await sequelize.sync();
     logDebug('Database tables synchronized successfully.');
@@ -375,7 +375,7 @@ let serverInstance;
 if (process.env.NODE_ENV !== 'test') {
   serverInstance = server.listen(PORT, () => {
     logDebug(`Server running on port ${PORT}`);
-    logDebug(`Environment: ${process.env.NODE_ENV}`);
+    logDebug(`Environment: ${process.env.NODE_ENV || 'development'}`);
   }).on('error', (err) => {
     if (err.code === 'EADDRINUSE') {
       logDebug(`⚠️  Port ${PORT} is already in use by another running server instance.`);
