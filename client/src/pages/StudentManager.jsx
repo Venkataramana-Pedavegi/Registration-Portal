@@ -88,7 +88,7 @@ const StudentManager = () => {
       setStudentDetails(data);
     } catch (err) {
       console.error(err);
-      alert('Failed to retrieve student activity logs.');
+      setError(err.response?.data?.message || 'Failed to retrieve student activity logs.');
     } finally {
       setLoadingDetails(false);
     }

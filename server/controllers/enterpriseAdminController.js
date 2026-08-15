@@ -296,31 +296,52 @@ const getStudentDetails = async (req, res) => {
       return res.status(404).json({ message: 'Student not found' });
     }
 
-    const registrations = await Registration.findAll({
-      where: { studentId: id },
-      include: [
-        { model: Event, attributes: ['id', 'title', 'eventDate', 'venue'] },
-        { model: Attendance, attributes: ['id', 'attendanceStatus', 'markedAt'] },
-      ],
-      order: [['registrationDate', 'DESC']],
-    });
+    let registrations = [];
+    try {
+      registrations = await Registration.findAll({
+        where: { studentId: id },
+        include: [
+          { model: Event, attributes: ['id', 'title', 'eventDate', 'venue'] },
+          { model: Attendance, attributes: ['id', 'attendanceStatus', 'markedAt'] },
+        ],
+        order: [['registrationDate', 'DESC']],
+      });
+    } catch (regErr) {
+      console.error('Error fetching student registrations:', regErr.message);
+    }
 
-    const certificates = await Certificate.findAll({
-      where: { studentId: id },
-      include: [{ model: Event, attributes: ['id', 'title'] }],
-      order: [['issuedAt', 'DESC']],
-    });
+    let certificates = [];
+    try {
+      certificates = await Certificate.findAll({
+        where: { studentId: id },
+        include: [{ model: Event, attributes: ['id', 'title'] }],
+        order: [['issueDate', 'DESC']],
+      });
+    } catch (certErr) {
+      console.error('Error fetching student certificates:', certErr.message);
+    }
 
-    const loginHistory = await LoginHistory.findAll({
-      where: { userId: id, userRole: 'Student' },
-      order: [['createdAt', 'DESC']],
-      limit: 15,
-    });
+    let loginHistory = [];
+    try {
+      loginHistory = await AuditLog.findAll({
+        where: { userId: id, action: { [Op.like]: '%LOGIN%' } },
+        order: [['createdAt', 'DESC']],
+        limit: 15,
+      });
+    } catch (lhErr) {
+      console.error('Error fetching student login history:', lhErr.message);
+    }
 
-    const achievements = await AuditLog.findAll({
-      where: { userId: id, action: { [Op.like]: '%BADGE%' } },
-      order: [['createdAt', 'DESC']],
-    });
+    let achievements = [];
+    try {
+      achievements = await AuditLog.findAll({
+        where: { userId: id, action: { [Op.like]: '%BADGE%' } },
+        order: [['createdAt', 'DESC']],
+        limit: 15,
+      });
+    } catch (achErr) {
+      console.error('Error fetching student achievements:', achErr.message);
+    }
 
     res.json({
       student,
@@ -330,6 +351,7 @@ const getStudentDetails = async (req, res) => {
       achievements,
     });
   } catch (error) {
+    console.error('Error in getStudentDetails:', error.message);
     res.status(500).json({ message: 'Server error retrieving student details', error: error.message });
   }
 };
