@@ -6,6 +6,13 @@ const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const logDebug = require('../utils/debugLogger');
 
+const hasMailCredentials = () => {
+  return !!(
+    (process.env.EMAIL_USER && process.env.EMAIL_PASS) ||
+    (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS)
+  );
+};
+
 // Helper to determine if user exists and get role
 const findUserByEmail = async (email) => {
   const normalized = email.toLowerCase().trim();
@@ -89,11 +96,16 @@ const forgotPassword = async (req, res) => {
 
     await logAudit({ req, userId: user.id, userRole: role, action: 'FORGOT_PASSWORD_REQUEST', details: `OTP generated for ${user.email}` });
 
+    const mailConfigured = hasMailCredentials();
+    const isSimulated = !mailConfigured || !mailResult || !mailResult.success || mailResult.messageId === 'simulated-id';
+
     const resPayload = {
-      message: 'A 6-digit password reset OTP code has been sent to your email address.',
+      message: isSimulated 
+        ? `A 6-digit verification OTP code has been generated.`
+        : 'A 6-digit password reset OTP code has been sent to your email address.',
     };
 
-    if (!mailResult || !mailResult.success || process.env.NODE_ENV !== 'production' || mailResult.messageId === 'simulated-id') {
+    if (isSimulated || process.env.SHOW_DEMO_OTP === 'true') {
       resPayload.demoOtp = otpCode;
     }
 
