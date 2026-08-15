@@ -35,6 +35,9 @@ const StudentLogin = ({ setToast }) => {
     return errors;
   };
 
+  const [showResend, setShowResend] = useState(false);
+  const [isResending, setIsResending] = useState(false);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     const errors = validateForm();
@@ -44,6 +47,7 @@ const StudentLogin = ({ setToast }) => {
     }
 
     setIsSubmitting(true);
+    setShowResend(false);
     const result = await loginStudent(formData.email, formData.password);
     setIsSubmitting(false);
 
@@ -52,6 +56,23 @@ const StudentLogin = ({ setToast }) => {
       navigate('/student-dashboard');
     } else {
       setToast({ type: 'error', message: result.message });
+      if (result.message && result.message.toLowerCase().includes('verify your email')) {
+        setShowResend(true);
+      }
+    }
+  };
+
+  const handleResend = async () => {
+    if (!formData.email) return;
+    setIsResending(true);
+    try {
+      const api = (await import('../services/api')).default;
+      const { data } = await api.post('/student/resend-verification', { email: formData.email });
+      setToast({ type: 'success', message: data.message || 'Verification link sent to your email!' });
+    } catch (err) {
+      setToast({ type: 'error', message: err.response?.data?.message || 'Failed to resend verification link.' });
+    } finally {
+      setIsResending(false);
     }
   };
 
@@ -73,6 +94,22 @@ const StudentLogin = ({ setToast }) => {
             </Link>
           </p>
         </div>
+
+        {showResend && (
+          <div className="p-4 bg-amber-50 border border-amber-200 rounded-xl space-y-2 text-center animate-in fade-in duration-300">
+            <p className="text-xs text-amber-800 font-medium">
+              Your account requires email verification. Check your inbox or click below to receive a new link.
+            </p>
+            <button
+              type="button"
+              onClick={handleResend}
+              disabled={isResending}
+              className="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-lg text-xs font-bold transition shadow-xs disabled:opacity-50 inline-flex items-center gap-1.5"
+            >
+              {isResending ? <Loader2 className="animate-spin h-3.5 w-3.5 text-white" /> : '📩 Resend Verification Email'}
+            </button>
+          </div>
+        )}
 
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           <div className="rounded-md shadow-sm space-y-4">

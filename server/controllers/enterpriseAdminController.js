@@ -236,7 +236,7 @@ const getAllStudents = async (req, res) => {
 const updateStudent = async (req, res) => {
   try {
     const { id } = req.params;
-    const { fullName, rollNumber, email, department, year } = req.body;
+    const { fullName, rollNumber, email, department, year, isVerified } = req.body;
 
     const student = await Student.findByPk(id);
     if (!student) {
@@ -248,6 +248,7 @@ const updateStudent = async (req, res) => {
     if (email) student.email = email.trim().toLowerCase();
     if (department) student.department = department;
     if (year) student.year = year;
+    if (isVerified !== undefined) student.isVerified = !!isVerified;
 
     await student.save();
 
@@ -273,6 +274,9 @@ const toggleStudentActive = async (req, res) => {
     }
 
     student.isActive = !!isActive;
+    if (student.isActive) {
+      student.isVerified = true;
+    }
     await student.save();
 
     const actionText = student.isActive ? 'activated' : 'deactivated';
