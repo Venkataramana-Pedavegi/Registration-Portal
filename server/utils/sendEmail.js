@@ -1,7 +1,17 @@
 const defaultTransporter = require('../config/mailConfig');
 const nodemailer = require('nodemailer');
 
-const getTransporter = async () => {
+let cachedTransporter = null;
+let cachedBranding = null;
+let lastCacheTime = 0;
+const CACHE_TTL_MS = 60 * 1000; // Cache DB settings for 1 minute
+
+const getCachedSettings = async () => {
+  const now = Date.now();
+  if (cachedBranding && cachedTransporter && now - lastCacheTime < CACHE_TTL_MS) {
+    return { transporter: cachedTransporter, branding: cachedBranding };
+  }
+
   try {
     const { SystemSetting } = require('../models');
     const settings = await SystemSetting.findAll();
@@ -10,43 +20,53 @@ const getTransporter = async () => {
       settingsMap[s.key] = s.value;
     });
 
+    cachedBranding = {
+      collegeName: settingsMap.collegeName || 'Sri Vasavi Engineering College',
+      appName: settingsMap.appName || 'Campus Event Management Portal',
+      smtpUser: settingsMap.smtpUser || process.env.EMAIL_USER || 'admin@college.edu',
+    };
+
     if (settingsMap.smtpHost && settingsMap.smtpUser && settingsMap.smtpPass) {
-      return nodemailer.createTransport({
+      cachedTransporter = nodemailer.createTransport({
         host: settingsMap.smtpHost,
         port: parseInt(settingsMap.smtpPort, 10) || 587,
         secure: settingsMap.smtpSecure === 'true',
+        pool: true,
+        maxConnections: 5,
+        maxMessages: 100,
+        rateLimit: 10,
         auth: {
           user: settingsMap.smtpUser,
           pass: settingsMap.smtpPass,
         },
       });
+    } else {
+      cachedTransporter = defaultTransporter;
     }
+
+    lastCacheTime = now;
   } catch (err) {
     console.error('Failed to load system SMTP settings:', err.message);
+    if (!cachedBranding) {
+      cachedBranding = {
+        collegeName: 'Sri Vasavi Engineering College',
+        appName: 'Campus Event Management Portal',
+        smtpUser: process.env.EMAIL_USER || 'admin@college.edu',
+      };
+    }
+    if (!cachedTransporter) {
+      cachedTransporter = defaultTransporter;
+    }
   }
-  return defaultTransporter;
+
+  return { transporter: cachedTransporter, branding: cachedBranding };
 };
 
-const getEmailBranding = async () => {
-  try {
-    const { SystemSetting } = require('../models');
-    const settings = await SystemSetting.findAll();
-    const settingsMap = {};
-    settings.forEach((s) => {
-      settingsMap[s.key] = s.value;
-    });
-    return {
-      collegeName: settingsMap.collegeName || 'Sri Vasavi Engineering College',
-      appName: settingsMap.appName || 'Campus Event Management Portal',
-      smtpUser: settingsMap.smtpUser || process.env.EMAIL_USER || 'admin@college.edu',
-    };
-  } catch (err) {
-    return {
-      collegeName: 'Sri Vasavi Engineering College',
-      appName: 'Campus Event Management Portal',
-      smtpUser: process.env.EMAIL_USER || 'admin@college.edu',
-    };
-  }
+// Function to explicitly clear settings cache when Admin updates settings
+const clearEmailSettingsCache = () => {
+  cachedTransporter = null;
+  cachedBranding = null;
+  lastCacheTime = 0;
 };
 
 /**
@@ -105,7 +125,7 @@ const sendEmail = async (options, subjectArg, htmlArg) => {
       html = htmlArg;
     }
 
-    const branding = await getEmailBranding();
+    const { transporter, branding } = await getCachedSettings();
 
     if (!to) {
       to = branding.smtpUser;
@@ -133,8 +153,27 @@ const sendEmail = async (options, subjectArg, htmlArg) => {
       mailOptions.attachments = options.attachments;
     }
 
-    const activeTransporter = await getTransporter();
-    const info = await activeTransporter.sendMail(mailOptions);
+    let retries = 2;
+    let info = null;
+    let lastErr = null;
+
+    while (retries > 0) {
+      try {
+        info = await transporter.sendMail(mailOptions);
+        lastErr = null;
+        break;
+      } catch (err) {
+        lastErr = err;
+        retries--;
+        if (retries > 0) {
+          await new Promise((res) => setTimeout(res, 500));
+        }
+      }
+    }
+
+    if (lastErr) {
+      throw lastErr;
+    }
 
     console.log(`✅ Email sent successfully to ${to}: ${info.messageId}`);
     return { success: true, messageId: info.messageId, response: info.response, info };
@@ -144,4 +183,23 @@ const sendEmail = async (options, subjectArg, htmlArg) => {
   }
 };
 
+/**
+ * Sends email messages to multiple recipients concurrently in controlled batches
+ */
+const sendBulkEmails = async (messages, concurrency = 5) => {
+  const results = [];
+  for (let i = 0; i < messages.length; i += concurrency) {
+    const chunk = messages.slice(i, i + concurrency);
+    const chunkResults = await Promise.all(
+      chunk.map((msg) => sendEmail(msg))
+    );
+    results.push(...chunkResults);
+  }
+  return results;
+};
+
+sendEmail.clearEmailSettingsCache = clearEmailSettingsCache;
+sendEmail.sendBulkEmails = sendBulkEmails;
+
 module.exports = sendEmail;
+

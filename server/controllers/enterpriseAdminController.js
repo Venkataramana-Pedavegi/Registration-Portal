@@ -370,6 +370,11 @@ const updateSystemSettings = async (req, res) => {
       }
     }
 
+    const sendEmail = require('../utils/sendEmail');
+    if (sendEmail && sendEmail.clearEmailSettingsCache) {
+      sendEmail.clearEmailSettingsCache();
+    }
+
     await logAudit({ req, userId: req.user.id, userRole: req.role || 'Admin', action: 'SETTINGS_UPDATE', details: 'System configuration settings updated' });
 
     res.json({ message: 'System settings updated successfully' });

@@ -10,6 +10,10 @@ const transporter = hasCredentials
           host: process.env.SMTP_HOST,
           port: parseInt(process.env.SMTP_PORT, 10) || 587,
           secure: process.env.SMTP_SECURE === 'true',
+          pool: true,
+          maxConnections: 5,
+          maxMessages: 100,
+          rateLimit: 10,
           auth: {
             user: process.env.SMTP_USER,
             pass: process.env.SMTP_PASS,
@@ -17,6 +21,10 @@ const transporter = hasCredentials
         })
       : nodemailer.createTransport({
           service: "gmail",
+          pool: true,
+          maxConnections: 5,
+          maxMessages: 100,
+          rateLimit: 10,
           auth: {
             user: process.env.EMAIL_USER,
             pass: process.env.EMAIL_PASS,
