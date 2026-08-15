@@ -15,7 +15,12 @@ const AnnouncementManager = () => {
   const [error, setError] = useState('');
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
 
-  const departments = ['CSE', 'ECE', 'EEE', 'MECH', 'CIVIL', 'MBA', 'MCA', 'Other'];
+  const departments = [
+    'Computer Science and Artificial Intelligence (CAI)',
+    'Artificial Intelligence and Machine Learning (AIML)',
+    'Information Technology (IT)',
+    'Computer Science and Technology (CST)'
+  ];
   const years = ['1', '2', '3', '4'];
 
   useEffect(() => {

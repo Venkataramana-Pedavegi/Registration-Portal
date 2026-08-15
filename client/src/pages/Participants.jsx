@@ -31,7 +31,12 @@ const Participants = () => {
   const [year, setYear] = useState('');
   const [status, setStatus] = useState('');
 
-  const departments = ['Computer Science', 'Electronics & Communication', 'Electrical & Electronics', 'Mechanical', 'Civil', 'Information Technology'];
+  const departments = [
+    'Computer Science and Artificial Intelligence (CAI)',
+    'Artificial Intelligence and Machine Learning (AIML)',
+    'Information Technology (IT)',
+    'Computer Science and Technology (CST)'
+  ];
   const years = ['1st Year', '2nd Year', '3rd Year', '4th Year'];
   const statuses = ['Registered', 'Cancelled', 'Completed'];
 

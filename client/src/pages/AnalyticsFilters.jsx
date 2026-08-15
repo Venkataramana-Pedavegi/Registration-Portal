@@ -2,7 +2,12 @@ import React from 'react';
 import { Filter, Calendar, RefreshCw } from 'lucide-react';
 
 const AnalyticsFilters = ({ filters, setFilters, onApply, onReset }) => {
-  const departments = ['CSE', 'ECE', 'EEE', 'MECH', 'CIVIL', 'MBA', 'MCA', 'Other'];
+  const departments = [
+    'Computer Science and Artificial Intelligence (CAI)',
+    'Artificial Intelligence and Machine Learning (AIML)',
+    'Information Technology (IT)',
+    'Computer Science and Technology (CST)'
+  ];
   const years = ['1', '2', '3', '4'];
   const categories = ['Technical', 'Cultural', 'Sports', 'Seminar', 'Workshop', 'Other'];
   const statuses = ['Upcoming', 'Ongoing', 'Completed', 'Cancelled'];

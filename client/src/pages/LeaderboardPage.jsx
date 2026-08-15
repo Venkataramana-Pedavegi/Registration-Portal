@@ -117,13 +117,10 @@ const LeaderboardPage = () => {
               className="block w-full px-4 py-2.5 rounded-xl border border-gray-300 focus:outline-none focus:ring-1 focus:ring-amber-500 text-xs"
             >
               <option value="">All Departments</option>
-              <option value="CSE">Computer Science (CSE)</option>
-              <option value="ECE">Electronics (ECE)</option>
-              <option value="EEE">Electrical (EEE)</option>
-              <option value="MECH">Mechanical (MECH)</option>
-              <option value="CIVIL">Civil (CIVIL)</option>
-              <option value="MBA">Business Admin (MBA)</option>
-              <option value="MCA">Computer Applications (MCA)</option>
+              <option value="Computer Science and Artificial Intelligence (CAI)">Computer Science and Artificial Intelligence (CAI)</option>
+              <option value="Artificial Intelligence and Machine Learning (AIML)">Artificial Intelligence and Machine Learning (AIML)</option>
+              <option value="Information Technology (IT)">Information Technology (IT)</option>
+              <option value="Computer Science and Technology (CST)">Computer Science and Technology (CST)</option>
             </select>
 
             {/* Year Filter */}

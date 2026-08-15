@@ -6,7 +6,7 @@ Welcome to the **College Event Registration Management System** Knowledge Transf
 
 ## 1. System Overview & Key Modules
 
-The College Event Registration Management System is an enterprise-grade platform that facilitates event creation, registration, ticketing, gamification, and AI-driven assistance for campus activities. It is architected around two primary portals: the **Student Portal** (where students register for events, earn badges, volunteer, and get AI recommendations) and the **Admin/Executive Portal** (where event coordinators and supervisors create templates, manage seating, verify entry passes, perform analytics, and run backup recovery).
+The College Event Registration Management System is an enterprise-grade platform that facilitates event creation, registration, ticketing, gamification, and AI-driven assistance for campus activities. The system supports students from multiple academic departments, including Computer Science and Artificial Intelligence (CAI), Artificial Intelligence and Machine Learning (AIML), Information Technology (IT), and Computer Science and Technology (CST). It is architected around two primary portals: the **Student Portal** (where students register for events, earn badges, volunteer, and get AI recommendations) and the **Admin/Executive Portal** (where event coordinators and supervisors create templates, manage seating, verify entry passes, perform analytics, and run backup recovery).
 
 ### Core Functional Modules
 1. **Authentication & Identity Management**: Secure sign-in for Students and Admins, complete with account lockouts, password history restrictions, verify email flow, and login notification alerts for unrecognized devices.

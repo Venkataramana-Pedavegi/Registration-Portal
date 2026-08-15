@@ -1,6 +1,6 @@
 # College Event Registration Management System - Enterprise Edition
 
-This repository contains the complete, production-ready, enterprise-grade **College Event Registration Management System** spanning all five development phases:
+This repository contains the complete, production-ready, enterprise-grade **College Event Registration Management System** spanning all five development phases. The system supports students from multiple academic departments, including Computer Science and Artificial Intelligence (CAI), Artificial Intelligence and Machine Learning (AIML), Information Technology (IT), and Computer Science and Technology (CST):
 
 - **Phase 1**: Authentication Module (Student/Admin JWT Auth & Password Hashing)
 - **Phase 2**: Event Management Module (Admin Event CRUD & Availability Tracking)
