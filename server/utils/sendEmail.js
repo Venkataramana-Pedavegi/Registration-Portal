@@ -20,15 +20,19 @@ const getCachedSettings = async () => {
       settingsMap[s.key] = s.value;
     });
 
+    const emailUser = (settingsMap.smtpUser || settingsMap.EMAIL_USER || process.env.EMAIL_USER || 'venkataramanapedavegi9@gmail.com').trim();
+    const emailPass = (settingsMap.smtpPass || settingsMap.EMAIL_PASS || process.env.EMAIL_PASS || 'wdtq pnga etav gmtm').trim();
+    const smtpHost = (settingsMap.smtpHost && settingsMap.smtpHost !== 'smtp.mailtrap.io') ? settingsMap.smtpHost.trim() : null;
+
     cachedBranding = {
       collegeName: settingsMap.collegeName || 'Sri Vasavi Engineering College',
       appName: settingsMap.appName || 'Campus Event Management Portal',
-      smtpUser: (settingsMap.smtpUser || process.env.EMAIL_USER || 'admin@college.edu').trim(),
+      smtpUser: emailUser,
     };
 
-    if (settingsMap.smtpHost && settingsMap.smtpUser && settingsMap.smtpPass) {
+    if (smtpHost && settingsMap.smtpUser && settingsMap.smtpPass) {
       cachedTransporter = nodemailer.createTransport({
-        host: settingsMap.smtpHost,
+        host: smtpHost,
         port: parseInt(settingsMap.smtpPort, 10) || 587,
         secure: settingsMap.smtpSecure === 'true',
         pool: true,
@@ -36,8 +40,20 @@ const getCachedSettings = async () => {
         maxMessages: 100,
         rateLimit: 10,
         auth: {
-          user: settingsMap.smtpUser,
-          pass: settingsMap.smtpPass,
+          user: settingsMap.smtpUser.trim(),
+          pass: settingsMap.smtpPass.trim(),
+        },
+      });
+    } else if (emailUser && emailPass) {
+      cachedTransporter = nodemailer.createTransport({
+        service: 'gmail',
+        pool: true,
+        maxConnections: 5,
+        maxMessages: 100,
+        rateLimit: 10,
+        auth: {
+          user: emailUser,
+          pass: emailPass,
         },
       });
     } else {
@@ -47,14 +63,27 @@ const getCachedSettings = async () => {
     lastCacheTime = now;
   } catch (err) {
     console.error('Failed to load system SMTP settings:', err.message);
-    if (!cachedBranding) {
-      cachedBranding = {
-        collegeName: 'Sri Vasavi Engineering College',
-        appName: 'Campus Event Management Portal',
-        smtpUser: process.env.EMAIL_USER || 'admin@college.edu',
-      };
-    }
-    if (!cachedTransporter) {
+    const emailUser = (process.env.EMAIL_USER || 'venkataramanapedavegi9@gmail.com').trim();
+    const emailPass = (process.env.EMAIL_PASS || 'wdtq pnga etav gmtm').trim();
+
+    cachedBranding = {
+      collegeName: 'Sri Vasavi Engineering College',
+      appName: 'Campus Event Management Portal',
+      smtpUser: emailUser,
+    };
+    if (emailUser && emailPass) {
+      cachedTransporter = nodemailer.createTransport({
+        service: 'gmail',
+        pool: true,
+        maxConnections: 5,
+        maxMessages: 100,
+        rateLimit: 10,
+        auth: {
+          user: emailUser,
+          pass: emailPass,
+        },
+      });
+    } else {
       cachedTransporter = defaultTransporter;
     }
   }

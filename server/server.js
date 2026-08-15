@@ -86,8 +86,8 @@ const seedSettings = async () => {
       const defaults = [
         { key: 'collegeName', value: 'Sri Vasavi Engineering College' },
         { key: 'collegeLogo', value: '/sri_vasavi_logo.png' },
-        { key: 'smtpHost', value: 'smtp.mailtrap.io' },
-        { key: 'smtpPort', value: '2525' },
+        { key: 'smtpHost', value: '' },
+        { key: 'smtpPort', value: '587' },
         { key: 'smtpUser', value: '' },
         { key: 'smtpPass', value: '' },
         { key: 'smtpSecure', value: 'false' },
