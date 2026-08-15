@@ -1,6 +1,6 @@
 # College Event Registration Management System — Developer Onboarding & Setup Guide
 
-Welcome to the **Developer Onboarding & Setup Guide** for the College Event Registration Management System. This guide provides comprehensive, step-by-step technical documentation to help developers set up, run, test, debug, and deploy the application. The system supports students from multiple academic departments, including Computer Science and Artificial Intelligence (CAI), Artificial Intelligence and Machine Learning (AIML), Information Technology (IT), and Computer Science and Technology (CST).
+Welcome to the **Developer Onboarding & Setup Guide** for the College Event Registration Management System. This guide provides comprehensive, step-by-step technical documentation to help developers set up, run, test, debug, and deploy the application. The system supports 9 academic departments: Computer Science (CSE), Civil Engineering (CE), Mechanical Engineering (ME), Electrical and Electronics Engineering (EEE), Electronics and Communication Engineering (ECE), Computer Science and Artificial Intelligence (CAI), Artificial Intelligence and Machine Learning (AIML), Information Technology (IT), and Computer Science and Technology (CST).
 
 ---
 

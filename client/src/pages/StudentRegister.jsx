@@ -20,6 +20,11 @@ const StudentRegister = ({ setToast }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const departments = [
+    'Computer Science (CSE)',
+    'Civil Engineering (CE)',
+    'Mechanical Engineering (ME)',
+    'Electrical and Electronics Engineering (EEE)',
+    'Electronics and Communication Engineering (ECE)',
     'Computer Science and Artificial Intelligence (CAI)',
     'Artificial Intelligence and Machine Learning (AIML)',
     'Information Technology (IT)',

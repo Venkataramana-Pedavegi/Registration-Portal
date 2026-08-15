@@ -6,7 +6,7 @@
 # 1. COVER PAGE
 
 **PROJECT TITLE:** COLLEGE EVENT REGISTRATION MANAGEMENT SYSTEM  
-**DEGREE:** BACHELOR OF TECHNOLOGY (B.TECH) IN COMPUTER SCIENCE AND ARTIFICIAL INTELLIGENCE (CAI) / ARTIFICIAL INTELLIGENCE AND MACHINE LEARNING (AIML) / INFORMATION TECHNOLOGY (IT) / COMPUTER SCIENCE AND TECHNOLOGY (CST)  
+**DEGREE:** BACHELOR OF TECHNOLOGY (B.TECH) IN COMPUTER SCIENCE (CSE) / CIVIL ENGINEERING (CE) / MECHANICAL ENGINEERING (ME) / ELECTRICAL AND ELECTRONICS ENGINEERING (EEE) / ELECTRONICS AND COMMUNICATION ENGINEERING (ECE) / COMPUTER SCIENCE AND ARTIFICIAL INTELLIGENCE (CAI) / ARTIFICIAL INTELLIGENCE AND MACHINE LEARNING (AIML) / INFORMATION TECHNOLOGY (IT) / COMPUTER SCIENCE AND TECHNOLOGY (CST)  
 **DEVELOPMENT PHASES:** PHASES 1 TO 5 (ENTERPRISE EDITION WITH AI COPILOT & REAL-TIME AUTOMATION)  
 **FRONTEND DEPLOYMENT:** VERCEL  
 **BACKEND DEPLOYMENT:** RAILWAY  
@@ -30,7 +30,7 @@ I/We hereby declare that the project report entitled **"College Event Registrati
 
 **Student Name(s):** B.Tech Candidate(s)  
 **Roll Number(s):** Standard Institutional Identifier  
-**Department:** Computer Science and Artificial Intelligence (CAI) / Artificial Intelligence and Machine Learning (AIML) / Information Technology (IT) / Computer Science and Technology (CST)  
+**Department:** Computer Science (CSE) / Civil Engineering (CE) / Mechanical Engineering (ME) / Electrical and Electronics Engineering (EEE) / Electronics and Communication Engineering (ECE) / Computer Science and Artificial Intelligence (CAI) / Artificial Intelligence and Machine Learning (AIML) / Information Technology (IT) / Computer Science and Technology (CST)  
 
 ---
 
@@ -42,7 +42,7 @@ We express our sincere gratitude to our Project Guide, Head of Department, facul
 
 # 5. ABSTRACT
 
-The **College Event Registration Management System** is an enterprise-grade, full-stack campus management platform designed to streamline event scheduling, student ticketing, venue entry pass verification, attendance handling, volunteer coordination, credential issuance, and AI-assisted event guidance. Built using a modern decoupled architecture—React 19 with Vite on the frontend and Node.js with Express and Sequelize ORM on the backend—the application interfaces with a relational MySQL database running on Railway and a high-performance single-page client hosted on Vercel. The system supports students from multiple academic departments, including Computer Science and Artificial Intelligence (CAI), Artificial Intelligence and Machine Learning (AIML), Information Technology (IT), and Computer Science and Technology (CST).
+The **College Event Registration Management System** is an enterprise-grade, full-stack campus management platform designed to streamline event scheduling, student ticketing, venue entry pass verification, attendance handling, volunteer coordination, credential issuance, and AI-assisted event guidance. Built using a modern decoupled architecture—React 19 with Vite on the frontend and Node.js with Express and Sequelize ORM on the backend—the application interfaces with a relational MySQL database running on Railway and a high-performance single-page client hosted on Vercel. The system supports 9 academic departments: Computer Science (CSE), Civil Engineering (CE), Mechanical Engineering (ME), Electrical and Electronics Engineering (EEE), Electronics and Communication Engineering (ECE), Computer Science and Artificial Intelligence (CAI), Artificial Intelligence and Machine Learning (AIML), Information Technology (IT), and Computer Science and Technology (CST).
 
 Key technical innovations include atomic SQL database transactions to guarantee double-booking and seat capacity bounds, real-time WebSocket events (`Socket.IO`) for immediate attendee alerts, automated Nodemailer email notifications with scheduled 24-hour and 1-hour event reminders, instant PDF certificate generation (`PDFKit`), dynamic QR code entry passes (`qrcode`), a multi-tiered gamification engine awarding points/badges/levels, and an integrated AI Copilot leveraging Google Generative AI (`gemini-1.5-flash`) with a rule-based fallback classifier (`intentClassifier.js`). The platform features 19 Jest integration test suites covering 179 tests with 100% pass status, proving system reliability under rigorous security and enterprise workloads.
 
@@ -118,7 +118,7 @@ Key technical innovations include atomic SQL database transactions to guarantee 
 # CHAPTER 1 — INTRODUCTION
 
 ## 1.1 Introduction
-In modern higher education institutions, co-curricular and extra-curricular events form a vital component of student development. Managing technical symposiums, cultural fests, workshops, and sports tournaments across supported academic departments—including Computer Science and Artificial Intelligence (CAI), Artificial Intelligence and Machine Learning (AIML), Information Technology (IT), and Computer Science and Technology (CST)—requires robust infrastructure to handle registration surges, venue capacity control, entry gate verification, credential issuing, and analytics. The **College Event Registration Management System** addresses these operational needs through a production-ready, enterprise-grade digital platform.
+In modern higher education institutions, co-curricular and extra-curricular events form a vital component of student development. Managing technical symposiums, cultural fests, workshops, and sports tournaments across 9 supported academic departments—Computer Science (CSE), Civil Engineering (CE), Mechanical Engineering (ME), Electrical and Electronics Engineering (EEE), Electronics and Communication Engineering (ECE), Computer Science and Artificial Intelligence (CAI), Artificial Intelligence and Machine Learning (AIML), Information Technology (IT), and Computer Science and Technology (CST)—requires robust infrastructure to handle registration surges, venue capacity control, entry gate verification, credential issuing, and analytics. The **College Event Registration Management System** addresses these operational needs through a production-ready, enterprise-grade digital platform.
 
 ## 1.2 Background
 Traditional campus event workflows rely heavily on manual paper sheets, Google Forms, or disconnected spreadsheets. These legacy solutions fail under peak loads, create duplicate registrations, lack gate verification mechanisms, delay certificate distribution, and offer zero real-time visibility into actual attendee turnout.
@@ -146,7 +146,7 @@ The primary motivation behind this system is to build an automated, transparent,
 - **AI-Powered Copilot**: Assist students and administrators using Google Gemini 1.5 with keyword fallback intent classification.
 
 ## 1.6 Scope
-The system supports students from multiple academic departments, including Computer Science and Artificial Intelligence (CAI), Artificial Intelligence and Machine Learning (AIML), Information Technology (IT), and Computer Science and Technology (CST). It covers event coordinators, administrative staff, and enrolled students, supporting free and paid registrations, volunteer task assignment, attendance importing, certificate verification, audit log tracking, and real-time analytics.
+The system supports students across all 9 academic departments: Computer Science (CSE), Civil Engineering (CE), Mechanical Engineering (ME), Electrical and Electronics Engineering (EEE), Electronics and Communication Engineering (ECE), Computer Science and Artificial Intelligence (CAI), Artificial Intelligence and Machine Learning (AIML), Information Technology (IT), and Computer Science and Technology (CST). It covers event coordinators, administrative staff, and enrolled students, supporting free and paid registrations, volunteer task assignment, attendance importing, certificate verification, audit log tracking, and real-time analytics.
 
 ## 1.7 Need for the System
 An enterprise digital platform ensures institutional compliance, operational efficiency, fraud prevention, fast entry processing, and data-driven insights for campus leadership.
@@ -206,7 +206,7 @@ The proposed system is an enterprise full-stack web application built on the Rea
 4. **Super Admin**: System administrator with full permission bypass, role configuration, backup management, and audit log access.
 
 ## 3.5 System Scope
-The system supports students from multiple academic departments, including Computer Science and Artificial Intelligence (CAI), Artificial Intelligence and Machine Learning (AIML), Information Technology (IT), and Computer Science and Technology (CST), with capacity for thousands of active student accounts and simultaneous event schedules.
+The system supports students across all 9 academic departments: Computer Science (CSE), Civil Engineering (CE), Mechanical Engineering (ME), Electrical and Electronics Engineering (EEE), Electronics and Communication Engineering (ECE), Computer Science and Artificial Intelligence (CAI), Artificial Intelligence and Machine Learning (AIML), Information Technology (IT), and Computer Science and Technology (CST), with capacity for thousands of active student accounts and simultaneous event schedules.
 
 ---
 
@@ -424,7 +424,7 @@ The application comprises 20 distinct system modules confirmed by backend contro
 - **Access Restrictions**: Public for login/register; Private for logout/refresh.
 
 ## 7.2 Student Module (`studentRoutes.js`, `studentController.js`)
-- **Purpose**: Manages student profile info, department selections across Computer Science and Artificial Intelligence (CAI), Artificial Intelligence and Machine Learning (AIML), Information Technology (IT), and Computer Science and Technology (CST), registration records, and activity feeds.
+- **Purpose**: Manages student profile info, department selections across all 9 departments (CSE, CE, ME, EEE, ECE, CAI, AIML, IT, CST), registration records, and activity feeds.
 - **Users**: Student, Admin.
 - **Database Interaction**: `Students`, `Registrations`, `Attendances`, `Certificates`.
 
@@ -481,7 +481,7 @@ The application comprises 20 distinct system modules confirmed by backend contro
 - **Database Interaction**: `Notifications`.
 
 ## 7.13 Analytics Module (`biRoutes.js`, `exportRoutes.js`, `adminController.js`)
-- **Purpose**: Admin reporting on registration growth, department turnout across Computer Science and Artificial Intelligence (CAI), Artificial Intelligence and Machine Learning (AIML), Information Technology (IT), and Computer Science and Technology (CST), attendance percentages, and CSV exports.
+- **Purpose**: Admin reporting on registration growth, department turnout across all 9 departments (CSE, CE, ME, EEE, ECE, CAI, AIML, IT, CST), attendance percentages, and CSV exports.
 - **Users**: Admin.
 - **Database Interaction**: Reads across all core entities.
 
@@ -833,7 +833,7 @@ Features a personalized dashboard displaying upcoming event tickets, personal pa
 Provides event coordinators and administrators with real-time operational insights powered by **Recharts**:
 - **Registration Trends**: Time-series area charts showing registration velocity.
 - **Turnout Percentages**: Bar charts comparing registered attendees vs actual `Present` turnout.
-- **Departmental Analytics**: Pie charts illustrating student distribution across supported academic departments: Computer Science and Artificial Intelligence (CAI), Artificial Intelligence and Machine Learning (AIML), Information Technology (IT), and Computer Science and Technology (CST).
+- **Departmental Analytics**: Pie charts illustrating student distribution across all 9 academic departments: Computer Science (CSE), Civil Engineering (CE), Mechanical Engineering (ME), Electrical and Electronics Engineering (EEE), Electronics and Communication Engineering (ECE), Computer Science and Artificial Intelligence (CAI), Artificial Intelligence and Machine Learning (AIML), Information Technology (IT), and Computer Science and Technology (CST).
 - **Export & Backup Controls**: Buttons for one-click CSV report generation and manual database backups.
 
 ---
@@ -1054,7 +1054,7 @@ registrationId,rollNumber,attendanceStatus
 # FINAL SECTION
 
 ## F.1 One-Page Project Summary
-The **College Event Registration Management System** is a full-stack enterprise campus web platform (React 19 + Node.js + Express + Railway MySQL) designed to handle event scheduling, atomic ticket reservation, QR gate pass verification, controlled attendance marking, instant PDF certificate generation, student gamification, and AI-assisted support. The system supports students from multiple academic departments, including Computer Science and Artificial Intelligence (CAI), Artificial Intelligence and Machine Learning (AIML), Information Technology (IT), and Computer Science and Technology (CST).
+The **College Event Registration Management System** is a full-stack enterprise campus web platform (React 19 + Node.js + Express + Railway MySQL) designed to handle event scheduling, atomic ticket reservation, QR gate pass verification, controlled attendance marking, instant PDF certificate generation, student gamification, and AI-assisted support. The system supports 9 academic departments: Computer Science (CSE), Civil Engineering (CE), Mechanical Engineering (ME), Electrical and Electronics Engineering (EEE), Electronics and Communication Engineering (ECE), Computer Science and Artificial Intelligence (CAI), Artificial Intelligence and Machine Learning (AIML), Information Technology (IT), and Computer Science and Technology (CST).
 
 ## F.2 Technology Stack Summary
 - **Frontend**: React 19, Vite 6, Tailwind CSS, Recharts, Lucide React, Axios, Socket.IO Client.

@@ -89,6 +89,11 @@ const EventCalendar = () => {
               className="px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
             >
               <option value="All">All Departments</option>
+              <option value="Computer Science (CSE)">Computer Science (CSE)</option>
+              <option value="Civil Engineering (CE)">Civil Engineering (CE)</option>
+              <option value="Mechanical Engineering (ME)">Mechanical Engineering (ME)</option>
+              <option value="Electrical and Electronics Engineering (EEE)">Electrical and Electronics Engineering (EEE)</option>
+              <option value="Electronics and Communication Engineering (ECE)">Electronics and Communication Engineering (ECE)</option>
               <option value="Computer Science and Artificial Intelligence (CAI)">Computer Science and Artificial Intelligence (CAI)</option>
               <option value="Artificial Intelligence and Machine Learning (AIML)">Artificial Intelligence and Machine Learning (AIML)</option>
               <option value="Information Technology (IT)">Information Technology (IT)</option>

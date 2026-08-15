@@ -3,6 +3,11 @@ import { Filter, Calendar, RefreshCw } from 'lucide-react';
 
 const AnalyticsFilters = ({ filters, setFilters, onApply, onReset }) => {
   const departments = [
+    'Computer Science (CSE)',
+    'Civil Engineering (CE)',
+    'Mechanical Engineering (ME)',
+    'Electrical and Electronics Engineering (EEE)',
+    'Electronics and Communication Engineering (ECE)',
     'Computer Science and Artificial Intelligence (CAI)',
     'Artificial Intelligence and Machine Learning (AIML)',
     'Information Technology (IT)',

@@ -117,6 +117,11 @@ const LeaderboardPage = () => {
               className="block w-full px-4 py-2.5 rounded-xl border border-gray-300 focus:outline-none focus:ring-1 focus:ring-amber-500 text-xs"
             >
               <option value="">All Departments</option>
+              <option value="Computer Science (CSE)">Computer Science (CSE)</option>
+              <option value="Civil Engineering (CE)">Civil Engineering (CE)</option>
+              <option value="Mechanical Engineering (ME)">Mechanical Engineering (ME)</option>
+              <option value="Electrical and Electronics Engineering (EEE)">Electrical and Electronics Engineering (EEE)</option>
+              <option value="Electronics and Communication Engineering (ECE)">Electronics and Communication Engineering (ECE)</option>
               <option value="Computer Science and Artificial Intelligence (CAI)">Computer Science and Artificial Intelligence (CAI)</option>
               <option value="Artificial Intelligence and Machine Learning (AIML)">Artificial Intelligence and Machine Learning (AIML)</option>
               <option value="Information Technology (IT)">Information Technology (IT)</option>
