@@ -80,7 +80,7 @@ const forgotPassword = async (req, res) => {
       </div>
     `;
 
-    await sendEmail({
+    const mailResult = await sendEmail({
       to: user.email,
       subject: 'Password Reset OTP - Sri Vasavi Event Portal',
       templateTitle: 'Password Reset OTP',
@@ -89,7 +89,15 @@ const forgotPassword = async (req, res) => {
 
     await logAudit({ req, userId: user.id, userRole: role, action: 'FORGOT_PASSWORD_REQUEST', details: `OTP generated for ${user.email}` });
 
-    res.json({ message: 'If an account exists with that email, a password reset link has been sent (OTP code included).' });
+    const resPayload = {
+      message: 'A 6-digit password reset OTP code has been sent to your email address.',
+    };
+
+    if (!mailResult || !mailResult.success || process.env.NODE_ENV !== 'production' || mailResult.messageId === 'simulated-id') {
+      resPayload.demoOtp = otpCode;
+    }
+
+    res.json(resPayload);
   } catch (error) {
     res.status(500).json({ message: 'Server error processing forgot password', error: error.message });
   }

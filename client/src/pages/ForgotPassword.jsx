@@ -65,6 +65,8 @@ const ForgotPassword = ({ setToast }) => {
     return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
   };
 
+  const [demoOtp, setDemoOtp] = useState('');
+
   const handleRequestOtp = async (e) => {
     e?.preventDefault();
     if (!email) {
@@ -74,8 +76,11 @@ const ForgotPassword = ({ setToast }) => {
 
     setLoading(true);
     try {
-      await api.post('/auth/forgot-password', { email });
-      setToast?.({ type: 'success', message: 'A 6-digit verification OTP code has been sent to your inbox!' });
+      const { data } = await api.post('/auth/forgot-password', { email });
+      setToast?.({ type: 'success', message: data.message || 'A 6-digit verification OTP code has been sent to your inbox!' });
+      if (data.demoOtp) {
+        setDemoOtp(data.demoOtp);
+      }
       setStep(2);
     } catch (err) {
       console.error(err);
@@ -90,8 +95,11 @@ const ForgotPassword = ({ setToast }) => {
 
     setLoading(true);
     try {
-      await api.post('/auth/forgot-password', { email });
-      setToast?.({ type: 'success', message: 'A fresh verification OTP has been sent to your email.' });
+      const { data } = await api.post('/auth/forgot-password', { email });
+      setToast?.({ type: 'success', message: data.message || 'A fresh verification OTP has been sent to your email.' });
+      if (data.demoOtp) {
+        setDemoOtp(data.demoOtp);
+      }
       setCountdown(600);
       setResendCooldown(60);
       clearInterval(cooldownRef.current);
@@ -238,6 +246,21 @@ const ForgotPassword = ({ setToast }) => {
               <span className="text-[10px] font-black text-indigo-700 uppercase tracking-wider">Code Expiration Countdown</span>
               <div className="text-xl font-mono font-black text-indigo-950">{formatTime(countdown)}</div>
             </div>
+
+            {demoOtp && (
+              <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-center space-y-1 animate-in fade-in duration-300">
+                <p className="text-xs font-bold text-amber-800">
+                  🔑 Verification OTP Code: <span className="font-mono text-sm tracking-widest text-amber-950 font-black">{demoOtp}</span>
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setOtp(demoOtp)}
+                  className="text-[11px] font-bold text-amber-700 hover:text-amber-900 underline"
+                >
+                  Click to Auto-fill OTP Code
+                </button>
+              </div>
+            )}
 
             <div>
               <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">6-Digit Verification Code</label>
