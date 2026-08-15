@@ -20,14 +20,14 @@ const getCachedSettings = async () => {
       settingsMap[s.key] = s.value;
     });
 
-    const emailUser = (settingsMap.smtpUser || settingsMap.EMAIL_USER || process.env.EMAIL_USER || 'venkataramanapedavegi9@gmail.com').trim();
-    const emailPass = (settingsMap.smtpPass || settingsMap.EMAIL_PASS || process.env.EMAIL_PASS || 'wdtq pnga etav gmtm').trim();
+    const emailUser = (settingsMap.smtpUser || settingsMap.EMAIL_USER || process.env.EMAIL_USER || '').trim();
+    const emailPass = (settingsMap.smtpPass || settingsMap.EMAIL_PASS || process.env.EMAIL_PASS || '').trim();
     const smtpHost = (settingsMap.smtpHost && settingsMap.smtpHost !== 'smtp.mailtrap.io') ? settingsMap.smtpHost.trim() : null;
 
     cachedBranding = {
       collegeName: settingsMap.collegeName || 'Sri Vasavi Engineering College',
       appName: settingsMap.appName || 'Campus Event Management Portal',
-      smtpUser: emailUser,
+      smtpUser: emailUser || 'admin@college.edu',
     };
 
     if (smtpHost && settingsMap.smtpUser && settingsMap.smtpPass) {
@@ -39,6 +39,9 @@ const getCachedSettings = async () => {
         maxConnections: 5,
         maxMessages: 100,
         rateLimit: 10,
+        connectionTimeout: 10000,
+        greetingTimeout: 10000,
+        socketTimeout: 15000,
         auth: {
           user: settingsMap.smtpUser.trim(),
           pass: settingsMap.smtpPass.trim(),
@@ -51,6 +54,9 @@ const getCachedSettings = async () => {
         maxConnections: 5,
         maxMessages: 100,
         rateLimit: 10,
+        connectionTimeout: 10000,
+        greetingTimeout: 10000,
+        socketTimeout: 15000,
         auth: {
           user: emailUser,
           pass: emailPass,
@@ -63,13 +69,13 @@ const getCachedSettings = async () => {
     lastCacheTime = now;
   } catch (err) {
     console.error('Failed to load system SMTP settings:', err.message);
-    const emailUser = (process.env.EMAIL_USER || 'venkataramanapedavegi9@gmail.com').trim();
-    const emailPass = (process.env.EMAIL_PASS || 'wdtq pnga etav gmtm').trim();
+    const emailUser = (process.env.EMAIL_USER || '').trim();
+    const emailPass = (process.env.EMAIL_PASS || '').trim();
 
     cachedBranding = {
       collegeName: 'Sri Vasavi Engineering College',
       appName: 'Campus Event Management Portal',
-      smtpUser: emailUser,
+      smtpUser: emailUser || 'admin@college.edu',
     };
     if (emailUser && emailPass) {
       cachedTransporter = nodemailer.createTransport({
@@ -78,6 +84,9 @@ const getCachedSettings = async () => {
         maxConnections: 5,
         maxMessages: 100,
         rateLimit: 10,
+        connectionTimeout: 10000,
+        greetingTimeout: 10000,
+        socketTimeout: 15000,
         auth: {
           user: emailUser,
           pass: emailPass,
@@ -182,13 +191,24 @@ const sendEmail = async (options, subjectArg, htmlArg) => {
       mailOptions.attachments = options.attachments;
     }
 
+    console.log(`📧 Dispatching email to: ${to} | Subject: ${subject}`);
+
+    const sendMailWithTimeout = (mailOpts, timeoutMs = 10000) => {
+      return Promise.race([
+        transporter.sendMail(mailOpts),
+        new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('SMTP email dispatch timeout (10s limit exceeded)')), timeoutMs)
+        ),
+      ]);
+    };
+
     let retries = 2;
     let info = null;
     let lastErr = null;
 
     while (retries > 0) {
       try {
-        info = await transporter.sendMail(mailOptions);
+        info = await sendMailWithTimeout(mailOptions, 10000);
         lastErr = null;
         break;
       } catch (err) {
@@ -201,10 +221,11 @@ const sendEmail = async (options, subjectArg, htmlArg) => {
     }
 
     if (lastErr) {
-      throw lastErr;
+      console.error('❌ Email sending failed with safe error:', lastErr.message);
+      return { success: false, error: lastErr.message };
     }
 
-    console.log(`✅ Email sent successfully to ${to}: ${info.messageId}`);
+    console.log(`✅ Email sent successfully to ${to} (ID: ${info.messageId})`);
     return { success: true, messageId: info.messageId, response: info.response, info };
   } catch (error) {
     console.error('❌ Error sending email:', error.message);

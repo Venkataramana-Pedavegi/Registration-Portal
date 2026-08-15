@@ -18,6 +18,9 @@ const transporter = hasCredentials
           maxConnections: 5,
           maxMessages: 100,
           rateLimit: 10,
+          connectionTimeout: 10000,
+          greetingTimeout: 10000,
+          socketTimeout: 15000,
           auth: {
             user: smtpUser,
             pass: smtpPass,
@@ -29,6 +32,9 @@ const transporter = hasCredentials
           maxConnections: 5,
           maxMessages: 100,
           rateLimit: 10,
+          connectionTimeout: 10000,
+          greetingTimeout: 10000,
+          socketTimeout: 15000,
           auth: {
             user,
             pass,

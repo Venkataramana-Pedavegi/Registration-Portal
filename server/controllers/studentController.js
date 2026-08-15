@@ -66,7 +66,7 @@ const registerStudent = async (req, res) => {
 
     if (existingStudentEmail) {
       logDebug(`[registerStudent] Registration rejected: Email ${email} already exists.`);
-      return res.status(400).json({ message: 'Email address is already registered' });
+      return res.status(400).json({ message: 'A student with this email already exists' });
     }
 
     // Check if student with roll number already exists
@@ -81,12 +81,13 @@ const registerStudent = async (req, res) => {
 
     if (existingStudentRoll) {
       logDebug(`[registerStudent] Registration rejected: Roll number ${rollNumber} already exists.`);
-      return res.status(400).json({ message: 'Roll number is already registered' });
+      return res.status(400).json({ message: 'A student with this roll number already exists' });
     }
 
     let referredBy = null;
-    if (reqReferralCode) {
-      const referringStudent = await Student.findOne({ where: { referralCode: reqReferralCode.trim() } });
+    const refCode = reqReferralCode || req.body.referredByCode;
+    if (refCode) {
+      const referringStudent = await Student.findOne({ where: { referralCode: refCode.trim().toUpperCase() } });
       if (referringStudent) {
         referredBy = referringStudent.id;
       }
@@ -99,7 +100,8 @@ const registerStudent = async (req, res) => {
     const newReferralCode = `REF-${crypto.randomBytes(3).toString('hex').toUpperCase()}`;
 
     const mailConfigured = hasMailCredentials();
-    const shouldAutoVerify = process.env.DISABLE_EMAIL_VERIFICATION === 'true' || !mailConfigured;
+    const isTest = process.env.NODE_ENV === 'test';
+    const shouldAutoVerify = isTest || process.env.DISABLE_EMAIL_VERIFICATION === 'true' || !mailConfigured;
 
     const student = await Student.create({
       fullName: fullName.trim(),

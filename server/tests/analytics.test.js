@@ -28,7 +28,9 @@ beforeAll(async () => {
 
 afterAll(async () => {
   await sequelize.close();
-  await new Promise((resolve) => server.close(resolve));
+  if (server && server.close) {
+    await new Promise((resolve) => server.close(resolve));
+  }
 });
 
 describe('College Event Registration Analytics & Management APIs', () => {
