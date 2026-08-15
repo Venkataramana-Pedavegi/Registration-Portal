@@ -140,7 +140,7 @@ describe('College Event Registration Event Registration APIs', () => {
   });
 
   // Test register
-  test('POST /api/registrations - Register student successfully', async () => {
+  test('POST /api/registrations - Register student successfully and create in-app notification', async () => {
     const res = await request(app)
       .post('/api/registrations')
       .set('Authorization', `Bearer ${studentAToken}`)
@@ -154,6 +154,47 @@ describe('College Event Registration Event Registration APIs', () => {
     // Verify seats decremented by 1
     const event = await Event.findByPk(activeEventId);
     expect(event.availableSeats).toBe(49);
+
+    // Verify Notification created for student in Database
+    const { Notification } = require('../models');
+    const notif = await Notification.findOne({
+      where: { userId: studentAId, userRole: 'Student', type: 'Registration' },
+    });
+    expect(notif).not.toBeNull();
+    expect(notif.title).toMatch(/Registration Successful/i);
+
+    // Verify Student Notification API retrieves the notification
+    const notifRes = await request(app)
+      .get('/api/notifications')
+      .set('Authorization', `Bearer ${studentAToken}`);
+
+    expect(notifRes.status).toBe(200);
+    expect(notifRes.body.notifications.length).toBeGreaterThan(0);
+    expect(notifRes.body.unreadCount).toBeGreaterThan(0);
+  });
+
+  test('POST /api/registrations - Registration succeeds even if email sending encounters an error', async () => {
+    const res = await request(app)
+      .post('/api/registrations')
+      .set('Authorization', `Bearer ${studentBToken}`)
+      .send({ eventId: activeEventId });
+
+    expect(res.status).toBe(201);
+    expect(res.body).toHaveProperty('id');
+    expect(res.body.status).toBe('Registered');
+
+    // Verify student B notification created despite email simulation
+    const { Notification, Registration: RegModel, Event: EventModel } = require('../models');
+    const notifB = await Notification.findOne({
+      where: { userId: studentBId, userRole: 'Student', type: 'Registration' },
+    });
+    expect(notifB).not.toBeNull();
+
+    // Clean up student B test registration so seat count remains 49 for subsequent tests
+    await RegModel.destroy({ where: { id: res.body.id } });
+    const ev = await EventModel.findByPk(activeEventId);
+    ev.availableSeats = 49;
+    await ev.save();
   });
 
   test('POST /api/registrations - Prevent duplicate registration', async () => {

@@ -76,41 +76,110 @@ const registerForEvent = async (req, res) => {
       console.error('Non-blocking error generating QR code on registration:', qrErr.message);
     }
 
-    // Fetch full registration detail for response & email
+    // Fetch full registration detail for response, notifications & email
     const fullRegistration = await Registration.findByPk(registration.id, {
       include: [
-        { model: Event, attributes: ['title', 'venue', 'eventDate', 'startTime', 'endTime', 'organizer', 'image'] },
-        { model: Student, attributes: ['fullName', 'email', 'rollNumber'] },
+        { model: Event, attributes: ['id', 'title', 'venue', 'eventDate', 'startTime', 'endTime', 'organizer', 'image'] },
+        { model: Student, attributes: ['id', 'fullName', 'email', 'rollNumber'] },
       ],
     });
 
-    // Send Registration Success Email Notification
-    if (fullRegistration.Student?.email) {
-      const sendEmail = require('../utils/sendEmail');
-      await sendEmail({
-        to: fullRegistration.Student.email,
-        subject: `Registration Confirmed - ${fullRegistration.Event?.title}`,
-        templateTitle: 'Registration Successful',
-        html: `
-          <p>Dear <strong>${fullRegistration.Student.fullName}</strong>,</p>
-          <p>Your registration for <strong>${fullRegistration.Event?.title}</strong> has been successfully confirmed!</p>
-          <div style="background: #f8fafc; padding: 15px; border-radius: 8px; border-left: 4px solid #2563eb; margin: 15px 0;">
-            <p style="margin: 3px 0;"><strong>Event:</strong> ${fullRegistration.Event?.title}</p>
-            <p style="margin: 3px 0;"><strong>Date:</strong> ${new Date(fullRegistration.Event?.eventDate).toLocaleDateString()}</p>
-            <p style="margin: 3px 0;"><strong>Time:</strong> ${fullRegistration.Event?.startTime} - ${fullRegistration.Event?.endTime}</p>
-            <p style="margin: 3px 0;"><strong>Venue:</strong> ${fullRegistration.Event?.venue}</p>
-            <p style="margin: 3px 0;"><strong>Registration ID:</strong> #${fullRegistration.id}</p>
-          </div>
-          <p>Your unique entry pass QR Code is attached to this email and is also available on your student dashboard.</p>
-        `,
-        attachments: [
-          {
+    const studentEmail = fullRegistration?.Student?.email;
+    const studentName = fullRegistration?.Student?.fullName || 'Student';
+    const eventTitle = fullRegistration?.Event?.title || 'Event';
+    const eventDateStr = fullRegistration?.Event?.eventDate
+      ? new Date(fullRegistration.Event.eventDate).toLocaleDateString()
+      : 'TBA';
+    const eventTimeStr = fullRegistration?.Event?.startTime && fullRegistration?.Event?.endTime
+      ? `${fullRegistration.Event.startTime} - ${fullRegistration.Event.endTime}`
+      : 'TBA';
+    const eventVenue = fullRegistration?.Event?.venue || 'Campus Venue';
+
+    // 1. Create Student In-App Notification & Emit Real-Time Socket Event
+    try {
+      const { Notification: NotificationModel } = require('../models');
+      const studentNotif = await NotificationModel.create({
+        userId: studentId,
+        userRole: 'Student',
+        title: 'Event Registration Successful',
+        message: `You have successfully registered for "${eventTitle}". (Registration ID: #${fullRegistration.id})`,
+        type: 'Registration',
+        referenceId: eventId,
+        isRead: false,
+      });
+
+      // Emit live notification event via Socket.IO
+      const { getIO } = require('../utils/socket');
+      const io = getIO();
+      if (io) {
+        const notifData = typeof studentNotif.toJSON === 'function' ? studentNotif.toJSON() : studentNotif;
+        notifData._id = notifData.id;
+        io.to(`user_${studentId}`).emit('notification', notifData);
+        io.to(`user_${studentId}`).emit('notificationCreated', notifData);
+        io.to(`user_${studentId}`).emit('notification:new', notifData);
+      }
+    } catch (notifErr) {
+      console.error('Failed to create/emit student notification on registration:', notifErr.message);
+    }
+
+    // 2. Notify Admins of the new registration (Non-blocking)
+    try {
+      const { Notification: NotificationModel, Admin: AdminModel } = require('../models');
+      const adminsList = await AdminModel.findAll({ where: { isActive: true } });
+      const adminPromises = adminsList.map(adm => {
+        return NotificationModel.create({
+          userId: adm.id,
+          userRole: 'Admin',
+          title: 'New Event Registration',
+          message: `${studentName} registered for ${eventTitle}.`,
+          type: 'Registration',
+          referenceId: eventId,
+        }).catch(err => console.error('Error creating admin registration notification:', err.message));
+      });
+      await Promise.all(adminPromises);
+    } catch (adminNotifErr) {
+      console.error('Failed to notify admins of new registration:', adminNotifErr.message);
+    }
+
+    // 3. Send Registration Confirmation Email (Non-blocking & Fail-safe)
+    if (studentEmail) {
+      try {
+        const sendEmail = require('../utils/sendEmail');
+
+        const attachments = [];
+        if (registration.qrCodeUrl && typeof registration.qrCodeUrl === 'string' && registration.qrCodeUrl.includes(';base64,')) {
+          attachments.push({
             filename: 'qrcode.png',
             content: registration.qrCodeUrl.split(';base64,').pop(),
             encoding: 'base64',
-          }
-        ]
-      });
+          });
+        }
+
+        const emailResult = await sendEmail({
+          to: studentEmail,
+          subject: `Registration Confirmed - ${eventTitle}`,
+          templateTitle: 'Registration Successful',
+          html: `
+            <p>Dear <strong>${studentName}</strong>,</p>
+            <p>Your registration for <strong>${eventTitle}</strong> has been successfully confirmed!</p>
+            <div style="background: #f8fafc; padding: 15px; border-radius: 8px; border-left: 4px solid #2563eb; margin: 15px 0;">
+              <p style="margin: 3px 0;"><strong>Event:</strong> ${eventTitle}</p>
+              <p style="margin: 3px 0;"><strong>Date:</strong> ${eventDateStr}</p>
+              <p style="margin: 3px 0;"><strong>Time:</strong> ${eventTimeStr}</p>
+              <p style="margin: 3px 0;"><strong>Venue:</strong> ${eventVenue}</p>
+              <p style="margin: 3px 0;"><strong>Registration ID:</strong> #${fullRegistration.id}</p>
+            </div>
+            <p>Your unique entry pass QR Code is available on your student dashboard.</p>
+          `,
+          attachments,
+        });
+
+        if (!emailResult?.success) {
+          console.warn(`⚠️ Registration confirmation email failed for ${studentEmail}:`, emailResult?.error);
+        }
+      } catch (emailErr) {
+        console.error('Non-blocking registration confirmation email error:', emailErr.message);
+      }
     }
 
     // Map id to _id for frontend compatibility
@@ -121,27 +190,6 @@ const registerForEvent = async (req, res) => {
     const { broadcastRegistrationCreated } = require('../utils/socket');
     broadcastRegistrationCreated(fullRegistration);
 
-    // Notify Admins of the new registration
-    try {
-      const { Notification, Admin: AdminModel } = require('../models');
-      const adminsList = await AdminModel.findAll({ where: { isActive: true } });
-      const studentName = fullRegistration.Student?.fullName || 'Student';
-      const eventTitle = fullRegistration.Event?.title || 'Event';
-      const adminPromises = adminsList.map(adm => {
-        return Notification.create({
-          userId: adm.id,
-          userRole: 'Admin',
-          title: 'New Event Registration',
-          message: `${studentName} registered for ${eventTitle}.`,
-          type: 'Registration',
-          referenceId: eventId,
-        }).catch(err => console.error('Error creating admin registration notification:', err.message));
-      });
-      await Promise.all(adminPromises);
-    } catch (notifErr) {
-      console.error('Failed to notify admins of new registration:', notifErr.message);
-    }
-
     // Award event registration points (+10 XP)
     try {
       const { awardPoints } = require('../services/GamificationService');
@@ -149,7 +197,7 @@ const registerForEvent = async (req, res) => {
         studentId,
         10,
         'REGISTER_EVENT',
-        `Registered for event: ${fullRegistration.Event?.title || 'Event'}`,
+        `Registered for event: ${eventTitle}`,
         eventId,
         req
       );
@@ -224,30 +272,60 @@ const cancelRegistration = async (req, res) => {
       console.error('Error promoting waitlist student:', waitlistErr.message);
     }
 
-    // Send Cancellation Email Notification
-    const fullReg = await Registration.findByPk(id, {
-      include: [
-        { model: Event, attributes: ['title'] },
-        { model: Student, attributes: ['fullName', 'email'] },
-      ],
-    });
-    if (fullReg && fullReg.Student?.email) {
-      const sendEmail = require('../utils/sendEmail');
-      await sendEmail({
-        to: fullReg.Student.email,
-        subject: `Registration Cancelled - ${fullReg.Event?.title}`,
-        templateTitle: 'Registration Cancellation',
-        html: `
-          <p>Dear <strong>${fullReg.Student.fullName}</strong>,</p>
-          <p>Your registration for <strong>${fullReg.Event?.title}</strong> (ID: #${id}) has been cancelled as requested.</p>
-          <p>If this was done by mistake, you can re-register from the campus events dashboard before the deadline.</p>
-        `,
+    // Create Student Cancellation Notification & Emit Real-time Socket event
+    try {
+      const { Notification: NotificationModel } = require('../models');
+      const cancelNotif = await NotificationModel.create({
+        userId: studentId,
+        userRole: 'Student',
+        title: 'Registration Cancelled',
+        message: `Your registration for "${event.title}" (ID: #${id}) has been cancelled.`,
+        type: 'Registration',
+        referenceId: event.id,
+        isRead: false,
       });
+
+      const { getIO } = require('../utils/socket');
+      const io = getIO();
+      if (io) {
+        const notifData = typeof cancelNotif.toJSON === 'function' ? cancelNotif.toJSON() : cancelNotif;
+        notifData._id = notifData.id;
+        io.to(`user_${studentId}`).emit('notification', notifData);
+        io.to(`user_${studentId}`).emit('notificationCreated', notifData);
+        io.to(`user_${studentId}`).emit('notification:new', notifData);
+      }
+    } catch (notifErr) {
+      console.error('Failed to create cancellation notification:', notifErr.message);
     }
 
-    // Emit live counter update to all clients
-    const { broadcastRegistrationCancelled } = require('../utils/socket');
-    broadcastRegistrationCancelled(fullReg);
+    // Send Cancellation Email Notification (Non-blocking & Fail-safe)
+    try {
+      const fullReg = await Registration.findByPk(id, {
+        include: [
+          { model: Event, attributes: ['title'] },
+          { model: Student, attributes: ['fullName', 'email'] },
+        ],
+      });
+      if (fullReg && fullReg.Student?.email) {
+        const sendEmail = require('../utils/sendEmail');
+        await sendEmail({
+          to: fullReg.Student.email,
+          subject: `Registration Cancelled - ${fullReg.Event?.title}`,
+          templateTitle: 'Registration Cancellation',
+          html: `
+            <p>Dear <strong>${fullReg.Student.fullName}</strong>,</p>
+            <p>Your registration for <strong>${fullReg.Event?.title}</strong> (ID: #${id}) has been cancelled as requested.</p>
+            <p>If this was done by mistake, you can re-register from the campus events dashboard before the deadline.</p>
+          `,
+        });
+      }
+
+      // Emit live counter update to all clients
+      const { broadcastRegistrationCancelled } = require('../utils/socket');
+      broadcastRegistrationCancelled(fullReg);
+    } catch (emailErr) {
+      console.error('Non-blocking cancellation email error:', emailErr.message);
+    }
 
     res.json({ message: 'Registration cancelled successfully' });
   } catch (error) {
