@@ -1,13 +1,17 @@
 const nodemailer = require("nodemailer");
 
-const hasCredentials =
-  (process.env.EMAIL_USER && process.env.EMAIL_PASS) ||
-  (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS);
+const user = process.env.EMAIL_USER ? process.env.EMAIL_USER.trim() : '';
+const pass = process.env.EMAIL_PASS ? process.env.EMAIL_PASS.trim() : '';
+const smtpHost = process.env.SMTP_HOST ? process.env.SMTP_HOST.trim() : '';
+const smtpUser = process.env.SMTP_USER ? process.env.SMTP_USER.trim() : '';
+const smtpPass = process.env.SMTP_PASS ? process.env.SMTP_PASS.trim() : '';
+
+const hasCredentials = (user && pass) || (smtpHost && smtpUser && smtpPass);
 
 const transporter = hasCredentials
-  ? (process.env.SMTP_HOST
+  ? (smtpHost
       ? nodemailer.createTransport({
-          host: process.env.SMTP_HOST,
+          host: smtpHost,
           port: parseInt(process.env.SMTP_PORT, 10) || 587,
           secure: process.env.SMTP_SECURE === 'true',
           pool: true,
@@ -15,8 +19,8 @@ const transporter = hasCredentials
           maxMessages: 100,
           rateLimit: 10,
           auth: {
-            user: process.env.SMTP_USER,
-            pass: process.env.SMTP_PASS,
+            user: smtpUser,
+            pass: smtpPass,
           },
         })
       : nodemailer.createTransport({
@@ -26,8 +30,8 @@ const transporter = hasCredentials
           maxMessages: 100,
           rateLimit: 10,
           auth: {
-            user: process.env.EMAIL_USER,
-            pass: process.env.EMAIL_PASS,
+            user,
+            pass,
           },
         }))
   : nodemailer.createTransport({

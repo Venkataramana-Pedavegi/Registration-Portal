@@ -23,7 +23,7 @@ const getCachedSettings = async () => {
     cachedBranding = {
       collegeName: settingsMap.collegeName || 'Sri Vasavi Engineering College',
       appName: settingsMap.appName || 'Campus Event Management Portal',
-      smtpUser: settingsMap.smtpUser || process.env.EMAIL_USER || 'admin@college.edu',
+      smtpUser: (settingsMap.smtpUser || process.env.EMAIL_USER || 'admin@college.edu').trim(),
     };
 
     if (settingsMap.smtpHost && settingsMap.smtpUser && settingsMap.smtpPass) {
