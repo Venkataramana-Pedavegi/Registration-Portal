@@ -36,6 +36,7 @@ app.use(
         allowedOrigins.some(
           (o) => origin === o || origin === o.replace(/\/$/, '')
         ) ||
+        origin.endsWith('.vercel.app') ||
         process.env.NODE_ENV !== 'production'
       ) {
         return callback(null, true);

@@ -118,6 +118,13 @@ export const AuthProvider = ({ children }) => {
     }
   }, [token, showTimeoutWarning]);
 
+  const getNetworkErrorMessage = (error, defaultMsg) => {
+    if (!error.response) {
+      return 'Unable to connect to backend server. Please verify VITE_API_URL in Vercel settings and ensure your backend service is running.';
+    }
+    return error.response?.data?.message || error.response?.data?.errors?.[0]?.msg || defaultMsg;
+  };
+
   const loginStudent = async (email, password) => {
     setLoading(true);
     try {
@@ -140,7 +147,7 @@ export const AuthProvider = ({ children }) => {
       resetInactivityTimer();
       return { success: true };
     } catch (error) {
-      const message = error.response?.data?.message || 'Login failed';
+      const message = getNetworkErrorMessage(error, 'Login failed');
       return { success: false, message };
     } finally {
       setLoading(false);
@@ -168,7 +175,7 @@ export const AuthProvider = ({ children }) => {
       resetInactivityTimer();
       return { success: true };
     } catch (error) {
-      const message = error.response?.data?.message || error.response?.data?.errors?.[0]?.msg || 'Registration failed';
+      const message = getNetworkErrorMessage(error, 'Registration failed');
       return { success: false, message };
     } finally {
       setLoading(false);
@@ -193,7 +200,7 @@ export const AuthProvider = ({ children }) => {
       resetInactivityTimer();
       return { success: true };
     } catch (error) {
-      const message = error.response?.data?.message || 'Admin login failed';
+      const message = getNetworkErrorMessage(error, 'Admin login failed');
       return { success: false, message };
     } finally {
       setLoading(false);

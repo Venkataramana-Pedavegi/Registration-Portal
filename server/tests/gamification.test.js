@@ -20,7 +20,9 @@ beforeAll(async () => {
 
 afterAll(async () => {
   await sequelize.close();
-  await new Promise((resolve) => server.close(resolve));
+  if (server && typeof server.close === 'function') {
+    await new Promise((resolve) => server.close(resolve));
+  }
 });
 
 describe('College Event System - Gamification & Engagement Tests', () => {

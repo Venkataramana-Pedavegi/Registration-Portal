@@ -5,6 +5,11 @@ if (process.env.NODE_ENV === 'test') {
   process.env.DB_NAME = 'college_event_registration_test';
 }
 
+const isRemoteHost = (host) => {
+  if (!host) return false;
+  return host !== '127.0.0.1' && host !== 'localhost' && host !== '::1';
+};
+
 /**
  * Initializes the MySQL database by creating it if it doesn't already exist.
  */
@@ -38,21 +43,48 @@ const initializeDatabase = async () => {
     password = password !== undefined ? password : '';
     dbName = dbName || 'college_event_registration';
 
-    const connection = await mysql.createConnection({
+    const sslDisabled = process.env.DB_SSL === 'false' || process.env.MYSQL_SSL === 'false';
+    const sslExplicitlyEnabled = process.env.DB_SSL === 'true' || process.env.MYSQL_SSL === 'true';
+    const isCloudEnv =
+      process.env.NODE_ENV === 'production' ||
+      isRemoteHost(host) ||
+      (connectionUrl &&
+        (connectionUrl.includes('ssl') ||
+         connectionUrl.includes('aiven') ||
+         connectionUrl.includes('railway') ||
+         connectionUrl.includes('planetscale')));
+
+    const sslConfig = (!sslDisabled && (sslExplicitlyEnabled || isCloudEnv))
+      ? { rejectUnauthorized: false }
+      : undefined;
+
+    const connectionConfig = {
       host,
       port,
       user,
       password,
-    });
+    };
+    if (sslConfig) {
+      connectionConfig.ssl = sslConfig;
+    }
 
-    await connection.query(`CREATE DATABASE IF NOT EXISTS \`${dbName}\`;`);
-    await connection.end();
-    console.log(`Database '${dbName}' verified/created successfully.`);
+    let connection;
+    try {
+      connection = await mysql.createConnection(connectionConfig);
+      await connection.query(`CREATE DATABASE IF NOT EXISTS \`${dbName}\`;`);
+      await connection.end();
+      console.log(`Database '${dbName}' verified/created successfully.`);
+    } catch (createErr) {
+      if (connection) {
+        try { await connection.end(); } catch (e) {}
+      }
+      console.log(`[initDb] Notice: Pre-connection database check skipped (${createErr.message}). Proceeding with direct database connection.`);
+    }
   } catch (error) {
     console.error('Failed to initialize database:', error.message);
-    // Do not crash the process immediately, let Sequelize attempt fallback
   }
 };
 
 module.exports = initializeDatabase;
+
 
