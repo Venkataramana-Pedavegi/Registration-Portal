@@ -27,74 +27,95 @@ const logModelAndDbDetails = async (actionName, req) => {
   }
 };
 
+const getFrontendUrl = (req) => {
+  if (process.env.FRONTEND_URL) {
+    return process.env.FRONTEND_URL.trim().replace(/\/$/, '');
+  }
+  const origin = req.headers.origin || req.headers.referer;
+  if (origin && !origin.includes('localhost:5000') && !origin.includes('railway.app') && !origin.includes('onrender.com')) {
+    return origin.trim().replace(/\/$/, '');
+  }
+  return 'https://registration-portal-bice-seven.vercel.app';
+};
+
+const hasMailCredentials = () => {
+  return !!(
+    (process.env.EMAIL_USER && process.env.EMAIL_PASS) ||
+    (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS)
+  );
+};
+
 // @desc    Register a new student
 // @route   POST /api/student/register
 // @access  Public
 const registerStudent = async (req, res) => {
   try {
-    const { fullName, rollNumber, email, department, year, password } = req.body;
+    const { fullName, rollNumber, email, department, year, password, referralCode: reqReferralCode } = req.body;
     await logModelAndDbDetails('registerStudent', req);
-    logDebug(`[registerStudent] Incoming request body: ${JSON.stringify({ fullName, rollNumber, email, department, year })}`);
+    logDebug(`[registerStudent] Incoming request body: ${JSON.stringify(req.body)}`);
 
-    const emailExists = await Student.findOne({ 
+    // Check if student with email already exists
+    let emailCheckSql = '';
+    const existingStudentEmail = await Student.findOne({ 
       where: { email: email.toLowerCase() },
-      logging: (sql) => logDebug(`[registerStudent] Email check SQL: ${sql}`)
+      logging: (sql) => {
+        emailCheckSql = sql;
+        logDebug(`[registerStudent] Email check SQL: ${sql}`);
+      }
     });
-    if (emailExists) {
+
+    if (existingStudentEmail) {
       logDebug(`[registerStudent] Registration rejected: Email ${email} already exists.`);
-      return res.status(400).json({ message: 'A student with this email already exists' });
+      return res.status(400).json({ message: 'Email address is already registered' });
     }
 
-    const rollExists = await Student.findOne({ 
+    // Check if student with roll number already exists
+    let rollCheckSql = '';
+    const existingStudentRoll = await Student.findOne({ 
       where: { rollNumber: rollNumber.toUpperCase() },
-      logging: (sql) => logDebug(`[registerStudent] Roll number check SQL: ${sql}`)
+      logging: (sql) => {
+        rollCheckSql = sql;
+        logDebug(`[registerStudent] Roll number check SQL: ${sql}`);
+      }
     });
-    if (rollExists) {
+
+    if (existingStudentRoll) {
       logDebug(`[registerStudent] Registration rejected: Roll number ${rollNumber} already exists.`);
-      return res.status(400).json({ message: 'A student with this roll number already exists' });
+      return res.status(400).json({ message: 'Roll number is already registered' });
+    }
+
+    let referredBy = null;
+    if (reqReferralCode) {
+      const referringStudent = await Student.findOne({ where: { referralCode: reqReferralCode.trim() } });
+      if (referringStudent) {
+        referredBy = referringStudent.id;
+      }
     }
 
     const emailBase64 = Buffer.from(email.toLowerCase()).toString('base64');
     const randomHex = crypto.randomBytes(16).toString('hex');
     const verificationToken = `${emailBase64}_${randomHex}`;
     const verificationTokenExpire = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 Hours
-    const isTest = process.env.NODE_ENV === 'test';
+    const newReferralCode = `REF-${crypto.randomBytes(3).toString('hex').toUpperCase()}`;
 
-    const referralCode = 'REF-' + Math.random().toString(36).substring(2, 8).toUpperCase();
-    let referredBy = null;
-
-    if (req.body.referredByCode) {
-      const referringStudent = await Student.findOne({ where: { referralCode: req.body.referredByCode.trim().toUpperCase() } });
-      if (referringStudent) {
-        referredBy = referringStudent.id;
-      }
-    }
+    const mailConfigured = hasMailCredentials();
+    const shouldAutoVerify = process.env.DISABLE_EMAIL_VERIFICATION === 'true' || !mailConfigured;
 
     const student = await Student.create({
-      fullName,
-      rollNumber: rollNumber.toUpperCase(),
-      email: email.toLowerCase(),
+      fullName: fullName.trim(),
+      rollNumber: rollNumber.trim().toUpperCase(),
+      email: email.trim().toLowerCase(),
       department,
       year,
       password,
-      isVerified: false,
-      verificationToken,
-      verificationTokenExpire,
-      referralCode,
+      isVerified: shouldAutoVerify,
+      verificationToken: shouldAutoVerify ? null : verificationToken,
+      verificationTokenExpire: shouldAutoVerify ? null : verificationTokenExpire,
+      referralCode: newReferralCode,
       referredBy,
     }, {
       logging: (sql) => logDebug(`[registerStudent] Insert Student SQL: ${sql}`)
     });
-
-    // Verification check immediately after registration
-    const verifyExists = await Student.findOne({ 
-      where: { email: email.toLowerCase() },
-      logging: (sql) => logDebug(`[registerStudent] Immediately query DB check SQL: ${sql}`)
-    });
-    logDebug(`[Student Register API] Immediately queried DB for ${email}. Row exists: ${!!verifyExists}`);
-    if (verifyExists) {
-      logDebug(`[Student Register API] Existing record detail: ID = ${verifyExists.id}, Email = ${verifyExists.email}, isVerified = ${verifyExists.isVerified}, isActive = ${verifyExists.isActive}`);
-    }
 
     if (student) {
       if (referredBy) {
@@ -124,9 +145,10 @@ const registerStudent = async (req, res) => {
         }
       }
 
-      if (!isTest) {
-        const verifyUrl = `${req.protocol}://${req.get('host').replace('5000', '5173')}/verify-email?token=${verificationToken}`;
-        const logoUrl = `${req.protocol}://${req.get('host').replace('5000', '5173')}/sri_vasavi_logo.png`;
+      if (process.env.NODE_ENV !== 'test' && !shouldAutoVerify) {
+        const frontendUrl = getFrontendUrl(req);
+        const verifyUrl = `${frontendUrl}/verify-email?token=${verificationToken}`;
+        const logoUrl = `${frontendUrl}/sri_vasavi_logo.png`;
         const expiryTimeStr = verificationTokenExpire.toLocaleString();
 
         const emailHtml = `<!DOCTYPE html>
@@ -188,13 +210,21 @@ const registerStudent = async (req, res) => {
           subject: 'Verify Your Email - Sri Vasavi Event Portal',
           templateTitle: 'Email Verification Required',
           html: emailHtml
+        }).then(res => {
+          if (res.success) {
+            console.log(`✅ Verification email dispatched to ${student.email}`);
+          } else {
+            console.warn(`⚠️ Verification email warning for ${student.email}:`, res.error);
+          }
         }).catch(err => console.error('Verification email failed:', err.message));
       }
 
       await logAudit({ req, userId: student.id, userRole: 'Student', action: 'REGISTRATION', details: `Student registered: ${student.email}` });
 
       res.status(201).json({
-        message: 'Registration successful! A verification link has been sent to your email. Please verify your account before logging in.',
+        message: shouldAutoVerify
+          ? 'Registration successful! Your account is active.'
+          : 'Registration successful! A verification link has been sent to your email. Please verify your account before logging in.',
         _id: student.id,
         fullName: student.fullName,
         rollNumber: student.rollNumber,
@@ -240,7 +270,7 @@ const verifyStudentEmail = async (req, res) => {
 
     // Check if already verified
     if (student.isVerified) {
-      return res.status(400).json({ message: 'Email already verified.' });
+      return res.json({ message: 'Email already verified. You can log in.' });
     }
 
     // If not verified, verify the token in the database
@@ -289,14 +319,15 @@ const resendVerification = async (req, res) => {
     const emailBase64 = Buffer.from(student.email.toLowerCase()).toString('base64');
     const randomHex = crypto.randomBytes(16).toString('hex');
     const verificationToken = `${emailBase64}_${randomHex}`;
-    const verificationTokenExpire = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 Hours
+    const verificationTokenExpire = new Date(Date.now() + 24 * 60 * 60 * 1000);
 
     student.verificationToken = verificationToken;
     student.verificationTokenExpire = verificationTokenExpire;
     await student.save();
 
-    const verifyUrl = `${req.protocol}://${req.get('host').replace('5000', '5173')}/verify-email?token=${verificationToken}`;
-    const logoUrl = `${req.protocol}://${req.get('host').replace('5000', '5173')}/sri_vasavi_logo.png`;
+    const frontendUrl = getFrontendUrl(req);
+    const verifyUrl = `${frontendUrl}/verify-email?token=${verificationToken}`;
+    const logoUrl = `${frontendUrl}/sri_vasavi_logo.png`;
     const expiryTimeStr = verificationTokenExpire.toLocaleString();
 
     const emailHtml = `<!DOCTYPE html>
@@ -353,7 +384,7 @@ const resendVerification = async (req, res) => {
 </body>
 </html>`;
 
-    await sendEmail({
+    const mailResult = await sendEmail({
       to: student.email,
       subject: 'Verify Your Email - Sri Vasavi Event Portal',
       templateTitle: 'Email Verification Required',
@@ -362,7 +393,11 @@ const resendVerification = async (req, res) => {
 
     await logAudit({ req, userId: student.id, userRole: 'Student', action: 'RESEND_VERIFICATION_EMAIL', details: `Resent verification email to ${student.email}` });
 
-    res.json({ message: 'Verification link has been resent to your email address.' });
+    if (mailResult.success) {
+      res.json({ message: 'Verification link has been resent to your email address.' });
+    } else {
+      res.json({ message: `Verification link generated: ${verifyUrl}`, verifyUrl });
+    }
   } catch (error) {
     res.status(500).json({ message: 'Server error resending verification email', error: error.message });
   }
@@ -393,7 +428,10 @@ const loginStudent = async (req, res) => {
       return res.status(401).json({ message: 'No student account found with this email' });
     }
 
-    if (!student.isVerified && process.env.NODE_ENV !== 'test') {
+    const mailConfigured = hasMailCredentials();
+    const verificationRequired = process.env.NODE_ENV !== 'test' && process.env.DISABLE_EMAIL_VERIFICATION !== 'true' && mailConfigured;
+
+    if (!student.isVerified && verificationRequired) {
       return res.status(400).json({ message: 'Please verify your email before logging in.' });
     }
 
