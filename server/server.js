@@ -14,6 +14,9 @@ dotenv.config();
 const app = express();
 const server = http.createServer(app);
 
+// Trust proxy for reverse proxy platforms like Railway, Render, and Vercel
+app.set('trust proxy', 1);
+
 // Initialize Socket.IO
 initSocket(server);
 
@@ -22,6 +25,7 @@ app.use(compression());
 app.use(configureHelmet());
 app.use(sanitizeXSS);
 const allowedOrigins = [
+  'https://registration-portal-6is5nnjtd-ramanas-projects-c89ec6d9.vercel.app',
   'https://registration-portal-bice-seven.vercel.app',
   process.env.FRONTEND_URL,
   'http://localhost:5173',

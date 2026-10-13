@@ -35,7 +35,7 @@ const getFrontendUrl = (req) => {
   if (origin && !origin.includes('localhost:5000') && !origin.includes('railway.app') && !origin.includes('onrender.com')) {
     return origin.trim().replace(/\/$/, '');
   }
-  return 'https://registration-portal-bice-seven.vercel.app';
+  return 'https://registration-portal-6is5nnjtd-ramanas-projects-c89ec6d9.vercel.app';
 };
 
 const hasMailCredentials = () => {
