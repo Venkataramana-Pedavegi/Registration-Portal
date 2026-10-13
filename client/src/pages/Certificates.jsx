@@ -17,7 +17,11 @@ const Certificates = () => {
         setCertificates(data);
       } catch (err) {
         console.error(err);
-        setError('Failed to load certificates catalog.');
+        if (!err.response) {
+          setError('Unable to connect to backend server. Please verify your backend service is running and accessible.');
+        } else {
+          setError(err.response?.data?.message || 'Failed to load certificates catalog.');
+        }
       } finally {
         setLoading(false);
       }

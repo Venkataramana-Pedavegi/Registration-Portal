@@ -155,30 +155,34 @@ const registerForEvent = async (req, res) => {
           });
         }
 
+        console.log(`📧 Email send attempted for event registration: ${studentEmail}`);
         const emailResult = await sendEmail({
           to: studentEmail,
-          subject: `Registration Confirmed - ${eventTitle}`,
+          subject: `Event Registration Confirmation - ${eventTitle}`,
           templateTitle: 'Registration Successful',
           html: `
             <p>Dear <strong>${studentName}</strong>,</p>
             <p>Your registration for <strong>${eventTitle}</strong> has been successfully confirmed!</p>
             <div style="background: #f8fafc; padding: 15px; border-radius: 8px; border-left: 4px solid #2563eb; margin: 15px 0;">
-              <p style="margin: 3px 0;"><strong>Event:</strong> ${eventTitle}</p>
+              <p style="margin: 3px 0;"><strong>Student Name:</strong> ${studentName}</p>
+              <p style="margin: 3px 0;"><strong>Event Name:</strong> ${eventTitle}</p>
+              <p style="margin: 3px 0;"><strong>Registration ID:</strong> #${fullRegistration.id}</p>
               <p style="margin: 3px 0;"><strong>Date:</strong> ${eventDateStr}</p>
               <p style="margin: 3px 0;"><strong>Time:</strong> ${eventTimeStr}</p>
               <p style="margin: 3px 0;"><strong>Venue:</strong> ${eventVenue}</p>
-              <p style="margin: 3px 0;"><strong>Registration ID:</strong> #${fullRegistration.id}</p>
             </div>
-            <p>Your unique entry pass QR Code is available on your student dashboard.</p>
+            <p>Your registration is complete. Your unique entry pass QR Code is available on your student dashboard.</p>
           `,
           attachments,
         });
 
-        if (!emailResult?.success) {
-          console.warn(`⚠️ Registration confirmation email failed for ${studentEmail}:`, emailResult?.error);
+        if (emailResult?.success) {
+          console.log(`✅ Registration email sent successfully to ${studentEmail}`);
+        } else {
+          console.warn(`❌ Email sending failed for registration: ${emailResult?.error || 'Unknown error'}`);
         }
       } catch (emailErr) {
-        console.error('Non-blocking registration confirmation email error:', emailErr.message);
+        console.error('❌ Email sending failed for registration:', emailErr.message);
       }
     }
 

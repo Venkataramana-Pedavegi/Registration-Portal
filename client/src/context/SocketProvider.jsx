@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { io } from 'socket.io-client';
 import { AuthContext } from './AuthContext';
+import { BACKEND_URL } from '../services/api';
 
 const SocketContext = createContext(null);
 
@@ -19,7 +20,11 @@ export const SocketProvider = ({ children }) => {
       return;
     }
 
-    const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || 'http://localhost:5000';
+    const defaultSocketUrl = import.meta.env.PROD ? '' : 'http://localhost:5000';
+    const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || BACKEND_URL || defaultSocketUrl;
+    if (!SOCKET_URL) {
+      return;
+    }
     const socketInstance = io(SOCKET_URL, {
       transports: ['websocket', 'polling'],
       autoConnect: true,

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { X, ChevronLeft, ChevronRight, Download, ZoomIn, ZoomOut, Maximize2, Play, Pause } from 'lucide-react';
 import GalleryService from '../services/GalleryService';
+import { getMediaUrl } from '../services/api';
 
 const MediaViewer = ({ mediaList, currentIndex, onClose, onIndexChange }) => {
   const [zoom, setZoom] = useState(1);
@@ -23,17 +24,6 @@ const MediaViewer = ({ mediaList, currentIndex, onClose, onIndexChange }) => {
   }, [currentIndex, currentItem?.id]);
 
   if (!currentItem) return null;
-
-  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
-  const getMediaUrl = (url) => {
-    if (!url) return '';
-    if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('data:')) {
-      return url;
-    }
-    // Remove base /api from server port address
-    const baseUrl = API_URL.replace('/api', '');
-    return `${baseUrl}${url}`;
-  };
 
   const handlePrev = (e) => {
     e.stopPropagation();

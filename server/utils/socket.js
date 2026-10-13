@@ -2,13 +2,27 @@ let io = null;
 
 const initSocket = (serverInstance) => {
   const { Server } = require('socket.io');
-  const allowedSocketOrigins = process.env.FRONTEND_URL
-    ? [process.env.FRONTEND_URL, 'http://localhost:5173', 'http://localhost:3000', 'http://localhost:5000']
-    : '*';
+  const allowedOrigins = [
+    'https://registration-portal-bice-seven.vercel.app',
+    process.env.FRONTEND_URL,
+    'http://localhost:5173',
+    'http://localhost:3000',
+    'http://localhost:5000',
+  ].filter(Boolean);
 
   io = new Server(serverInstance, {
     cors: {
-      origin: allowedSocketOrigins,
+      origin: (origin, callback) => {
+        if (!origin) return callback(null, true);
+        if (
+          allowedOrigins.some((o) => origin === o || origin === o.replace(/\/+$/, '')) ||
+          origin.endsWith('.vercel.app') ||
+          process.env.NODE_ENV !== 'production'
+        ) {
+          return callback(null, true);
+        }
+        return callback(new Error(`Not allowed by Socket CORS: ${origin}`));
+      },
       methods: ['GET', 'POST', 'PUT', 'DELETE'],
       credentials: true,
     },

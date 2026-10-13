@@ -42,7 +42,7 @@ const forgotPassword = async (req, res) => {
 
     // Generate 6-digit OTP
     const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
-    logDebug(`[ForgotPassword] Generated plain OTP for ${email}: ${otpCode}`);
+    logDebug(`[ForgotPassword] Generated secure OTP for ${email}`);
     const hashedOtp = crypto.createHash('sha256').update(otpCode).digest('hex');
 
     user.otpCode = hashedOtp;
@@ -90,7 +90,7 @@ const forgotPassword = async (req, res) => {
     console.log(`📌 [ForgotPassword] Password reset request received for account: ${email}`);
     console.log('🔑 [ForgotPassword] OTP generated and saved to DB with 10m expiry');
 
-    console.log('📧 [ForgotPassword] Triggering email dispatch...');
+    console.log('📧 Email send attempted for forgot-password');
     const mailResult = await sendEmail({
       to: user.email,
       subject: 'Password Reset OTP - Sri Vasavi Event Portal',
@@ -101,13 +101,13 @@ const forgotPassword = async (req, res) => {
     await logAudit({ req, userId: user.id, userRole: role, action: 'FORGOT_PASSWORD_REQUEST', details: `OTP generated for ${user.email}` });
 
     if (mailResult && mailResult.success) {
-      console.log('✅ [ForgotPassword] Email dispatched successfully');
+      console.log('✅ Forgot-password email sent successfully');
     } else {
-      console.warn('⚠️ [ForgotPassword] Email delivery failed or running unconfigured:', mailResult?.error || 'Unknown error');
+      console.warn('❌ Email sending failed for forgot-password:', mailResult?.error || 'Unknown error');
     }
 
     res.json({
-      message: 'If an account exists with that email, a 6-digit verification OTP code has been sent to your email address.',
+      message: 'If an account exists with that email, a 6-digit verification OTP code / password reset link has been sent to your email address.',
     });
   } catch (error) {
     res.status(500).json({ message: 'Server error processing forgot password', error: error.message });

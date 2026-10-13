@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import api from '../services/api';
+import api, { API_URL } from '../services/api';
 import Loader from '../components/Loader';
 import Pagination from '../components/Pagination';
 import { ShieldCheck, Search, Globe, Clock, User, ArrowUpDown, Download, FileText, CheckCircle2, XCircle } from 'lucide-react';
@@ -68,7 +68,6 @@ const AuditLogs = () => {
   // CSV Export Action
   const handleExportCSV = () => {
     const token = localStorage.getItem('token');
-    const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
     window.open(`${API_URL}/export/audit-logs?token=${token}`, '_blank');
   };
 

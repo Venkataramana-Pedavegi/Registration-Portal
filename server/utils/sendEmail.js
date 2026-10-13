@@ -17,12 +17,22 @@ const getCachedSettings = async () => {
     const settings = await SystemSetting.findAll();
     const settingsMap = {};
     settings.forEach((s) => {
-      settingsMap[s.key] = s.value;
+      if (s.value !== undefined && s.value !== null && s.value !== '') {
+        settingsMap[s.key] = s.value;
+      }
     });
 
-    const emailUser = (settingsMap.smtpUser || settingsMap.EMAIL_USER || process.env.EMAIL_USER || '').trim();
-    const emailPass = (settingsMap.smtpPass || settingsMap.EMAIL_PASS || process.env.EMAIL_PASS || '').trim();
-    const smtpHost = (settingsMap.smtpHost && settingsMap.smtpHost !== 'smtp.mailtrap.io') ? settingsMap.smtpHost.trim() : null;
+    const emailUser = (settingsMap.smtpUser || settingsMap.EMAIL_USER || process.env.EMAIL_USER || process.env.SMTP_USER || '').trim();
+    const rawEmailPass = (settingsMap.smtpPass || settingsMap.EMAIL_PASS || process.env.EMAIL_PASS || process.env.SMTP_PASS || '').trim();
+    const emailPass = (!settingsMap.smtpHost && (emailUser.includes('gmail.com') || process.env.EMAIL_USER?.includes('gmail.com')))
+      ? rawEmailPass.replace(/\s+/g, '')
+      : rawEmailPass;
+
+    const smtpHost = (settingsMap.smtpHost && settingsMap.smtpHost !== 'smtp.mailtrap.io')
+      ? settingsMap.smtpHost.trim()
+      : (process.env.SMTP_HOST ? process.env.SMTP_HOST.trim() : null);
+    const smtpPort = parseInt(settingsMap.smtpPort || process.env.SMTP_PORT, 10) || 587;
+    const smtpSecure = (settingsMap.smtpSecure || process.env.SMTP_SECURE) === 'true';
 
     cachedBranding = {
       collegeName: settingsMap.collegeName || 'Sri Vasavi Engineering College',
@@ -30,11 +40,12 @@ const getCachedSettings = async () => {
       smtpUser: emailUser || 'admin@college.edu',
     };
 
-    if (smtpHost && settingsMap.smtpUser && settingsMap.smtpPass) {
+    if (smtpHost && emailUser && emailPass) {
+      console.log('ℹ️ SMTP configuration loaded (Custom SMTP Host)');
       cachedTransporter = nodemailer.createTransport({
         host: smtpHost,
-        port: parseInt(settingsMap.smtpPort, 10) || 587,
-        secure: settingsMap.smtpSecure === 'true',
+        port: smtpPort,
+        secure: smtpSecure,
         pool: true,
         maxConnections: 5,
         maxMessages: 100,
@@ -43,11 +54,13 @@ const getCachedSettings = async () => {
         greetingTimeout: 10000,
         socketTimeout: 15000,
         auth: {
-          user: settingsMap.smtpUser.trim(),
-          pass: settingsMap.smtpPass.trim(),
+          user: emailUser,
+          pass: emailPass,
         },
       });
+      console.log('✅ SMTP Transporter initialized');
     } else if (emailUser && emailPass) {
+      console.log('ℹ️ SMTP configuration loaded (Gmail Service)');
       cachedTransporter = nodemailer.createTransport({
         service: 'gmail',
         pool: true,
@@ -62,6 +75,7 @@ const getCachedSettings = async () => {
           pass: emailPass,
         },
       });
+      console.log('✅ SMTP Transporter initialized');
     } else {
       cachedTransporter = defaultTransporter;
     }
@@ -69,8 +83,9 @@ const getCachedSettings = async () => {
     lastCacheTime = now;
   } catch (err) {
     console.error('Failed to load system SMTP settings:', err.message);
-    const emailUser = (process.env.EMAIL_USER || '').trim();
-    const emailPass = (process.env.EMAIL_PASS || '').trim();
+    const emailUser = (process.env.EMAIL_USER || process.env.SMTP_USER || '').trim();
+    const rawPass = (process.env.EMAIL_PASS || process.env.SMTP_PASS || '').trim();
+    const emailPass = emailUser.includes('gmail.com') ? rawPass.replace(/\s+/g, '') : rawPass;
 
     cachedBranding = {
       collegeName: 'Sri Vasavi Engineering College',
@@ -78,6 +93,7 @@ const getCachedSettings = async () => {
       smtpUser: emailUser || 'admin@college.edu',
     };
     if (emailUser && emailPass) {
+      console.log('ℹ️ SMTP configuration loaded from environment');
       cachedTransporter = nodemailer.createTransport({
         service: 'gmail',
         pool: true,
@@ -92,6 +108,7 @@ const getCachedSettings = async () => {
           pass: emailPass,
         },
       });
+      console.log('✅ SMTP Transporter initialized');
     } else {
       cachedTransporter = defaultTransporter;
     }

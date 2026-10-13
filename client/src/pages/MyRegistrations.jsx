@@ -24,7 +24,11 @@ const MyRegistrations = () => {
       setRegistrations(data.filter((r) => r.status === 'Registered'));
     } catch (err) {
       console.error(err);
-      setError(err.response?.data?.message || 'Failed to load your event registrations.');
+      if (!err.response) {
+        setError('Unable to connect to backend server. Please verify your backend service is running and accessible.');
+      } else {
+        setError(err.response?.data?.message || 'Failed to load your event registrations.');
+      }
     } finally {
       setLoading(false);
     }

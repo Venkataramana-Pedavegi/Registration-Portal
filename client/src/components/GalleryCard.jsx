@@ -1,5 +1,6 @@
 import React from 'react';
 import { Play, Eye, Edit, Trash2, Star, Calendar } from 'lucide-react';
+import { getMediaUrl } from '../services/api';
 
 const GalleryCard = ({
   item,
@@ -9,17 +10,6 @@ const GalleryCard = ({
   onDeleteClick,
 }) => {
   const isVideo = item.mediaType?.toUpperCase() === 'VIDEO' || item.mediaUrl?.endsWith('.mp4') || item.mediaUrl?.endsWith('.webm');
-
-  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
-  const getMediaUrl = (url) => {
-    if (!url) return '';
-    if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('data:')) {
-      return url;
-    }
-    // Remove base /api from server port address
-    const baseUrl = API_URL.replace('/api', '');
-    return `${baseUrl}${url}`;
-  };
 
   const handleEdit = (e) => {
     e.stopPropagation();

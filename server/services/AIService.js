@@ -1,16 +1,18 @@
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 
-let genAI = null;
-if (process.env.GEMINI_API_KEY) {
-  genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-}
+const getClient = () => {
+  const apiKey = (process.env.GEMINI_API_KEY || '').trim();
+  if (!apiKey || apiKey === 'your_gemini_api_key_here') return null;
+  return new GoogleGenerativeAI(apiKey);
+};
 
 // Basic rate limiting helper (throttle consecutive calls)
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 const generateText = async (prompt, systemInstruction = '', fallbackText = null, retryCount = 0) => {
   try {
-    if (!process.env.GEMINI_API_KEY || !genAI) {
+    const client = getClient();
+    if (!client) {
       if (fallbackText) {
         return fallbackText;
       }
@@ -20,8 +22,9 @@ const generateText = async (prompt, systemInstruction = '', fallbackText = null,
     // Rate limiter throttle: sleep 200ms
     await delay(200);
 
-    const model = genAI.getGenerativeModel({
-      model: 'gemini-1.5-flash',
+    const modelName = process.env.GEMINI_MODEL || 'gemini-3.8-flash';
+    const model = client.getGenerativeModel({
+      model: modelName,
       systemInstruction: systemInstruction || 'You are an intelligent administrative assistant for Sri Vasavi Event Management Portal.'
     });
 
@@ -29,10 +32,24 @@ const generateText = async (prompt, systemInstruction = '', fallbackText = null,
     const text = result.response.text();
     return text.trim();
   } catch (error) {
-    console.error(`❌ [AI Service] Gemini Generation Error (Attempt ${retryCount + 1}):`, error.message);
+    const errorMsg = error?.message || '';
+    const isAuthOrQuotaError =
+      errorMsg.includes('API_KEY_INVALID') ||
+      errorMsg.includes('API key not valid') ||
+      errorMsg.includes('API_KEY_SERVICE_BLOCKED') ||
+      errorMsg.includes('RESOURCE_EXHAUSTED') ||
+      errorMsg.includes('429') ||
+      errorMsg.includes('503') ||
+      errorMsg.includes('Quota exceeded') ||
+      errorMsg.includes('quota') ||
+      errorMsg.includes('high demand');
 
-    // Simple Retry with Exponential Backoff
-    if (retryCount < 2) {
+    // Sanitize error message to avoid printing any sensitive key in URLs
+    const sanitizedError = errorMsg.replace(/key=[^&\s]+/gi, 'key=[REDACTED]');
+    console.error(`⚠️ [AI Service] Gemini Generation Issue (Attempt ${retryCount + 1}):`, sanitizedError);
+
+    // Simple Retry with Exponential Backoff (skip retrying if key is invalid, quota exhausted, or service unavailable)
+    if (!isAuthOrQuotaError && retryCount < 2) {
       const waitTime = Math.pow(2, retryCount) * 1000;
       await delay(waitTime);
       return generateText(prompt, systemInstruction, fallbackText, retryCount + 1);

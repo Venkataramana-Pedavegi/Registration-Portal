@@ -22,37 +22,89 @@ app.use(compression());
 app.use(configureHelmet());
 app.use(sanitizeXSS);
 const allowedOrigins = [
+  'https://registration-portal-bice-seven.vercel.app',
   process.env.FRONTEND_URL,
   'http://localhost:5173',
   'http://localhost:3000',
   'http://localhost:5000',
 ].filter(Boolean);
 
-app.use(
-  cors({
-    origin: (origin, callback) => {
-      if (!origin) return callback(null, true);
-      if (
-        allowedOrigins.some(
-          (o) => origin === o || origin === o.replace(/\/$/, '')
-        ) ||
-        origin.endsWith('.vercel.app') ||
-        process.env.NODE_ENV !== 'production'
-      ) {
-        return callback(null, true);
-      }
-      return callback(new Error('Not allowed by CORS'));
+const corsOptions = {
+  origin: (origin, callback) => {
+    if (!origin) return callback(null, true);
+    if (
+      allowedOrigins.some(
+        (o) => origin === o || origin === o.replace(/\/$/, '')
+      ) ||
+      origin.endsWith('.vercel.app') ||
+      process.env.NODE_ENV !== 'production'
+    ) {
+      return callback(null, true);
+    }
+    return callback(new Error(`Not allowed by CORS: ${origin}`));
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: [
+    'Origin',
+    'X-Requested-With',
+    'Content-Type',
+    'Accept',
+    'Authorization',
+    'Cache-Control',
+    'Pragma',
+  ],
+  exposedHeaders: ['Content-Range', 'X-Content-Range'],
+};
+
+app.use(cors(corsOptions));
+app.options('*', cors(corsOptions));
+
+// Health-Check Endpoints (Mounted before rate limiter so Railway/Vercel probes succeed)
+const healthCheckHandler = async (req, res) => {
+  let dbStatus = 'disconnected';
+  let dbError = null;
+
+  try {
+    await sequelize.authenticate();
+    dbStatus = 'connected';
+  } catch (err) {
+    dbError = err.message;
+  }
+
+  const isHealthy = dbStatus === 'connected';
+  const responseData = {
+    status: isHealthy ? 'healthy' : 'unhealthy',
+    timestamp: new Date().toISOString(),
+    uptime: Math.floor(process.uptime()),
+    environment: process.env.NODE_ENV || 'development',
+    database: {
+      status: dbStatus,
+      dialect: 'mysql',
+      ...(dbError ? { error: dbError } : {}),
     },
-    credentials: true,
-  })
-);
+  };
+
+  if (!isHealthy) {
+    return res.status(503).json(responseData);
+  }
+
+  return res.status(200).json(responseData);
+};
+
+app.get('/api/health', healthCheckHandler);
+app.get('/health', healthCheckHandler);
+
 app.use(express.json({ limit: '50mb' }));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
-// Apply Rate Limiting in production or default environments
+// Apply Rate Limiting in production or default environments (skipping healthcheck)
 if (process.env.NODE_ENV !== 'test') {
-  app.use('/api', apiRateLimiter);
+  app.use('/api', (req, res, next) => {
+    if (req.path === '/health') return next();
+    return apiRateLimiter(req, res, next);
+  });
 }
 
 // Seed Admin User if none exists
@@ -371,11 +423,12 @@ const errorHandler = require('./middleware/errorHandler');
 app.use(errorHandler);
 
 const PORT = process.env.PORT || 5000;
+const HOST = '0.0.0.0';
 
 let serverInstance;
 if (process.env.NODE_ENV !== 'test') {
-  serverInstance = server.listen(PORT, () => {
-    logDebug(`Server running on port ${PORT}`);
+  serverInstance = server.listen(PORT, HOST, () => {
+    logDebug(`Server running on http://${HOST}:${PORT}`);
     logDebug(`Environment: ${process.env.NODE_ENV || 'development'}`);
   }).on('error', (err) => {
     if (err.code === 'EADDRINUSE') {

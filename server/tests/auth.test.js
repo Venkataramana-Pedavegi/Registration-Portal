@@ -13,8 +13,15 @@ beforeAll(async () => {
   await initDb();
   
   // Recreate all tables fresh in the test database
+  await sequelize.query('SET FOREIGN_KEY_CHECKS = 0');
   await sequelize.sync({ force: true });
+  await sequelize.query('SET FOREIGN_KEY_CHECKS = 1');
   
+  // Import app and server
+  const backend = require('../server');
+  app = backend.app;
+  server = backend.server;
+
   // Manual seed of default admin for testing (since sync dropped tables)
   await Admin.create({
     username: 'admin',
@@ -22,11 +29,6 @@ beforeAll(async () => {
     password: 'adminpassword',
     role: 'Admin',
   });
-
-  // Import app and server
-  const backend = require('../server');
-  app = backend.app;
-  server = backend.server;
   
   // Small wait for server startup log print
   await new Promise((resolve) => setTimeout(resolve, 500));
@@ -34,8 +36,8 @@ beforeAll(async () => {
 
 afterAll(async () => {
   // Close database connections and server
-  await sequelize.close();
-  await new Promise((resolve) => server.close(resolve));
+  if (sequelize) await sequelize.close();
+  if (server && server.close) await new Promise((resolve) => server.close(resolve));
 });
 
 describe('College Event Registration Auth APIs', () => {

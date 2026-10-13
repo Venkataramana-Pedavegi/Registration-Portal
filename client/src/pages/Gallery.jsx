@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useContext } from 'react';
 import GalleryService from '../services/GalleryService';
+import { getMediaUrl } from '../services/api';
 import GalleryFilter from '../components/GalleryFilter';
 import GalleryGrid from '../components/GalleryGrid';
 import MediaViewer from '../components/MediaViewer';
@@ -92,16 +93,6 @@ const Gallery = () => {
     if (newPage >= 1 && newPage <= pagination.pages) {
       setPage(newPage);
     }
-  };
-
-  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
-  const getMediaUrl = (url) => {
-    if (!url) return '';
-    if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('data:')) {
-      return url;
-    }
-    const baseUrl = API_URL.replace('/api', '');
-    return `${baseUrl}${url}`;
   };
 
   return (
