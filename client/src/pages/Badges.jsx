@@ -11,9 +11,10 @@ const Badges = () => {
     try {
       setLoading(true);
       const data = await gamificationService.getBadges();
-      setBadges(data);
+      setBadges(Array.isArray(data) ? data : []);
     } catch (err) {
-      console.error(err);
+      console.error('[Badges] Error fetching badges:', err);
+      setBadges([]);
     } finally {
       setLoading(false);
     }
@@ -40,9 +41,13 @@ const Badges = () => {
           <div className="py-16">
             <Loader size="large" />
           </div>
+        ) : (badges || []).length === 0 ? (
+          <div className="bg-white rounded-2xl border border-gray-250 p-8 text-center text-xs text-gray-500 font-bold max-w-md mx-auto shadow-xs">
+            No badges available in the catalog currently.
+          </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-            {badges.map((badge) => (
+            {(badges || []).map((badge) => (
               <div
                 key={badge.id}
                 className={`bg-white rounded-2xl border p-5 shadow-xs flex flex-col items-center text-center space-y-4 transition-all duration-200 ${

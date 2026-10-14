@@ -15,6 +15,27 @@ const getProfileStats = async (req, res) => {
     });
 
     if (!student) {
+      if (req.user && req.role && req.role !== 'Student') {
+        return res.json({
+          student: {
+            id: req.user.id,
+            fullName: req.user.fullName || req.user.username || 'Administrator',
+            profileImage: req.user.profileImage || null,
+            department: req.user.department || 'Administration',
+            year: req.role,
+          },
+          points: 0,
+          level: 'Administrator',
+          nextLevel: 'N/A',
+          progressPercentage: 100,
+          remainingPoints: 0,
+          rank: 1,
+          attendancePercentage: 100,
+          volunteerHours: 0,
+          badgesCount: 0,
+          certsCount: 0,
+        });
+      }
       return res.status(404).json({ message: 'Student not found' });
     }
 
@@ -153,6 +174,15 @@ const getAchievements = async (req, res) => {
   try {
     const studentId = req.user.id;
 
+    if (req.role && req.role !== 'Student') {
+      return res.json({
+        badges: [],
+        certificates: [],
+        completedEventsCount: 0,
+        timeline: [],
+      });
+    }
+
     const badges = await StudentBadge.findAll({
       where: { studentId },
       include: [{ model: Badge }],
@@ -165,13 +195,20 @@ const getAchievements = async (req, res) => {
       order: [['issueDate', 'DESC']]
     });
 
-    const completedRegistrations = await Registration.findAll({
-      where: { studentId, status: 'Registered' },
-      include: [
-        { model: Event, attributes: ['id', 'title', 'eventDate', 'category'] },
-        { model: Attendance, where: { attendanceStatus: 'Present' } }
-      ]
-    });
+    let completedRegistrations = [];
+    try {
+      completedRegistrations = await Registration.findAll({
+        where: { studentId, status: 'Registered' },
+        include: [
+          { model: Event, attributes: ['id', 'title', 'eventDate', 'category'] },
+          { model: Attendance, where: { attendanceStatus: 'Present' } }
+        ]
+      });
+    } catch (regErr) {
+      completedRegistrations = await Registration.findAll({
+        where: { studentId, status: 'Registered' },
+      });
+    }
 
     const timeline = await ActivityLog.findAll({
       where: { studentId },
@@ -180,10 +217,10 @@ const getAchievements = async (req, res) => {
     });
 
     res.json({
-      badges,
-      certificates,
-      completedEventsCount: completedRegistrations.length,
-      timeline,
+      badges: badges || [],
+      certificates: certificates || [],
+      completedEventsCount: completedRegistrations ? completedRegistrations.length : 0,
+      timeline: timeline || [],
     });
   } catch (error) {
     res.status(500).json({ message: 'Error retrieving achievements summary', error: error.message });

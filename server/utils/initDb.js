@@ -45,14 +45,19 @@ const initializeDatabase = async () => {
 
     const sslDisabled = process.env.DB_SSL === 'false' || process.env.MYSQL_SSL === 'false';
     const sslExplicitlyEnabled = process.env.DB_SSL === 'true' || process.env.MYSQL_SSL === 'true';
+
+    const isRailwayInternal =
+      (host && (host.includes('railway.internal') || host.includes('rlwy.net'))) ||
+      (connectionUrl && (connectionUrl.includes('railway.internal') || connectionUrl.includes('rlwy.net')));
+
     const isCloudEnv =
-      process.env.NODE_ENV === 'production' ||
-      isRemoteHost(host) ||
-      (connectionUrl &&
-        (connectionUrl.includes('ssl') ||
-         connectionUrl.includes('aiven') ||
-         connectionUrl.includes('railway') ||
-         connectionUrl.includes('planetscale')));
+      !isRailwayInternal &&
+      (process.env.NODE_ENV === 'production' ||
+       isRemoteHost(host) ||
+       (connectionUrl &&
+         (connectionUrl.includes('ssl') ||
+          connectionUrl.includes('aiven') ||
+          connectionUrl.includes('planetscale'))));
 
     const sslConfig = (!sslDisabled && (sslExplicitlyEnabled || isCloudEnv))
       ? { rejectUnauthorized: false }

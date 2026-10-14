@@ -1,7 +1,9 @@
 import React from 'react';
 import { Calendar, CheckCircle2, Award, ArrowUpCircle, Settings } from 'lucide-react';
 
-const ActivityTimeline = ({ logs }) => {
+const ActivityTimeline = ({ logs = [] }) => {
+  const safeLogs = Array.isArray(logs) ? logs : [];
+
   const getIconForType = (type) => {
     switch (type) {
       case 'REGISTER_EVENT':
@@ -34,11 +36,11 @@ const ActivityTimeline = ({ logs }) => {
         <p className="text-[10px] text-gray-400 mt-0.5">Your chronological achievements and registration logs on the portal.</p>
       </div>
 
-      {logs.length === 0 ? (
+      {safeLogs.length === 0 ? (
         <div className="text-center py-10 text-xs text-gray-450 font-semibold">No recent activity logged. Start attending events to earn points!</div>
       ) : (
         <div className="relative pl-6 border-l border-gray-200 space-y-6 ml-3">
-          {logs.map((log) => (
+          {safeLogs.map((log) => (
             <div key={log.id || log._id} className="relative space-y-1">
               
               {/* Point Indicator dot */}

@@ -138,11 +138,13 @@ describe('AI Copilot Assistant Endpoints Test Suite (10 Required Scenarios)', ()
   });
 
   afterAll(async () => {
-    await Certificate.destroy({ where: { studentId } });
-    await Attendance.destroy({ where: { studentId } });
-    await Registration.destroy({ where: { studentId } });
+    if (studentId) {
+      await Certificate.destroy({ where: { studentId } });
+      await Attendance.destroy({ where: { studentId } });
+      await Registration.destroy({ where: { studentId } });
+      await Volunteer.destroy({ where: { studentId } });
+    }
     await VolunteerTask.destroy({ where: {} });
-    await Volunteer.destroy({ where: { studentId } });
     if (testEventTomorrow) await testEventTomorrow.destroy();
     if (testEventPast) await testEventPast.destroy();
   });

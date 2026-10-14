@@ -25,6 +25,7 @@ app.use(compression());
 app.use(configureHelmet());
 app.use(sanitizeXSS);
 const allowedOrigins = [
+  'https://registration-portal-rouge.vercel.app',
   'https://registration-portal-6is5nnjtd-ramanas-projects-c89ec6d9.vercel.app',
   'https://registration-portal-bice-seven.vercel.app',
   process.env.FRONTEND_URL,
@@ -78,7 +79,7 @@ const healthCheckHandler = async (req, res) => {
 
   const isHealthy = dbStatus === 'connected';
   const responseData = {
-    status: isHealthy ? 'healthy' : 'unhealthy',
+    status: isHealthy ? 'healthy' : 'degraded',
     timestamp: new Date().toISOString(),
     uptime: Math.floor(process.uptime()),
     environment: process.env.NODE_ENV || 'development',
@@ -89,10 +90,7 @@ const healthCheckHandler = async (req, res) => {
     },
   };
 
-  if (!isHealthy) {
-    return res.status(503).json(responseData);
-  }
-
+  // Always return 200 so orchestrator health checks (Railway) do not kill container
   return res.status(200).json(responseData);
 };
 

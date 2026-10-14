@@ -283,13 +283,70 @@ This executes tests checking auth behaviors, registration bounds, intent classif
 
 ---
 
-## 7. Operational Troubleshooting
+## 7. Cloud Deployment & Hosting Architecture
+
+The system is designed for modern cloud deployment across **Railway** (Backend & MySQL) and **Vercel** (Frontend SPA):
+
+```mermaid
+graph LR
+    User[End User / Browser] -->|HTTPS| Vercel[Vercel: React Frontend]
+    Vercel -->|REST API / WSS| Railway[Railway: Node.js / Express API]
+    Railway -->|Internal VPC / SSL| MySQL[(Railway MySQL Database)]
+    Railway -->|SMTP / TLS| Gmail[Nodemailer / Gmail SMTP]
+    Railway -->|HTTPS API| Gemini[Google Gemini AI]
+```
+
+### Deployment Configuration Matrix
+
+| Environment | Variable Name | Purpose & Example Value |
+| :--- | :--- | :--- |
+| **Railway (Backend)** | `PORT` | Container binding port (e.g., `5000` or `8080`) |
+| **Railway (Backend)** | `NODE_ENV` | `production` |
+| **Railway (Backend)** | `MYSQL_URL` or `DB_HOST` | Database connection string (e.g. `${{MySQL.MYSQL_URL}}` or remote DB host) |
+| **Railway (Backend)** | `DB_SSL` | Set to `true` for cloud DB connections |
+| **Railway (Backend)** | `FRONTEND_URL` | Allowed client origin (e.g., `https://registration-portal-rouge.vercel.app`) |
+| **Railway (Backend)** | `JWT_SECRET` | 32+ character random secret string |
+| **Railway (Backend)** | `JWT_REFRESH_SECRET` | 32+ character random secret string |
+| **Railway (Backend)** | `EMAIL_USER` / `EMAIL_PASS` | Gmail or custom SMTP credentials (app password) |
+| **Railway (Backend)** | `GEMINI_API_KEY` | Google AI Studio Gemini API key |
+| **Vercel (Frontend)** | `VITE_API_URL` | Backend API URL (e.g. `https://your-backend.up.railway.app/api`) |
+| **Vercel (Frontend)** | `VITE_SOCKET_URL` | Backend root URL for Socket.IO (e.g. `https://your-backend.up.railway.app`) |
+
+---
+
+## 8. Operational Troubleshooting & Production Pitfalls
 
 > [!IMPORTANT]
-> **API Port Conflicts**: The backend uses Port `5000` by default. If the port is in use, verify if a duplicate server instance is running in the background. The server handles this gracefully by warning you and remaining available if already listening.
+> **Database Connection Refused (`ECONNREFUSED 127.0.0.1:3306`)**:
+> On cloud platforms like Railway, containers run in isolation without a local MySQL daemon. If `DB_HOST` or `MYSQL_URL` are not defined in the service environment variables, the system defaults to `127.0.0.1:3306`, resulting in connection failure. Always link Railway's MySQL service or supply `MYSQL_URL` / `DB_HOST` in the service variables.
+
+> [!IMPORTANT]
+> **Reverse Proxy & Rate Limiter (`X-Forwarded-For` / `trust proxy`)**:
+> When deployed behind Railway, Render, or cloud load balancers, Express receives forwarded client headers. Express requires `app.set('trust proxy', 1);` enabled in [server.js](file:///c:/Registration%20Portal/server/server.js) to accurately identify client IPs and prevent `express-rate-limit` from throwing validation errors.
 
 > [!WARNING]
-> **Gemini Rate Throttling**: The AI service includes a `delay(200)` wrapper to throttle consecutive calls and avoid API exhaustion. If the Gemini API returns status `429` (Quota Exceeded), the service automatically retries twice with exponential backoff before falling back to local mock payloads.
+> **CORS with Vercel Preview Deployments**:
+> Every Vercel preview deployment creates a unique subdomain. Both Express and Socket.IO include regex/pattern checks (`origin.endsWith('.vercel.app')`) alongside `process.env.FRONTEND_URL` to ensure preview URLs are authorized dynamically while rejecting unauthorized origins.
+
+> [!WARNING]
+> **Gemini Rate Throttling**:
+> The AI service includes a `delay(200)` wrapper to throttle consecutive calls and avoid API exhaustion. If the Gemini API returns status `429` (Quota Exceeded), the service automatically retries twice with exponential backoff before falling back to local rule-based mock payloads.
 
 > [!TIP]
-> **Simulating Emails in Testing**: In `test` environments, Nodemailer emails are bypassed. The console outputs `[Email Simulation] To: ... | Subject: ...` instead, preventing outbound calls.
+> **Simulating Emails in Testing**:
+> In `test` environments or when `EMAIL_USER`/`EMAIL_PASS` are omitted, Nodemailer emails run in graceful simulation mode. The console outputs `[Email Simulation]` or logs fallback notices, ensuring user registration flows never stall due to email outages.
+
+---
+
+## 9. System Handover & Checklist
+
+- [x] Database schemas and relations mapped via Sequelize (`/server/models`).
+- [x] Auto-database creation and column sync handled in `/server/utils/initDb.js` and `server.js`.
+- [x] Default Super Admin (`admin` / `adminpassword`) automatically seeded on clean startup.
+- [x] Initial gamification badges auto-seeded via `GamificationService.seedBadges()`.
+- [x] CORS whitelists both production domain and all dynamic `.vercel.app` subdomains.
+- [x] Express configured with `trust proxy` for cloud reverse proxies.
+- [x] Comprehensive automated test suite available via `npm test` in `/server`.
+- [ ] Ensure Railway MySQL service is provisioned and linked via `MYSQL_URL`.
+- [ ] Configure `VITE_API_URL` and `VITE_SOCKET_URL` in Vercel project environment variables.
+- [ ] Change default admin password upon initial production login.

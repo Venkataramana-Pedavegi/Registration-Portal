@@ -3,6 +3,7 @@ let io = null;
 const initSocket = (serverInstance) => {
   const { Server } = require('socket.io');
   const allowedOrigins = [
+    'https://registration-portal-rouge.vercel.app',
     'https://registration-portal-6is5nnjtd-ramanas-projects-c89ec6d9.vercel.app',
     'https://registration-portal-bice-seven.vercel.app',
     process.env.FRONTEND_URL,

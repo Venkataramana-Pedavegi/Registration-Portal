@@ -1,7 +1,7 @@
 import React from 'react';
 import { Award, Star, Trophy, Clock } from 'lucide-react';
 
-const PointsCard = ({ points, rank, volunteerHours, badgesCount, certsCount }) => {
+const PointsCard = ({ points = 0, rank = 1, volunteerHours = 0, badgesCount = 0, certsCount = 0 }) => {
   return (
     <div className="bg-white rounded-2xl border border-gray-250 p-6 shadow-xs grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
       
@@ -11,7 +11,7 @@ const PointsCard = ({ points, rank, volunteerHours, badgesCount, certsCount }) =
           <Star className="h-5 w-5 fill-amber-500" />
         </div>
         <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block">Total Points</span>
-        <span className="text-2xl font-black text-gray-900">{points} <span className="text-xs text-amber-500 font-bold">XP</span></span>
+        <span className="text-2xl font-black text-gray-900">{points ?? 0} <span className="text-xs text-amber-500 font-bold">XP</span></span>
       </div>
 
       {/* Rank */}
@@ -20,7 +20,7 @@ const PointsCard = ({ points, rank, volunteerHours, badgesCount, certsCount }) =
           <Trophy className="h-5 w-5" />
         </div>
         <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block">Current Rank</span>
-        <span className="text-2xl font-black text-gray-900">#{rank}</span>
+        <span className="text-2xl font-black text-gray-900">#{rank ?? 1}</span>
       </div>
 
       {/* Volunteer Hours */}

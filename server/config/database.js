@@ -47,14 +47,20 @@ const dbConfig = getDbConfig();
 
 const sslDisabled = process.env.DB_SSL === 'false' || process.env.MYSQL_SSL === 'false';
 const sslExplicitlyEnabled = process.env.DB_SSL === 'true' || process.env.MYSQL_SSL === 'true';
+
+// Railway internal MySQL plugin does NOT support SSL connections
+const isRailwayInternal =
+  (dbConfig.host && (dbConfig.host.includes('railway.internal') || dbConfig.host.includes('rlwy.net'))) ||
+  (dbConfig.connectionUrl && (dbConfig.connectionUrl.includes('railway.internal') || dbConfig.connectionUrl.includes('rlwy.net')));
+
 const isCloudEnv =
-  process.env.NODE_ENV === 'production' ||
-  isRemoteHost(dbConfig.host) ||
-  (dbConfig.connectionUrl &&
-    (dbConfig.connectionUrl.includes('ssl') ||
-     dbConfig.connectionUrl.includes('aiven') ||
-     dbConfig.connectionUrl.includes('railway') ||
-     dbConfig.connectionUrl.includes('planetscale')));
+  !isRailwayInternal &&
+  (process.env.NODE_ENV === 'production' ||
+   isRemoteHost(dbConfig.host) ||
+   (dbConfig.connectionUrl &&
+     (dbConfig.connectionUrl.includes('ssl') ||
+      dbConfig.connectionUrl.includes('aiven') ||
+      dbConfig.connectionUrl.includes('planetscale'))));
 
 const shouldEnableSsl = !sslDisabled && (sslExplicitlyEnabled || isCloudEnv);
 
